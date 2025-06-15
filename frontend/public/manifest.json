@@ -1,0 +1,16 @@
+{
+  "name": "ToolsCandy",
+  "short_name": "ToolsCandy",
+  "description": "A collection of useful web tools",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#00BFA6",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+} 

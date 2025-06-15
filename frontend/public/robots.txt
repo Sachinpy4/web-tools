@@ -1,0 +1,95 @@
+# Web Tools - Robots.txt Configuration
+# This file controls how search engines crawl and index your site
+
+# Allow all search engines to crawl public content
+User-agent: *
+
+# ALLOW: Public pages that should be indexed
+Allow: /
+Allow: /about
+Allow: /contact
+Allow: /privacy
+Allow: /terms
+Allow: /disclaimer
+
+# ALLOW: Blog content for SEO
+Allow: /blog
+Allow: /blog/*
+
+# ALLOW: Image processing tools (main functionality)
+Allow: /image/compress
+Allow: /image/resize  
+Allow: /image/convert
+Allow: /image/crop
+Allow: /image/metadata
+
+# DISALLOW: Common system directories and file types
+Disallow: /api/
+Disallow: /_next/
+Disallow: /_vercel/
+Disallow: /*.json$
+Disallow: /*.xml$
+Disallow: /*.log$
+Disallow: /*.env$
+Disallow: /*.sql$
+Disallow: /*.db$
+Disallow: /*.bak$
+Disallow: /*.config$
+Disallow: /*.ini$
+
+# DISALLOW: Search and filter parameters to avoid duplicate content
+Disallow: /*?search=*
+Disallow: /*?filter=*
+Disallow: /*?sort=*
+Disallow: /*?page=*
+
+# CRAWL DELAY: Be respectful to server resources
+Crawl-delay: 1
+
+# SITEMAP: Point to sitemap location (when you create one)
+# Sitemap: https://toolscandy.com/sitemap.xml
+
+# SPECIFIC RULES FOR MAJOR SEARCH ENGINES
+
+# Google Bot - Allow faster crawling for main content
+User-agent: Googlebot
+Crawl-delay: 0.5
+Allow: /
+Allow: /blog
+Allow: /blog/*
+Allow: /image/*
+
+# Bing Bot
+User-agent: Bingbot
+Crawl-delay: 1
+Allow: /
+Allow: /blog
+Allow: /blog/*
+Allow: /image/*
+
+# Block aggressive crawlers that might overload your server
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# Block AI training bots (optional - uncomment if you want to block them)
+# User-agent: GPTBot
+# Disallow: /
+
+# User-agent: ChatGPT-User
+# Disallow: /
+
+# User-agent: CCBot
+# Disallow: /
+
+# User-agent: anthropic-ai
+# Disallow: /
+
+# User-agent: Claude-Web
+# Disallow: /
+

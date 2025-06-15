@@ -1,0 +1,37 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradient for the circular background - Teal to Purple to Royal Blue -->
+    <linearGradient id="candyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00BFA6"/>
+      <stop offset="50%" stop-color="#6C63FF"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+    
+    <!-- Shine effect gradient -->
+    <linearGradient id="shineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.3)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Main circular candy icon -->
+  <circle cx="16" cy="16" r="14" fill="url(#candyGradient)" stroke="rgba(156,163,175,0.3)" stroke-width="1"/>
+  
+  <!-- Shine effect -->
+  <ellipse cx="12" cy="12" rx="8" ry="10" fill="url(#shineGradient)" opacity="0.6"/>
+  
+  <!-- Gear Icon (simplified for favicon size) -->
+  <g transform="translate(16,16)" fill="white">
+    <circle r="5" fill="white"/>
+    <circle r="2.5" fill="none" stroke="white" stroke-width="0.8"/>
+    <!-- Gear teeth (simplified for small size) -->
+    <rect x="-0.8" y="-6.5" width="1.6" height="2.5" rx="0.4"/>
+    <rect x="-0.8" y="4" width="1.6" height="2.5" rx="0.4"/>
+    <rect x="-6.5" y="-0.8" width="2.5" height="1.6" rx="0.4"/>
+    <rect x="4" y="-0.8" width="2.5" height="1.6" rx="0.4"/>
+    <rect x="-4.8" y="-4.8" width="1.6" height="1.6" rx="0.4" transform="rotate(45)"/>
+    <rect x="3.2" y="-4.8" width="1.6" height="1.6" rx="0.4" transform="rotate(45)"/>
+    <rect x="-4.8" y="3.2" width="1.6" height="1.6" rx="0.4" transform="rotate(45)"/>
+    <rect x="3.2" y="3.2" width="1.6" height="1.6" rx="0.4" transform="rotate(45)"/>
+  </g>
+</svg>

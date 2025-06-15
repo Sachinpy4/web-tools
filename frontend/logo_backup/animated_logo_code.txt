@@ -1,0 +1,96 @@
+/* ANIMATED LOGO CODE FROM MainLayout.tsx (lines 60-116) */
+/* BACKUP CREATED BEFORE GIT RESTORE */
+
+{/* Logo */}
+<div className="flex items-center">
+  <Link href="/" className="flex items-center space-x-2 group" onClick={closeMenu}>
+    {/* Candy Logo Icon */}
+    <motion.div 
+      className="relative"
+      whileHover={{ 
+        rotate: [0, -10, 10, -5, 5, 0],
+        scale: 1.05
+      }}
+      transition={{ 
+        duration: 0.6,
+        ease: "easeInOut"
+      }}
+    >
+      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-violet-500 shadow-lg flex items-center justify-center relative overflow-hidden">
+        {/* Candy Shine Effect */}
+        <motion.div 
+          className="absolute inset-0 bg-gradient-to-tr from-white/30 to-transparent rounded-full"
+          animate={{ 
+            rotate: [0, 360] 
+          }}
+          transition={{ 
+            duration: 8, 
+            repeat: Infinity, 
+            ease: "linear" 
+          }}
+        />
+        {/* Lollipop Icon */}
+        <span className="text-white text-sm sm:text-base font-bold relative z-10">🍭</span>
+      </div>
+      
+      {/* Sparkle Effects */}
+      <motion.div
+        className="absolute -top-1 -right-1 text-yellow-400"
+        animate={{ 
+          scale: [0, 1, 0],
+          rotate: [0, 180, 360]
+        }}
+        transition={{ 
+          duration: 2, 
+          repeat: Infinity, 
+          delay: 0 
+        }}
+      >
+        ✨
+      </motion.div>
+      <motion.div
+        className="absolute -bottom-1 -left-1 text-pink-400 text-xs"
+        animate={{ 
+          scale: [0, 1, 0],
+          rotate: [0, -180, -360]
+        }}
+        transition={{ 
+          duration: 2, 
+          repeat: Infinity, 
+          delay: 1 
+        }}
+      >
+        ✨
+      </motion.div>
+    </motion.div>
+    
+    {/* Brand Text */}
+    <div className="flex flex-col sm:flex-row sm:items-baseline sm:space-x-1">
+      <motion.span 
+        className="font-bold text-lg sm:text-xl bg-gradient-to-r from-pink-600 via-purple-600 to-violet-600 bg-clip-text text-transparent group-hover:from-pink-500 group-hover:via-purple-500 group-hover:to-violet-500 transition-all duration-300"
+        whileHover={{ scale: 1.02 }}
+      >
+        Tools
+      </motion.span>
+      <motion.span 
+        className="font-bold text-lg sm:text-xl bg-gradient-to-r from-orange-500 via-pink-500 to-rose-500 bg-clip-text text-transparent group-hover:from-orange-400 group-hover:via-pink-400 group-hover:to-rose-400 transition-all duration-300"
+        whileHover={{ scale: 1.02 }}
+      >
+        Candy
+      </motion.span>
+    </div>
+  </Link>
+</div>
+
+/* IMPORT REQUIRED FOR FRAMER MOTION: */
+import { motion } from 'framer-motion'
+
+/* FILE LOCATION: */
+src/components/layout/MainLayout.tsx
+
+/* NOTES: */
+- This creates an animated candy/lollipop logo with sparkle effects
+- Uses framer-motion for animations
+- Has hover animations and continuous sparkle rotation
+- Pink/purple gradient theme with "Tools Candy" text
+- Responsive sizing (w-8 h-8 sm:w-9 sm:h-9) 

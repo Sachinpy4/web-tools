@@ -1,0 +1,58 @@
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradient for the circular background -->
+    <radialGradient id="candyGradient" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#ec4899"/>
+      <stop offset="50%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </radialGradient>
+    
+    <!-- Gradient for "Tools" text -->
+    <linearGradient id="toolsGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#db2777"/>
+      <stop offset="50%" stop-color="#9333ea"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    
+    <!-- Gradient for "Candy" text -->
+    <linearGradient id="candyTextGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f97316"/>
+      <stop offset="50%" stop-color="#ec4899"/>
+      <stop offset="100%" stop-color="#f43f5e"/>
+    </linearGradient>
+    
+    <!-- Shine effect gradient -->
+    <linearGradient id="shineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.4)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Main circular candy icon -->
+  <circle cx="30" cy="30" r="20" fill="url(#candyGradient)" filter="drop-shadow(0 4px 8px rgba(0,0,0,0.2))"/>
+  
+  <!-- Shine effect on the circle -->
+  <ellipse cx="25" cy="25" rx="12" ry="15" fill="url(#shineGradient)" opacity="0.6"/>
+  
+  <!-- Lollipop emoji (represented as stylized candy) -->
+  <circle cx="30" cy="26" r="8" fill="#fff" opacity="0.9"/>
+  <circle cx="30" cy="26" r="6" fill="#ff69b4"/>
+  <rect x="29" y="34" width="2" height="8" fill="#8b4513" rx="1"/>
+  
+  <!-- Sparkle effects -->
+  <g fill="#fbbf24" opacity="0.8">
+    <!-- Top right sparkle -->
+    <path d="M45 18 L47 20 L45 22 L43 20 Z"/>
+    <path d="M44 19 L46 19 M45 18 L45 22"/>
+    
+    <!-- Bottom left sparkle -->
+    <path d="M15 35 L17 37 L15 39 L13 37 Z"/>
+    <path d="M14 36 L16 36 M15 35 L15 39"/>
+  </g>
+  
+  <!-- "Tools" text -->
+  <text x="60" y="25" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="bold" fill="url(#toolsGradient)">Tools</text>
+  
+  <!-- "Candy" text -->
+  <text x="60" y="45" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="bold" fill="url(#candyTextGradient)">Candy</text>
+</svg> 

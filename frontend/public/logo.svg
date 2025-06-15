@@ -1,0 +1,55 @@
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradient for the circular background - Teal to Purple to Royal Blue -->
+    <linearGradient id="candyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00BFA6"/>
+      <stop offset="50%" stop-color="#6C63FF"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+    
+    <!-- Gradient for "Tools" text - Royal Blue to Dark Gray -->
+    <linearGradient id="toolsGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1D4ED8"/>
+      <stop offset="100%" stop-color="#374151"/>
+    </linearGradient>
+    
+    <!-- Gradient for "Candy" text - Teal to Purple -->
+    <linearGradient id="candyTextGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00BFA6"/>
+      <stop offset="100%" stop-color="#6C63FF"/>
+    </linearGradient>
+    
+    <!-- Shine effect gradient -->
+    <linearGradient id="shineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.3)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Main circular candy icon -->
+  <circle cx="30" cy="30" r="20" fill="url(#candyGradient)" stroke="rgba(156,163,175,0.3)" stroke-width="1" filter="drop-shadow(0 4px 8px rgba(0,0,0,0.2))"/>
+  
+  <!-- Shine effect on the circle -->
+  <ellipse cx="25" cy="25" rx="12" ry="15" fill="url(#shineGradient)" opacity="0.6"/>
+  
+  <!-- Gear Icon (simplified SVG gear) -->
+  <g transform="translate(30,30)" fill="white">
+    <circle r="6" fill="white"/>
+    <circle r="3" fill="none" stroke="white" stroke-width="1"/>
+    <!-- Gear teeth -->
+    <rect x="-1" y="-8" width="2" height="3" rx="0.5"/>
+    <rect x="-1" y="5" width="2" height="3" rx="0.5"/>
+    <rect x="-8" y="-1" width="3" height="2" rx="0.5"/>
+    <rect x="5" y="-1" width="3" height="2" rx="0.5"/>
+    <rect x="-6" y="-6" width="2" height="2" rx="0.5" transform="rotate(45)"/>
+    <rect x="4" y="-6" width="2" height="2" rx="0.5" transform="rotate(45)"/>
+    <rect x="-6" y="4" width="2" height="2" rx="0.5" transform="rotate(45)"/>
+    <rect x="4" y="4" width="2" height="2" rx="0.5" transform="rotate(45)"/>
+  </g>
+  
+  <!-- "Tools" text -->
+  <text x="60" y="25" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="bold" fill="url(#toolsGradient)">Tools</text>
+  
+  <!-- "Candy" text -->
+  <text x="60" y="45" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="bold" fill="url(#candyTextGradient)">Candy</text>
+</svg> 

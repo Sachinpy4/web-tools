@@ -1,0 +1,13 @@
+.next/
+node_modules/
+.vscode/
+.idea/
+.git/
+package-lock.json
+yarn.lock
+dist/
+public/
+build/
+coverage/
+*.log
+*.d.ts 
