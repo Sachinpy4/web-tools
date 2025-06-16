@@ -124,7 +124,6 @@ router.post('/archive', rateLimiter_1.batchOperationLimiter, async (req, res) =>
         await archive.finalize();
     }
     catch (error) {
-        console.error('Archive error:', error);
         res.status(500).json({
             status: 'error',
             message: 'Failed to create archive'

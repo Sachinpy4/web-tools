@@ -21,7 +21,7 @@ const createUploadDirs = async () => {
         await promises_1.default.mkdir(processedDir, { recursive: true });
     }
     catch (err) {
-        console.error('Error creating upload directories:', err);
+        // Silent error handling
     }
 };
 // Create dirs on module import
@@ -34,15 +34,10 @@ async function compressImageService(filePath, quality = 80) {
     try {
         // Ensure quality is in valid range
         const validQuality = Math.max(1, Math.min(100, quality));
-        if (validQuality !== quality) {
-            console.log(`Quality adjusted from ${quality} to valid range: ${validQuality}`);
-        }
         const image = (0, sharp_1.default)(filePath);
         const metadata = await image.metadata();
         const ext = path_1.default.extname(filePath);
         const outputPath = path_1.default.join(__dirname, '../../uploads/processed', `tool-compressed-${(0, uuid_1.v4)()}${ext}`);
-        console.log('Image format:', metadata.format);
-        console.log('Using quality setting:', validQuality);
         let processedImage;
         let mime;
         // Process based on image format
@@ -55,7 +50,6 @@ async function compressImageService(filePath, quality = 80) {
             case 'png':
                 // PNG compression is 0-9, so we convert the 1-100 quality scale to appropriate level
                 const pngQuality = Math.max(1, Math.round(validQuality / 10));
-                console.log('PNG quality adjusted to:', pngQuality);
                 processedImage = await image.png({ quality: pngQuality }).toFile(outputPath);
                 mime = 'image/png';
                 break;
@@ -68,9 +62,6 @@ async function compressImageService(filePath, quality = 80) {
                 processedImage = await image.jpeg({ quality: validQuality }).toFile(outputPath);
                 mime = 'image/jpeg';
         }
-        console.log('Compression complete:');
-        console.log('- Original size:', metadata.size || 'unknown', 'bytes');
-        console.log('- Compressed size:', processedImage.size, 'bytes');
         // Record the job completion
         const processingTime = Date.now() - startTime;
         await (0, jobTrackingService_1.recordJobCompletion)('compress', processingTime, 'completed');
@@ -188,26 +179,17 @@ async function convertImageService(filePath, format) {
 async function cropImageService(filePath, left, top, width, height) {
     const startTime = Date.now();
     try {
-        console.log('Crop request received:');
-        console.log('- File:', filePath);
-        console.log('- Crop area:', `left=${left}, top=${top}, width=${width}, height=${height}`);
         const image = (0, sharp_1.default)(filePath);
         const metadata = await image.metadata();
         if (!metadata.width || !metadata.height) {
             throw new Error('Could not determine image dimensions');
         }
-        console.log('- Image dimensions:', `${metadata.width}x${metadata.height}`);
         // Validate crop parameters
         const validLeft = Math.max(0, Math.min(left, metadata.width - 1));
         const validTop = Math.max(0, Math.min(top, metadata.height - 1));
         let validWidth = Math.max(1, Math.min(width, metadata.width - validLeft));
         let validHeight = Math.max(1, Math.min(height, metadata.height - validTop));
-        // Log if we had to adjust the crop area
-        if (validLeft !== left || validTop !== top || validWidth !== width || validHeight !== height) {
-            console.log('Adjusted crop parameters to fit within image:');
-            console.log(`Original: left=${left}, top=${top}, width=${width}, height=${height}`);
-            console.log(`Adjusted: left=${validLeft}, top=${validTop}, width=${validWidth}, height=${validHeight}`);
-        }
+        // Crop parameters adjusted if needed
         const ext = path_1.default.extname(filePath);
         const outputPath = path_1.default.join(__dirname, '../../uploads/processed', `tool-cropped-${(0, uuid_1.v4)()}${ext}`);
         // Process crop with validated parameters
@@ -219,8 +201,6 @@ async function cropImageService(filePath, left, top, width, height) {
             height: validHeight
         })
             .toFile(outputPath);
-        console.log('Crop completed successfully:');
-        console.log('- Output dimensions:', `${processedImage.width}x${processedImage.height}`);
         // Record the job completion
         const processingTime = Date.now() - startTime;
         await (0, jobTrackingService_1.recordJobCompletion)('crop', processingTime, 'completed');

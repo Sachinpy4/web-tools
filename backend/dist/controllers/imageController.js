@@ -76,7 +76,7 @@ exports.getJobStatus = (0, asyncHandler_1.asyncHandler)(async (req, res, next) =
             }
         }
         catch (error) {
-            console.error('Error calculating queue position:', error);
+            // Silent error handling
         }
     }
     res.status(200).json({
@@ -125,7 +125,6 @@ exports.compressImage = (0, asyncHandler_1.asyncHandler)(async (req, res, next) 
             });
         }
         catch (error) {
-            console.error('Direct compression failed:', error);
             return res.status(500).json({
                 status: 'error',
                 message: 'Image compression failed',
@@ -206,7 +205,6 @@ exports.resizeImage = (0, asyncHandler_1.asyncHandler)(async (req, res, next) =>
             });
         }
         catch (error) {
-            console.error('Direct resize failed:', error);
             return res.status(500).json({
                 status: 'error',
                 message: 'Image resize failed',
@@ -277,7 +275,6 @@ exports.convertImage = (0, asyncHandler_1.asyncHandler)(async (req, res, next) =
             });
         }
         catch (error) {
-            console.error('Direct conversion failed:', error);
             return res.status(500).json({
                 status: 'error',
                 message: 'Image conversion failed',
@@ -357,7 +354,6 @@ exports.cropImage = (0, asyncHandler_1.asyncHandler)(async (req, res, next) => {
             });
         }
         catch (error) {
-            console.error('Direct crop failed:', error);
             return res.status(500).json({
                 status: 'error',
                 message: 'Image crop failed',
@@ -448,7 +444,6 @@ exports.optimizeBlogImage = (0, asyncHandler_1.asyncHandler)(async (req, res, ne
         res.send(processedImageBuffer);
     }
     catch (error) {
-        console.error('Error optimizing blog image:', error);
         res.status(500).json({
             status: 'error',
             message: error.message || 'Error processing image'
@@ -499,7 +494,6 @@ exports.extractMetadata = (0, asyncHandler_1.asyncHandler)(async (req, res, next
             }
         }
         catch (sharpError) {
-            console.warn('Sharp metadata extraction failed (possibly RAW format):', sharpError);
             canProcessImage = false;
         }
         // Extract EXIF data with enhanced HEIC support
@@ -598,7 +592,6 @@ exports.extractMetadata = (0, asyncHandler_1.asyncHandler)(async (req, res, next
             }
         }
         catch (exifError) {
-            console.warn('Failed to extract EXIF data:', exifError);
             // For HEIC files, this is not uncommon due to format complexity
         }
         // Enhanced image analysis with HEIC-specific handling
@@ -633,7 +626,7 @@ exports.extractMetadata = (0, asyncHandler_1.asyncHandler)(async (req, res, next
                     sortedColors = [`rgb(${Math.round(avgR)},${Math.round(avgG)},${Math.round(avgB)})`];
                 }
                 catch (colorError) {
-                    console.warn('HEIC color analysis failed, using defaults:', colorError);
+                    // Use defaults
                 }
             }
             else if (canProcessImage) {
@@ -698,7 +691,6 @@ exports.extractMetadata = (0, asyncHandler_1.asyncHandler)(async (req, res, next
             }
         }
         catch (imageAnalysisError) {
-            console.warn('Image analysis failed, using defaults:', imageAnalysisError);
             // Use default values already set above
         }
         const isPhotographic = colorVariance > 30;
@@ -794,7 +786,6 @@ exports.extractMetadata = (0, asyncHandler_1.asyncHandler)(async (req, res, next
         });
     }
     catch (error) {
-        console.error('Error extracting metadata:', error);
         // Provide more specific error messages based on file type
         let errorMessage = 'Error extracting image metadata';
         if (req.file?.mimetype === 'image/heic' || req.file?.mimetype === 'image/heif') {

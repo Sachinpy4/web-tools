@@ -37,11 +37,9 @@ const app = (0, express_1.default)();
 const port = process.env.PORT || 5000;
 // Define uploads path
 const uploadsPath = path_1.default.join(__dirname, '../uploads');
-console.log('Uploads directory path:', uploadsPath);
 // Set up a domain to catch uncaught errors and prevent server crashes
 const domain = require('domain').create();
 domain.on('error', (err) => {
-    console.error('Uncaught error in domain:', err);
     // Don't crash the server, just log the error
 });
 domain.run(async () => {
@@ -80,13 +78,11 @@ domain.run(async () => {
         app.use('/api/', cacheControl_1.addVersionHeaders);
         // Connect to MongoDB in the background, but don't block server startup
         (0, database_1.connectDB)().catch(err => {
-            console.error('MongoDB connection failed, but server will continue:', err);
             // We're not exiting the process anymore, allowing the server to run
             // even without MongoDB for stateless operations
         });
         // Initialize scheduler system after database connection attempt
         (0, cleanupScheduler_1.initializeSchedulers)().catch(err => {
-            console.error('Scheduler initialization failed:', err);
             // Don't exit - server can run without schedulers
         });
         // Upload endpoint for blog images
@@ -110,7 +106,6 @@ domain.run(async () => {
                 });
             }
             const isBlogImage = req.query.type === 'blog' || (req.body && req.body.type === 'blog');
-            console.log('Blog image uploaded:', req.file.filename, isBlogImage ? '(blog image)' : '');
             // Determine the correct path (blogs directory for blog images)
             const filePath = isBlogImage ?
                 `/uploads/blogs/${req.file.filename}` :
@@ -166,7 +161,6 @@ domain.run(async () => {
                 res.send(html);
             }
             catch (error) {
-                console.error('Error serving frontend:', error);
                 res.status(500).send('Internal Server Error');
             }
         });
@@ -174,23 +168,15 @@ domain.run(async () => {
         app.use(errorHandler_1.errorHandler);
         // Start server
         const server = app.listen(port, () => {
-            console.log(`✨ Server running on http://localhost:${port}`);
-            console.log(`👉 API documentation: http://localhost:${port}/api/docs`);
-            console.log(`🔒 Auth routes: http://localhost:${port}/api/auth`);
-            console.log(`📝 Blog routes: http://localhost:${port}/api/blogs`);
-            console.log(`🖼️ Media routes: http://localhost:${port}/api/media`);
-            console.log(`🔍 Health check: http://localhost:${port}/api/health`);
-            console.log(`⚙️ Admin routes: http://localhost:${port}/api/admin`);
             // Delay printing processing mode until Redis availability is confirmed
             // Allow some time for Redis connection to be established or failed
             setTimeout(async () => {
                 try {
                     // Force a re-check of Redis status before logging
                     const redisStatus = await (0, redis_1.testRedisConnection)();
-                    console.log(`🔄 Processing mode: ${redisStatus ? 'Queued (Redis)' : 'Direct (Local)'}`);
                     // Clean up old jobs at startup if Redis is available
                     if (redisStatus) {
-                        (0, imageQueue_1.cleanOldJobs)().catch(err => console.error('Failed to clean old jobs:', err));
+                        (0, imageQueue_1.cleanOldJobs)().catch(err => { });
                     }
                     // Try to clean up dead letter queue periodically
                     setInterval(async () => {
@@ -205,28 +191,23 @@ domain.run(async () => {
                     }, 10 * 60 * 1000); // Every 10 minutes
                 }
                 catch (err) {
-                    console.error('Error during Redis status check:', err);
+                    // Silent fail
                 }
             }, 3000); // 3 second delay to allow Redis connection to stabilize
         });
         // Graceful shutdown handling
         process.on('SIGTERM', () => {
-            console.log('SIGTERM received, shutting down gracefully');
             server.close(() => {
-                console.log('Process terminated');
                 process.exit(0);
             });
         });
         process.on('SIGINT', () => {
-            console.log('SIGINT received, shutting down gracefully');
             server.close(() => {
-                console.log('Process terminated');
                 process.exit(0);
             });
         });
     }
     catch (error) {
-        console.error('Error during server startup:', error);
         process.exit(1);
     }
 });

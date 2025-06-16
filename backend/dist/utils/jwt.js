@@ -33,7 +33,6 @@ function verifyToken(token) {
         return decoded;
     }
     catch (error) {
-        console.log('JWT verification failed:', error);
         return null;
     }
 }

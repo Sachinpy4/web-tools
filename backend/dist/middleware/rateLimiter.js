@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createBatchOperationLimiter = exports.createImageProcessingLimiter = exports.lightApiLimiter = exports.apiLimiter = exports.batchOperationLimiter = exports.imageProcessingLimiter = void 0;
+exports.createBatchOperationLimiter = exports.createImageProcessingLimiter = exports.lightApiLimiter = exports.apiLimiter = exports.batchOperationLimiter = exports.imageProcessingLimiter = exports.suspiciousActivityDetection = exports.clearLoginAttempts = exports.trackFailedLogin = exports.bruteForcePrevention = exports.loginSecurityLimiter = void 0;
 exports.clearRateLimitCache = clearRateLimitCache;
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const settingsService_1 = require("../services/settingsService");
@@ -11,6 +11,127 @@ const settingsService_1 = require("../services/settingsService");
 let rateLimitCache = null;
 let lastRateLimitUpdate = 0;
 const RATE_LIMIT_CACHE_DURATION = 60000; // 1 minute
+// Login attempt tracking for enhanced security
+const loginAttempts = new Map();
+const FAILED_LOGIN_LIMIT = 3; // Max failed attempts
+const BLOCK_DURATION = 15 * 60 * 1000; // 15 minutes block
+const ATTEMPT_WINDOW = 5 * 60 * 1000; // 5 minutes window
+/**
+ * Enhanced login security middleware with brute force protection
+ */
+exports.loginSecurityLimiter = (0, express_rate_limit_1.default)({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 3, // Only 3 login attempts per 15 minutes per IP
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true, // Don't count successful logins
+    message: {
+        status: 'error',
+        message: 'Too many login attempts. Please try again in 15 minutes.',
+        code: 'LOGIN_RATE_LIMIT_EXCEEDED',
+        retryAfter: 900 // 15 minutes in seconds
+    },
+    keyGenerator: (req) => {
+        return req.ip || req.connection.remoteAddress || 'unknown';
+    },
+    handler: (req, res) => {
+        res.status(429).json({
+            status: 'error',
+            message: 'Too many login attempts. Please try again in 15 minutes.',
+            code: 'LOGIN_RATE_LIMIT_EXCEEDED',
+            retryAfter: 900
+        });
+    }
+});
+/**
+ * Advanced brute force protection middleware
+ */
+const bruteForcePrevention = (req, res, next) => {
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    // Get or create attempt record for this IP
+    let attempts = loginAttempts.get(ip) || { count: 0, lastAttempt: 0, blocked: false };
+    // Check if IP is currently blocked
+    if (attempts.blocked && attempts.blockUntil && now < attempts.blockUntil) {
+        const remainingTime = Math.ceil((attempts.blockUntil - now) / 1000 / 60);
+        return res.status(423).json({
+            status: 'error',
+            message: `Account temporarily locked due to multiple failed login attempts. Try again in ${remainingTime} minutes.`,
+            code: 'ACCOUNT_TEMPORARILY_LOCKED',
+            retryAfter: Math.ceil((attempts.blockUntil - now) / 1000)
+        });
+    }
+    // Reset block if time has passed
+    if (attempts.blocked && attempts.blockUntil && now >= attempts.blockUntil) {
+        attempts = { count: 0, lastAttempt: 0, blocked: false };
+        loginAttempts.set(ip, attempts);
+    }
+    // Reset count if outside attempt window
+    if (now - attempts.lastAttempt > ATTEMPT_WINDOW) {
+        attempts.count = 0;
+    }
+    // Store the middleware check result for later use
+    req.loginSecurity = {
+        ip,
+        currentAttempts: attempts.count,
+        isBlocked: attempts.blocked
+    };
+    next();
+};
+exports.bruteForcePrevention = bruteForcePrevention;
+/**
+ * Track failed login attempts
+ */
+const trackFailedLogin = (req) => {
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    let attempts = loginAttempts.get(ip) || { count: 0, lastAttempt: 0, blocked: false };
+    attempts.count += 1;
+    attempts.lastAttempt = now;
+    // Block IP if too many failed attempts
+    if (attempts.count >= FAILED_LOGIN_LIMIT) {
+        attempts.blocked = true;
+        attempts.blockUntil = now + BLOCK_DURATION;
+    }
+    loginAttempts.set(ip, attempts);
+};
+exports.trackFailedLogin = trackFailedLogin;
+/**
+ * Clear successful login attempts
+ */
+const clearLoginAttempts = (req) => {
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    loginAttempts.delete(ip);
+};
+exports.clearLoginAttempts = clearLoginAttempts;
+/**
+ * Suspicious activity detection middleware
+ */
+const suspiciousActivityDetection = (req, res, next) => {
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const userAgent = req.get('User-Agent') || 'unknown';
+    const { email } = req.body;
+    // Check for suspicious patterns
+    const suspiciousPatterns = [
+        /bot|crawler|spider|scraper/i,
+        /curl|wget|python|postman/i,
+        /automated|script|tool/i
+    ];
+    const isSuspicious = suspiciousPatterns.some(pattern => pattern.test(userAgent));
+    if (isSuspicious) {
+        // Add extra delay for suspicious requests
+        setTimeout(() => {
+            res.status(429).json({
+                status: 'error',
+                message: 'Request blocked due to suspicious activity.',
+                code: 'SUSPICIOUS_ACTIVITY_DETECTED'
+            });
+        }, 3000); // 3 second delay
+        return;
+    }
+    next();
+};
+exports.suspiciousActivityDetection = suspiciousActivityDetection;
 /**
  * Get rate limit configuration with caching
  */
@@ -46,7 +167,6 @@ async function getRateLimitConfig() {
         return rateLimitCache;
     }
     catch (error) {
-        console.error('Failed to get rate limit settings, using defaults:', error);
         // Fallback configuration
         return {
             imageProcessing: {
@@ -91,7 +211,6 @@ function getOrCreateRateLimiter(key, config) {
                 return req.ip || req.connection.remoteAddress || 'unknown';
             },
             handler: (req, res) => {
-                console.log(`Rate limit hit for ${key}: ${req.ip}`);
                 res.status(429).json(config.message);
             }
         });
@@ -114,7 +233,6 @@ const imageProcessingLimiter = async (req, res, next) => {
         limiter(req, res, next);
     }
     catch (error) {
-        console.error('Error in image processing rate limiter:', error);
         next(); // Continue without rate limiting on error
     }
 };
@@ -129,7 +247,6 @@ const batchOperationLimiter = async (req, res, next) => {
         limiter(req, res, next);
     }
     catch (error) {
-        console.error('Error in batch operation rate limiter:', error);
         next(); // Continue without rate limiting on error
     }
 };
@@ -141,7 +258,6 @@ function clearRateLimitCache() {
     rateLimitCache = null;
     lastRateLimitUpdate = 0;
     rateLimiters.clear(); // Clear all cached limiters to force recreation
-    console.log('Rate limit cache cleared - new settings will be applied');
 }
 /**
  * General API rate limiter - static for overall API protection

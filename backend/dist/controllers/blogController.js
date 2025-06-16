@@ -32,12 +32,6 @@ exports.getBlogs = (0, asyncHandler_1.asyncHandler)(async (req, res, next) => {
     const skip = (page - 1) * limit;
     // Build query
     let query = {};
-    console.log('Get blogs request:', {
-        auth: req.headers.authorization ? 'Present' : 'Missing',
-        user: req.user ? `${req.user.email} (${req.user.role})` : 'Not authenticated',
-        query: req.query,
-        pagination: { page, limit, skip }
-    });
     // Filter by status if provided (Admin can see all, public only published)
     if (req.query.status) {
         if (req.user?.role === 'admin') {
@@ -85,7 +79,6 @@ exports.getBlogs = (0, asyncHandler_1.asyncHandler)(async (req, res, next) => {
             query.date.$lte = new Date(req.query.endDate);
         }
     }
-    console.log('Final query:', query);
     // Count total items for pagination
     const total = await Blog_1.default.countDocuments(query);
     // Handle scheduled posts - check if any scheduled posts should now be published
@@ -97,10 +90,9 @@ exports.getBlogs = (0, asyncHandler_1.asyncHandler)(async (req, res, next) => {
         }, {
             $set: { status: 'published' }
         });
-        console.log('Checked for scheduled posts ready to publish');
     }
     catch (error) {
-        console.error('Error publishing scheduled posts:', error);
+        // Silent error handling
     }
     // Execute query with pagination
     const blogs = await Blog_1.default.find(query)
@@ -108,7 +100,6 @@ exports.getBlogs = (0, asyncHandler_1.asyncHandler)(async (req, res, next) => {
         .sort({ date: -1 })
         .skip(skip)
         .limit(limit);
-    console.log(`Found ${blogs.length} blogs for request (page ${page}, total: ${total})`);
     res.status(200).json({
         status: 'success',
         total,
@@ -125,23 +116,17 @@ exports.getBlogs = (0, asyncHandler_1.asyncHandler)(async (req, res, next) => {
  */
 exports.getBlog = (0, asyncHandler_1.asyncHandler)(async (req, res, next) => {
     const blogId = req.params.id;
-    console.log(`Getting blog post with ID: ${blogId}`);
-    console.log('Authorization header:', req.headers.authorization ? 'Present' : 'Missing');
-    console.log('User authentication:', req.user ? `Authenticated as ${req.user.email}` : 'Not authenticated');
     const blog = await Blog_1.default.findById(blogId)
         .populate('author', 'name email');
     if (!blog) {
-        console.log(`Blog post with ID ${blogId} not found`);
         return res.status(404).json({
             status: 'error',
             message: 'Blog post not found'
         });
     }
-    console.log(`Found blog: ${blog.title}, status: ${blog.status}`);
     // Check if blog is published or user is admin
     // If blog is draft, req.user must exist and be admin
     if (blog.status !== 'published' && (!req.user || req.user.role !== 'admin')) {
-        console.log(`Access denied - Blog is in ${blog.status} status and user is not admin`);
         return res.status(403).json({
             status: 'error',
             message: 'Not authorized to view this blog post'
@@ -173,9 +158,7 @@ exports.getBlog = (0, asyncHandler_1.asyncHandler)(async (req, res, next) => {
             blog.uniqueVisitors = blog.visitorIPs.length;
         }
         await blog.save();
-        console.log(`Incremented view count to ${blog.views}`);
     }
-    console.log(`Returning blog post data for: ${blog.title}`);
     res.status(200).json({
         status: 'success',
         data: blog
@@ -308,22 +291,18 @@ exports.getBlogAnalytics = (0, asyncHandler_1.asyncHandler)(async (req, res, nex
  */
 exports.getBlogBySlug = (0, asyncHandler_1.asyncHandler)(async (req, res, next) => {
     const slug = req.params.slug;
-    console.log(`Getting blog post with slug: ${slug}`);
     // Find the blog post by slug
     const blog = await Blog_1.default.findOne({ slug })
         .populate('author', 'name email');
     if (!blog) {
-        console.log(`Blog post with slug ${slug} not found`);
         return res.status(404).json({
             status: 'error',
             message: 'Blog post not found'
         });
     }
-    console.log(`Found blog: ${blog.title}, status: ${blog.status}`);
     // Check if blog is published or user is admin
     // If blog is draft, req.user must exist and be admin
     if (blog.status !== 'published' && (!req.user || req.user.role !== 'admin')) {
-        console.log(`Access denied - Blog is in ${blog.status} status and user is not admin`);
         return res.status(403).json({
             status: 'error',
             message: 'Not authorized to view this blog post'
@@ -354,9 +333,7 @@ exports.getBlogBySlug = (0, asyncHandler_1.asyncHandler)(async (req, res, next) 
             blog.uniqueVisitors = blog.visitorIPs.length;
         }
         await blog.save();
-        console.log(`Incremented view count to ${blog.views}`);
     }
-    console.log(`Returning blog post data for: ${blog.title}`);
     res.status(200).json({
         status: 'success',
         data: blog

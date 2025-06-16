@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const authController_1 = require("../controllers/authController");
 const authMiddleware_1 = require("../middleware/authMiddleware");
+const rateLimiter_1 = require("../middleware/rateLimiter");
 const router = (0, express_1.Router)();
 /**
  * @route POST /api/auth/register
@@ -11,9 +12,13 @@ const router = (0, express_1.Router)();
 router.post('/register', authController_1.register);
 /**
  * @route POST /api/auth/login
- * @desc Login a user
+ * @desc Login a user with enhanced security
  */
-router.post('/login', authController_1.login);
+router.post('/login', rateLimiter_1.loginSecurityLimiter, // Rate limiting (10 attempts per 15 min)
+rateLimiter_1.bruteForcePrevention, // IP-based brute force protection
+rateLimiter_1.suspiciousActivityDetection, // Detect suspicious user agents
+authController_1.login // Actual login logic
+);
 /**
  * @route GET /api/auth/me
  * @desc Get current user profile
