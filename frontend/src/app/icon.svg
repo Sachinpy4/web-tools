@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="32" height="32" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <!-- Gradient for the circular background - Teal to Purple to Royal Blue -->
     <linearGradient id="candyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -17,31 +17,45 @@
     <!-- Candy stripes gradient -->
     <linearGradient id="candyStripes" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#FF6B9D"/>
-      <stop offset="25%" stop-color="#FBBF24"/>
-      <stop offset="50%" stop-color="#34D399"/>
-      <stop offset="75%" stop-color="#60A5FA"/>
-      <stop offset="100%" stop-color="#A78BFA"/>
+      <stop offset="20%" stop-color="#FBBF24"/>
+      <stop offset="40%" stop-color="#34D399"/>
+      <stop offset="60%" stop-color="#60A5FA"/>
+      <stop offset="80%" stop-color="#A78BFA"/>
+      <stop offset="100%" stop-color="#FF6B9D"/>
+    </linearGradient>
+    
+    <!-- Candy stick gradient -->
+    <linearGradient id="stickGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
     </linearGradient>
   </defs>
   
-  <!-- Main circular candy icon -->
-  <circle cx="16" cy="16" r="14" fill="url(#candyGradient)" stroke="rgba(156,163,175,0.3)" stroke-width="1"/>
+  <!-- Main circular candy icon (exact copy from main logo) -->
+  <circle cx="30" cy="30" r="20" fill="url(#candyGradient)" stroke="rgba(156,163,175,0.3)" stroke-width="1" filter="drop-shadow(0 4px 8px rgba(0,0,0,0.2))"/>
   
-  <!-- Shine effect -->
-  <ellipse cx="12" cy="12" rx="8" ry="10" fill="url(#shineGradient)" opacity="0.6"/>
+  <!-- Shine effect on the circle -->
+  <ellipse cx="25" cy="25" rx="12" ry="15" fill="url(#shineGradient)" opacity="0.6"/>
   
-  <!-- Candy Icon (lollipop style) -->
-  <g transform="translate(16,16)">
-    <!-- Candy circle -->
-    <circle r="6" fill="white"/>
+  <!-- Candy Icon (detailed lollipop) -->
+  <g transform="translate(30,30)">
+    <!-- Candy base circle -->
+    <circle r="8" fill="white"/>
     <!-- Colorful candy stripes -->
-    <circle r="5.5" fill="url(#candyStripes)" opacity="0.8"/>
-    <!-- Candy swirl pattern -->
-    <path d="M-4,-2 Q0,0 4,2 Q0,4 -4,6" stroke="white" stroke-width="1.5" fill="none" opacity="0.9"/>
-    <path d="M-2,-4 Q0,-2 2,0 Q0,2 -2,4" stroke="white" stroke-width="1.5" fill="none" opacity="0.9"/>
+    <circle r="7.5" fill="url(#candyStripes)" opacity="0.9"/>
+    <!-- Candy swirl patterns -->
+    <path d="M-6,-3 Q-2,0 2,3 Q6,6 6,6" stroke="white" stroke-width="2" fill="none" opacity="0.9" stroke-linecap="round"/>
+    <path d="M-6,3 Q-2,0 2,-3 Q6,-6 6,-6" stroke="white" stroke-width="2" fill="none" opacity="0.9" stroke-linecap="round"/>
+    <path d="M-3,-6 Q0,-2 3,2 Q6,6 6,6" stroke="white" stroke-width="1.5" fill="none" opacity="0.8" stroke-linecap="round"/>
+    <path d="M3,-6 Q0,-2 -3,2 Q-6,6 -6,6" stroke="white" stroke-width="1.5" fill="none" opacity="0.8" stroke-linecap="round"/>
     <!-- Center highlight -->
-    <circle r="1.5" fill="white" opacity="0.8"/>
-    <!-- Candy stick (small) -->
-    <rect x="-0.5" y="5" width="1" height="3" fill="#D97706" rx="0.5"/>
+    <circle r="2" fill="white" opacity="0.9"/>
+    <!-- Small sparkles -->
+    <circle cx="-4" cy="-4" r="0.8" fill="white" opacity="0.8"/>
+    <circle cx="4" cy="4" r="0.8" fill="white" opacity="0.8"/>
+    <!-- Candy stick -->
+    <rect x="-1" y="7" width="2" height="8" fill="url(#stickGradient)" rx="1"/>
+    <!-- Stick highlight -->
+    <rect x="-0.5" y="7" width="1" height="8" fill="rgba(255,255,255,0.3)" rx="0.5"/>
   </g>
 </svg> 
