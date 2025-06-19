@@ -173,7 +173,7 @@ export class SettingsCacheService implements OnModuleInit {
       return false;
     }
 
-    const cacheMaxAge = this.configService.get<number>('cache.settingsMaxAge') || 300000; // 5 minutes default
+    const cacheMaxAge = this.configService.get<number>('cache.settingsMaxAge') || 60000; // 1 minute default (optimized)
     const age = Date.now() - this.lastCacheUpdate.getTime();
     
     return age < cacheMaxAge;

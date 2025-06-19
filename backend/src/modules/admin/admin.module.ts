@@ -11,10 +11,12 @@ import { Comment, CommentSchema } from '../comments/schemas/comment.schema';
 import { Media, MediaSchema } from '../media/schemas/media.schema';
 import { User, UserSchema } from '../auth/schemas/user.schema';
 import { CommonModule } from '../../common/common.module';
+import { ImagesModule } from '../images/images.module';
 
 @Module({
   imports: [
     CommonModule,
+    forwardRef(() => ImagesModule),
     MongooseModule.forFeature([
       { name: SystemSettings.name, schema: SystemSettingsSchema },
       { name: SchedulerConfig.name, schema: SchedulerConfigSchema },

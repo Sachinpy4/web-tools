@@ -131,13 +131,13 @@ class ImageWorker {
             try {
               this.logger.log(`Processing compress job ${job.id}: ${originalFilename}`);
               
-              // Update progress (BullMQ style)
-              await job.updateProgress(10);
+              // Update progress (BullMQ style) - more granular updates
+              await job.updateProgress(15);
               
-              // Process image
+              // Process image with intermediate progress updates
               const result = await this.imageService.compressImage(filePath, quality, originalFilename);
               
-              await job.updateProgress(90);
+              await job.updateProgress(95);
               
               // Prepare response
               const response = {
@@ -967,18 +967,34 @@ class ImageWorker {
     });
   }
 
+  // Cache worker concurrency to avoid repeated DB calls during worker creation
+  private cachedWorkerConcurrency: number | null = null;
+  private concurrencyCacheExpiry: number = 0;
+  private readonly CONCURRENCY_CACHE_TTL = 60000; // 1 minute
+
   /**
-   * Get worker concurrency setting from system settings
+   * Get worker concurrency setting from system settings (optimized with cache)
    */
   private async getWorkerConcurrency(): Promise<number> {
+    const now = Date.now();
+    
+    // Use cached concurrency if still valid
+    if (this.cachedWorkerConcurrency !== null && now < this.concurrencyCacheExpiry) {
+      return this.cachedWorkerConcurrency;
+    }
+
     try {
       const settings = await this.settingsCacheService.getSettings();
-      const concurrency = settings.workerConcurrency || 25;
-      this.logger.log(`Using worker concurrency: ${concurrency}`);
-      return concurrency;
+      this.cachedWorkerConcurrency = settings.workerConcurrency || 25;
+      this.concurrencyCacheExpiry = now + this.CONCURRENCY_CACHE_TTL;
+      
+      this.logger.log(`Using worker concurrency: ${this.cachedWorkerConcurrency}`);
+      return this.cachedWorkerConcurrency;
     } catch (error) {
       this.logger.warn('Failed to get worker concurrency from settings, using default:', error);
-      return 25; // Default concurrency
+      this.cachedWorkerConcurrency = 25; // Default concurrency
+      this.concurrencyCacheExpiry = now + this.CONCURRENCY_CACHE_TTL;
+      return this.cachedWorkerConcurrency;
     }
   }
 }

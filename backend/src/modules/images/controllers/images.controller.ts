@@ -103,11 +103,8 @@ export class ImagesController {
       // Validate file (same as original)
       await this.imageService.validateImageFile(file);
 
-      // Check if Redis is available for queue processing
-      const queueStats = await this.queueService.getQueueStats();
-      console.log('🔍 QUEUE STATS:', queueStats);
-      
-      const isRedisAvailable = queueStats.redis;
+      // Quick Redis availability check without full stats (optimization)
+      const isRedisAvailable = this.queueService.isRedisQuickAvailable();
       console.log('🔍 REDIS AVAILABLE:', isRedisAvailable);
 
       // If Redis is not available, process image directly (same as original backend)

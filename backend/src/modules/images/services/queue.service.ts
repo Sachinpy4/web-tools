@@ -712,32 +712,75 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     return this.batchQueue;
   }
 
+  // Quick Redis availability check without expensive operations (optimization)
+  isRedisQuickAvailable(): boolean {
+    return this.redisStatusService.isRedisAvailable;
+  }
+
+  // Cache for dynamic queue options to avoid repeated DB calls
+  private cachedQueueOptions: any = null;
+  private queueOptionsCacheExpiry: number = 0;
+  private readonly QUEUE_CACHE_TTL = 30000; // 30 seconds
+
   /**
-   * Get dynamic queue options from system settings
+   * Get dynamic queue options from system settings (optimized with local cache)
    */
   private async getDynamicQueueOptions(customOptions?: QueueOptions): Promise<any> {
+    const now = Date.now();
+    
+    // Use cached options if still valid (30-second cache for high performance)
+    if (this.cachedQueueOptions && now < this.queueOptionsCacheExpiry) {
+      return {
+        ...this.cachedQueueOptions,
+        ...customOptions // Custom options override cached ones
+      };
+    }
+
     try {
       const settings = await this.settingsCacheService.getSettings();
       
-      return {
-        attempts: customOptions?.attempts || settings.jobRetryAttempts || 3,
-        backoff: customOptions?.backoff || { type: 'exponential', delay: 2000 },
-        removeOnComplete: customOptions?.removeOnComplete || 10,
-        removeOnFail: customOptions?.removeOnFail || 5,
-        delay: customOptions?.delay || 0,
-        // Add job timeout from settings
+      this.cachedQueueOptions = {
+        attempts: settings.jobRetryAttempts || 3,
+        backoff: { type: 'exponential', delay: 2000 },
+        removeOnComplete: 10,
+        removeOnFail: 5,
+        delay: 0,
         timeout: settings.jobTimeoutMs || 180000, // 3 minutes default
+      };
+      
+      this.queueOptionsCacheExpiry = now + this.QUEUE_CACHE_TTL;
+      
+      return {
+        ...this.cachedQueueOptions,
+        ...customOptions // Custom options override cached ones
       };
     } catch (error) {
       this.logger.warn('Failed to get dynamic queue options, using defaults:', error);
+      
+      // Cache fallback options too
+      this.cachedQueueOptions = {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 2000 },
+        removeOnComplete: 10,
+        removeOnFail: 5,
+        delay: 0,
+        timeout: 180000,
+      };
+      
+      this.queueOptionsCacheExpiry = now + this.QUEUE_CACHE_TTL;
+      
       return {
-        attempts: customOptions?.attempts || 3,
-        backoff: customOptions?.backoff || { type: 'exponential', delay: 2000 },
-        removeOnComplete: customOptions?.removeOnComplete || 10,
-        removeOnFail: customOptions?.removeOnFail || 5,
-        delay: customOptions?.delay || 0,
-        timeout: 180000, // 3 minutes default
+        ...this.cachedQueueOptions,
+        ...customOptions
       };
     }
+  }
+
+  /**
+   * Clear queue options cache when settings change
+   */
+  clearQueueOptionsCache(): void {
+    this.cachedQueueOptions = null;
+    this.queueOptionsCacheExpiry = 0;
   }
 } 

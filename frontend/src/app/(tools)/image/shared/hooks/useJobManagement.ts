@@ -93,7 +93,11 @@ export const useJobManagement = ({
     setFileJobMapping(prev => ({ ...prev, [fileIndex]: jobId }));
     setJobProgress(prev => ({ ...prev, [jobId]: 0 }));
     
-    const pollInterval = setInterval(async () => {
+    // Use adaptive polling: faster initially, slower as job progresses
+    let pollDelay = 500; // Start with 500ms
+    const maxPollDelay = 2000; // Max 2 seconds
+    
+    const adaptivePoll = async () => {
       try {
         console.log('🔍 FRONTEND - Polling job status:', jobId);
         
@@ -161,9 +165,9 @@ export const useJobManagement = ({
           
           if (state === 'completed' && result) {
             console.log('✅ FRONTEND - Job completed:', { jobId, result });
-            console.log('🛑 FRONTEND - Clearing polling interval for job:', jobId);
+            console.log('🛑 FRONTEND - Stopping polling for job:', jobId);
             
-            clearInterval(pollInterval);
+            // No need to clear interval in adaptive polling
             
             const resultObj = resultProcessor(result, file);
             console.log('🎯 FRONTEND - Processed result:', resultObj);
@@ -202,9 +206,9 @@ export const useJobManagement = ({
             
           } else if (state === 'failed') {
             console.error('❌ FRONTEND - Job failed:', { jobId, error });
-            console.log('🛑 FRONTEND - Clearing polling interval for failed job:', jobId);
+            console.log('🛑 FRONTEND - Stopping polling for failed job:', jobId);
             
-            clearInterval(pollInterval);
+            // No need to clear interval in adaptive polling
             
             toast({
               title: `${toolType.charAt(0).toUpperCase() + toolType.slice(1)} failed`,
@@ -215,12 +219,13 @@ export const useJobManagement = ({
             // Clean up job state
             cleanupJobState(jobId, fileIndex);
             return; // Exit early to prevent further polling
+          } else {
+            // Job is still processing, increase poll delay gradually
+            pollDelay = Math.min(pollDelay * 1.2, maxPollDelay);
           }
         }
       } catch (error) {
         console.error('❌ FRONTEND - Job polling error:', { jobId, error });
-        
-        clearInterval(pollInterval);
         
         toast({
           title: "Processing failed",
@@ -230,8 +235,15 @@ export const useJobManagement = ({
         
         // Clean up job state
         cleanupJobState(jobId, fileIndex);
+        return; // Stop polling on error
       }
-    }, 2000);
+      
+      // Schedule next poll with adaptive delay
+      setTimeout(adaptivePoll, pollDelay);
+    };
+    
+    // Start adaptive polling
+    adaptivePoll();
   }, [setJobIds, setFileJobMapping, setVisualProgress, setJobProgress, setQueueStatus, setResults, setProcessingFiles, toast, cleanupJobState]);
 
   const clearAllJobs = useCallback(() => {

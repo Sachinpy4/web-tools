@@ -4,6 +4,7 @@ import { Model, Connection } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { CleanupService } from './cleanup.service';
 import { SettingsCacheService } from '../../../common/services/settings-cache.service';
+import { QueueService } from '../../images/services/queue.service';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
@@ -38,6 +39,7 @@ export class AdminService {
     private configService: ConfigService,
     private cleanupService: CleanupService,
     private settingsCacheService: SettingsCacheService,
+    @Inject(forwardRef(() => QueueService)) private queueService: QueueService,
   ) {}
 
   // Setter for scheduler service to avoid circular dependency
@@ -73,6 +75,11 @@ export class AdminService {
       
       // Invalidate settings cache to force refresh
       await this.settingsCacheService.invalidateCache();
+      
+      // Clear queue options cache for immediate effect
+      this.queueService.clearQueueOptionsCache();
+      
+      this.logger.log('All caches invalidated for immediate settings effect');
       
       this.logger.log('System settings updated by admin:', {
         updates: updateSystemSettingsDto,

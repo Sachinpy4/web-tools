@@ -23,7 +23,7 @@ export class RedisStatusService extends EventEmitter implements OnModuleInit, On
   
   // Health check interval
   private healthCheckInterval: NodeJS.Timeout;
-  private readonly REDIS_CHECK_INTERVAL = 5000; // Check every 5 seconds (same as original)
+  private readonly REDIS_CHECK_INTERVAL = 3000; // Check every 3 seconds (optimized for faster detection)
 
   constructor(private readonly configService: ConfigService) {
     super();
