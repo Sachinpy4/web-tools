@@ -5,6 +5,59 @@ function getBackendUrl() {
   return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 }
 
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ path: string[] }> }
+) {
+  try {
+    // Await the params since they're now wrapped in a Promise in Next.js 15
+    const resolvedParams = await params
+    const apiPath = resolvedParams.path.join('/')
+    
+    // Only handle archive endpoint
+    if (apiPath !== 'archive') {
+      return new NextResponse('Not Found', { status: 404 })
+    }
+    
+    // Get the request body
+    const body = await request.json()
+    
+    // Forward to backend
+    const backendUrl = getBackendUrl()
+    const backendApiUrl = `${backendUrl}/images/archive`
+    
+    console.log(`[Archive API] Forwarding POST to: ${backendApiUrl}`)
+    
+    const response = await fetch(backendApiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'NextJS-API-Proxy/1.0',
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30000), // 30 second timeout for archive creation
+    })
+    
+    if (!response.ok) {
+      console.error(`[Archive API] Backend returned ${response.status}`)
+      const errorText = await response.text()
+      return new NextResponse(errorText || 'Archive creation failed', { status: response.status })
+    }
+    
+    const result = await response.json()
+    
+    return NextResponse.json(result)
+  } catch (error) {
+    console.error(`[Archive API] Error:`, error)
+    
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      return new NextResponse('Archive creation timeout', { status: 504 })
+    }
+    
+    return new NextResponse('Internal server error', { status: 500 })
+  }
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }

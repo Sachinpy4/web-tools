@@ -49,25 +49,25 @@ export class SettingsCacheService implements OnModuleInit {
   private lastCacheUpdate: Date | null = null;
   private cacheUpdateInProgress = false;
 
-  // Default settings fallback
+  // Default settings fallback (optimized for 10K+ traffic)
   private readonly defaultSettings: Partial<CachedSettings> = {
     apiMaxRequests: 1000,
     apiWindowMs: 900000, // 15 minutes
-    imageProcessingMaxRequests: 50,
+    imageProcessingMaxRequests: 100, // Increased for 10K+ daily requests
     imageProcessingWindowMs: 300000, // 5 minutes
-    batchOperationMaxRequests: 15,
+    batchOperationMaxRequests: 25, // Increased for higher traffic
     batchOperationWindowMs: 600000, // 10 minutes
-    workerConcurrency: 25,
+    workerConcurrency: 30, // Increased for 10K+ traffic handling
     maxLoadThreshold: 0.9,
-    maxMemoryUsagePercent: 90,
+    maxMemoryUsagePercent: 85, // More conservative for high traffic
     degradationCooldownMs: 15000,
     maxFileSize: 52428800, // 50MB
     maxFiles: 10,
-    processedFileRetentionHours: 48,
+    processedFileRetentionHours: 24, // Reduced for high traffic storage management
     archiveFileRetentionHours: 24,
     tempFileRetentionHours: 2,
     autoCleanupEnabled: true,
-    cleanupIntervalHours: 6,
+    cleanupIntervalHours: 3, // More frequent for high traffic
     nodeMemoryLimit: 4096,
     jobTimeoutMs: 180000,
     jobRetryAttempts: 3,

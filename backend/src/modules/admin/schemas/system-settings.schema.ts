@@ -11,7 +11,7 @@ export class SystemSettings {
   // Worker & Processing Settings
   @Prop({
     type: Number,
-    default: 25,
+    default: 30, // Increased for 10K+ traffic handling
     min: [1, 'Worker concurrency must be at least 1'],
     max: [100, 'Worker concurrency cannot exceed 100']
   })
@@ -27,7 +27,7 @@ export class SystemSettings {
 
   @Prop({
     type: Number,
-    default: 90,
+    default: 85, // More conservative for high traffic
     min: [50, 'Memory usage threshold must be at least 50%'],
     max: [99, 'Memory usage threshold cannot exceed 99%']
   })
@@ -44,7 +44,7 @@ export class SystemSettings {
   // Rate Limiting Settings
   @Prop({
     type: Number,
-    default: 50,
+    default: 100, // Increased for 10K+ daily requests
     min: [1, 'Must allow at least 1 request'],
     max: [1000, 'Cannot exceed 1000 requests per window']
   })
@@ -60,7 +60,7 @@ export class SystemSettings {
 
   @Prop({
     type: Number,
-    default: 15,
+    default: 25, // Increased for higher traffic
     min: [1, 'Must allow at least 1 batch operation'],
     max: [100, 'Cannot exceed 100 batch operations per window']
   })
@@ -110,7 +110,7 @@ export class SystemSettings {
   // Cleanup Settings
   @Prop({
     type: Number,
-    default: 48, // 2 days
+    default: 24, // 1 day (reduced for high traffic storage management)
     min: [1, 'Must retain files for at least 1 hour'],
     max: [720, 'Cannot retain files for more than 30 days']
   })
@@ -140,7 +140,7 @@ export class SystemSettings {
 
   @Prop({
     type: Number,
-    default: 6, // Every 6 hours
+    default: 3, // Every 3 hours (more frequent for high traffic)
     min: [1, 'Cleanup interval must be at least 1 hour'],
     max: [72, 'Cleanup interval cannot exceed 72 hours']
   })

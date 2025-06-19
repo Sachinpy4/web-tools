@@ -22,6 +22,7 @@ import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import * as fs from 'fs';
+import archiver from 'archiver';
 import { ImageService } from '../services/image.service';
 import { QueueService } from '../services/queue.service';
 import { DynamicThrottlerGuard } from '../../../common/guards/dynamic-throttler.guard';
@@ -564,6 +565,98 @@ export class ImagesController {
     } catch (error) {
       console.error('❌ BACKEND - Get job status failed:', { jobId, error: error.message });
       this.logger.error(`Get job status failed for ${jobId}:`, error);
+      throw error;
+    }
+  }
+
+  // CREATE ARCHIVE - Archive multiple processed files into a ZIP
+  @Post('archive')
+  @ApiOperation({ summary: 'Create archive of processed files' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Archive created successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'string', example: 'success' },
+        data: {
+          type: 'object',
+          properties: {
+            downloadUrl: { type: 'string', example: '/api/images/download/archive-12345.zip' }
+          }
+        }
+      }
+    }
+  })
+  async createArchive(
+    @Body() body: { files: Array<{ filename: string; originalName: string }> }
+  ) {
+    try {
+      if (!body.files || body.files.length === 0) {
+        throw new BadRequestException('No files specified for archive');
+      }
+
+      this.logger.log(`Creating archive for ${body.files.length} files`);
+
+      const uploadDir = process.env.UPLOAD_DIR || 'uploads';
+      const processedDir = path.join(uploadDir, 'processed');
+      const archiveDir = path.join(uploadDir, 'archives');
+      
+      // Ensure archive directory exists
+      if (!fs.existsSync(archiveDir)) {
+        fs.mkdirSync(archiveDir, { recursive: true });
+      }
+
+      // Generate unique archive filename
+      const archiveId = uuidv4();
+      const archiveFilename = `tool-archive-${archiveId}.zip`;
+      const archivePath = path.join(archiveDir, archiveFilename);
+
+      // Create archive
+      const archive = archiver('zip', { zlib: { level: 9 } });
+      const output = fs.createWriteStream(archivePath);
+      
+      archive.pipe(output);
+
+      // Add files to archive
+      let addedFiles = 0;
+      for (const fileInfo of body.files) {
+        // Extract just the filename from the path (in case full path is provided)
+        const actualFilename = path.basename(fileInfo.filename);
+        const filePath = path.join(processedDir, actualFilename);
+        
+                if (fs.existsSync(filePath)) {
+          // Use original name if provided, otherwise use filename
+          const nameInArchive = fileInfo.originalName || fileInfo.filename;
+          archive.file(filePath, { name: nameInArchive });
+          addedFiles++;
+        } else {
+          this.logger.warn(`File not found for archive: ${actualFilename}`);
+        }
+      }
+
+      if (addedFiles === 0) {
+        throw new BadRequestException('No valid files found for archive');
+      }
+
+      await archive.finalize();
+
+      // Wait for archive to complete
+      await new Promise<void>((resolve, reject) => {
+        output.on('close', () => resolve());
+        output.on('error', reject);
+      });
+
+      this.logger.log(`Archive created: ${archiveFilename} with ${addedFiles} files`);
+
+      return {
+        status: 'success',
+        data: {
+          downloadUrl: `/api/images/download/${archiveFilename}`
+        }
+      };
+    } catch (error) {
+      this.logger.error('Archive creation failed:', error);
       throw error;
     }
   }

@@ -55,6 +55,8 @@ export const useArchiveDownload = ({
         .map((result) => result ? getFileId(result) : null)
         .filter(item => item !== null);
 
+
+
       // Use the provided API request function
       const result = await makeApiRequestWithRateLimitTracking<ArchiveResponse>('images/archive', {
         method: 'POST',

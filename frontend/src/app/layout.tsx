@@ -21,7 +21,6 @@ export const metadata: Metadata = {
     ],
     shortcut: '/favicon.svg',
   },
-  manifest: '/manifest.json',
 }
 
 export default function RootLayout({
@@ -35,6 +34,7 @@ export default function RootLayout({
         <HeadScripts />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="shortcut icon" href="/favicon.svg" />
+        <link rel="manifest" href="/manifest.webmanifest" />
       </head>
       <body className={inter.className}>
         <BodyScripts />

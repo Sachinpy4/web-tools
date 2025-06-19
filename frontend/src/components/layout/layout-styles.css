@@ -1,0 +1,122 @@
+/* Candy Logo Optimizations */
+.candy-logo-wrapper {
+  will-change: transform;
+}
+
+.candy-logo-wrapper:hover .candy-logo-base {
+  transform: scale(1.05) rotate3d(0, 0, 1, 5deg);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.candy-shine {
+  will-change: transform;
+  animation: candyShine 8s linear infinite;
+}
+
+@keyframes candyShine {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Brand Text Optimizations */
+.brand-text-1, .brand-text-2 {
+  will-change: transform;
+}
+
+.group:hover .brand-text-1,
+.group:hover .brand-text-2 {
+  transform: scale(1.02);
+  transition: transform 0.2s ease-out;
+}
+
+/* Tools Dropdown Optimizations */
+.tools-dropdown-btn {
+  will-change: transform;
+}
+
+.tools-dropdown-btn:hover {
+  transform: scale(1.02);
+  transition: transform 0.2s ease-out;
+}
+
+.tools-dropdown {
+  will-change: opacity, transform;
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.tools-dropdown-open {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+}
+
+.tools-dropdown-closed {
+  opacity: 0;
+  transform: scale(0.95) translateY(-10px);
+  pointer-events: none;
+}
+
+/* Tool Icon Optimizations */
+.tool-icon {
+  will-change: transform;
+  transition: transform 0.2s ease-out;
+}
+
+.tool-link:hover .tool-icon {
+  transform: scale(1.1);
+}
+
+/* Mobile Menu Optimizations */
+.mobile-menu {
+  will-change: transform, opacity;
+  transition: all 0.3s ease-in-out;
+  overflow: hidden;
+}
+
+.mobile-menu-open {
+  max-height: 100vh;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.mobile-menu-closed {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.mobile-submenu {
+  will-change: max-height, opacity;
+  transition: all 0.3s ease-in-out;
+  overflow: hidden;
+}
+
+.mobile-submenu-open {
+  max-height: 300px;
+  opacity: 1;
+}
+
+.mobile-submenu-closed {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* Performance Optimizations */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hardware acceleration for transforms */
+.candy-logo-wrapper,
+.tools-dropdown-btn,
+.tool-icon,
+.mobile-menu {
+  transform: translate3d(0, 0, 0);
+}
+
+/* Reduce paint operations */
+.tools-dropdown,
+.mobile-menu {
+  contain: layout style paint;
+} 

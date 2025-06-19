@@ -35,9 +35,24 @@ import { MonitoringModule } from './modules/monitoring/monitoring.module';
 
     // Database (same MongoDB setup as original)
     MongooseModule.forRootAsync({
-      useFactory: (configService: ConfigService) => ({
-        uri: configService.get<string>('database.uri'),
-      }),
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => {
+        const dbConfig = configService.get('database');
+        return {
+          uri: dbConfig.uri,
+          // High-traffic connection pool settings
+          maxPoolSize: dbConfig.maxPoolSize,
+          minPoolSize: dbConfig.minPoolSize,
+          maxIdleTimeMS: dbConfig.maxIdleTimeMS,
+          serverSelectionTimeoutMS: dbConfig.serverSelectionTimeoutMS,
+          socketTimeoutMS: dbConfig.socketTimeoutMS,
+          connectTimeoutMS: dbConfig.connectTimeoutMS,
+                     // Performance optimizations
+          bufferCommands: false,
+           // Connection monitoring
+           heartbeatFrequencyMS: 10000,
+        };
+      },
       inject: [ConfigService],
     }),
 

@@ -374,7 +374,7 @@ export default function CompressTool() {
   const handleDownloadArchive = () => {
     sharedHandleDownloadArchive(results, (result) => ({
       filename: result.resultFilename,
-      originalName: result.originalFilename
+      originalName: result.filename
     }));
   };
   
