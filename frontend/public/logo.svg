@@ -1,10 +1,10 @@
 <svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- Main background gradient - more vibrant -->
-    <linearGradient id="candyBg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0891B2"/>
-      <stop offset="50%" stop-color="#7C3AED"/>
-      <stop offset="100%" stop-color="#1E40AF"/>
+    <!-- Gradient for the circular background - Teal to Purple to Royal Blue -->
+    <linearGradient id="candyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00BFA6"/>
+      <stop offset="50%" stop-color="#6C63FF"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
     </linearGradient>
     
     <!-- Gradient for "Tools" text - Royal Blue to Dark Gray -->
@@ -15,18 +15,24 @@
     
     <!-- Gradient for "Candy" text - Teal to Purple -->
     <linearGradient id="candyTextGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#0891B2"/>
-      <stop offset="100%" stop-color="#7C3AED"/>
+      <stop offset="0%" stop-color="#00BFA6"/>
+      <stop offset="100%" stop-color="#6C63FF"/>
     </linearGradient>
     
-    <!-- Candy stripes gradient - more saturated -->
+    <!-- Shine effect gradient -->
+    <linearGradient id="shineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.3)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+    
+    <!-- Candy stripes gradient -->
     <linearGradient id="candyStripes" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#EC4899"/>
-      <stop offset="20%" stop-color="#F59E0B"/>
-      <stop offset="40%" stop-color="#10B981"/>
-      <stop offset="60%" stop-color="#3B82F6"/>
-      <stop offset="80%" stop-color="#8B5CF6"/>
-      <stop offset="100%" stop-color="#EC4899"/>
+      <stop offset="0%" stop-color="#FF6B9D"/>
+      <stop offset="20%" stop-color="#FBBF24"/>
+      <stop offset="40%" stop-color="#34D399"/>
+      <stop offset="60%" stop-color="#60A5FA"/>
+      <stop offset="80%" stop-color="#A78BFA"/>
+      <stop offset="100%" stop-color="#FF6B9D"/>
     </linearGradient>
     
     <!-- Candy stick gradient -->
@@ -34,47 +40,35 @@
       <stop offset="0%" stop-color="#F59E0B"/>
       <stop offset="100%" stop-color="#D97706"/>
     </linearGradient>
-    
-    <!-- Shine effect -->
-    <radialGradient id="shine" cx="30%" cy="30%" r="60%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.5)"/>
-      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-    </radialGradient>
   </defs>
   
-  <!-- Main circular candy icon with stronger border -->
-  <circle cx="30" cy="30" r="19" fill="url(#candyBg)" stroke="#1F2937" stroke-width="2" filter="drop-shadow(0 4px 8px rgba(0,0,0,0.2))"/>
+  <!-- Main circular candy icon -->
+  <circle cx="30" cy="30" r="20" fill="url(#candyGradient)" stroke="rgba(156,163,175,0.3)" stroke-width="1" filter="drop-shadow(0 4px 8px rgba(0,0,0,0.2))"/>
   
-  <!-- Candy lollipop -->
+  <!-- Shine effect on the circle -->
+  <ellipse cx="25" cy="25" rx="12" ry="15" fill="url(#shineGradient)" opacity="0.6"/>
+  
+  <!-- Candy Icon (detailed lollipop) -->
   <g transform="translate(30,30)">
-    <!-- White base with border -->
-    <circle r="10" fill="white" stroke="#374151" stroke-width="1.5"/>
-    
-    <!-- Colorful candy with stronger colors -->
-    <circle r="8.5" fill="url(#candyStripes)"/>
-    
-    <!-- Candy swirl patterns - more prominent -->
-    <path d="M-6,-3 Q-2,0 2,3 Q6,6 6,6" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M-6,3 Q-2,0 2,-3 Q6,-6 6,-6" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M-3,-6 Q0,-2 3,2 Q6,6 6,6" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <path d="M3,-6 Q0,-2 -3,2 Q-6,6 -6,6" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
-    
+    <!-- Candy base circle -->
+    <circle r="8" fill="white"/>
+    <!-- Colorful candy stripes -->
+    <circle r="7.5" fill="url(#candyStripes)" opacity="0.9"/>
+    <!-- Candy swirl patterns -->
+    <path d="M-6,-3 Q-2,0 2,3 Q6,6 6,6" stroke="white" stroke-width="2" fill="none" opacity="0.9" stroke-linecap="round"/>
+    <path d="M-6,3 Q-2,0 2,-3 Q6,-6 6,-6" stroke="white" stroke-width="2" fill="none" opacity="0.9" stroke-linecap="round"/>
+    <path d="M-3,-6 Q0,-2 3,2 Q6,6 6,6" stroke="white" stroke-width="1.5" fill="none" opacity="0.8" stroke-linecap="round"/>
+    <path d="M3,-6 Q0,-2 -3,2 Q-6,6 -6,6" stroke="white" stroke-width="1.5" fill="none" opacity="0.8" stroke-linecap="round"/>
     <!-- Center highlight -->
-    <circle r="2.5" fill="white"/>
-    
+    <circle r="2" fill="white" opacity="0.9"/>
     <!-- Small sparkles -->
-    <circle cx="-5" cy="-5" r="1" fill="white"/>
-    <circle cx="5" cy="5" r="1" fill="white"/>
-    
-    <!-- Candy stick with border -->
-    <rect x="-1.5" y="8" width="3" height="10" fill="url(#stickGradient)" stroke="#92400E" stroke-width="1" rx="1.5"/>
-    
+    <circle cx="-4" cy="-4" r="0.8" fill="white" opacity="0.8"/>
+    <circle cx="4" cy="4" r="0.8" fill="white" opacity="0.8"/>
+    <!-- Candy stick -->
+    <rect x="-1" y="7" width="2" height="8" fill="url(#stickGradient)" rx="1"/>
     <!-- Stick highlight -->
-    <rect x="-0.8" y="8" width="1.6" height="10" fill="rgba(255,255,255,0.4)" rx="0.8"/>
+    <rect x="-0.5" y="7" width="1" height="8" fill="rgba(255,255,255,0.3)" rx="0.5"/>
   </g>
-  
-  <!-- Overall shine effect -->
-  <ellipse cx="22" cy="22" rx="10" ry="12" fill="url(#shine)"/>
   
   <!-- "Tools" text -->
   <text x="60" y="25" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="bold" fill="url(#toolsGradient)">Tools</text>
