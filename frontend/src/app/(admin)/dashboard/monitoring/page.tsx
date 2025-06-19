@@ -739,7 +739,7 @@ export default function MonitoringPage() {
                       <CardTitle className="text-sm font-medium">Active Requests</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{loadBalancerStats.activeRequests}</div>
+                      <div className="text-2xl font-bold">{loadBalancerStats.activeRequests || 0}</div>
                     </CardContent>
                   </Card>
                   
@@ -748,7 +748,7 @@ export default function MonitoringPage() {
                       <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{loadBalancerStats.totalRequests}</div>
+                      <div className="text-2xl font-bold">{loadBalancerStats.totalRequests || 0}</div>
                     </CardContent>
                   </Card>
                   
@@ -757,7 +757,7 @@ export default function MonitoringPage() {
                       <CardTitle className="text-sm font-medium">Rejected Requests</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{loadBalancerStats.rejectedRequests}</div>
+                      <div className="text-2xl font-bold">{loadBalancerStats.rejectedRequests || 0}</div>
                     </CardContent>
                   </Card>
                   
@@ -780,16 +780,16 @@ export default function MonitoringPage() {
                       <div className="flex items-center space-x-2">
                         <div className="flex-1">
                           <Progress 
-                            value={loadBalancerStats.systemLoad.cpuLoad * 100} 
+                            value={loadBalancerStats.systemLoad?.cpuLoad || 0} 
                             className="h-2"
                           />
                         </div>
                         <div className="text-sm font-medium">
-                          {(loadBalancerStats.systemLoad.cpuLoad * 100).toFixed(1)}%
+                          {(loadBalancerStats.systemLoad?.cpuLoad || 0).toFixed(1)}%
                         </div>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">
-                        {loadBalancerStats.systemLoad.cpuCount} CPU cores available
+                        {loadBalancerStats.systemLoad?.cpuCount || 0} CPU cores available
                       </p>
                     </CardContent>
                   </Card>
@@ -802,12 +802,12 @@ export default function MonitoringPage() {
                       <div className="flex items-center space-x-2">
                         <div className="flex-1">
                           <Progress 
-                            value={loadBalancerStats.systemLoad.memoryUsage} 
+                            value={loadBalancerStats.systemLoad?.memoryUsage || 0} 
                             className="h-2"
                           />
                         </div>
                         <div className="text-sm font-medium">
-                          {loadBalancerStats.systemLoad.memoryUsage.toFixed(1)}%
+                          {(loadBalancerStats.systemLoad?.memoryUsage || 0).toFixed(1)}%
                         </div>
                       </div>
                     </CardContent>

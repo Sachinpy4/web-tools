@@ -45,18 +45,24 @@ import { cn } from '@/lib/utils'
 interface BackupHistory {
   _id: string;
   filename: string;
-  originalName: string;
+  originalName?: string;
   type: 'full' | 'incremental' | 'selective';
-  collections: string[];
+  collections?: string[];
   size: number;
   status: 'creating' | 'completed' | 'failed' | 'deleted';
   startedAt: string;
   completedAt?: string;
-  createdBy: string;
+  createdBy: string | { _id: string; name: string; email: string };
   description?: string;
   errorMessage?: string;
-  compression: boolean;
-  encryption: boolean;
+  compression?: boolean;
+  encryption?: boolean;
+  metadata?: {
+    collections: string[];
+    totalDocuments: number;
+    totalSize: number;
+    compression: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -85,7 +91,7 @@ interface RestoreHistory {
   status: 'in_progress' | 'completed' | 'failed' | 'cancelled';
   startedAt: string;
   completedAt?: string;
-  restoredBy: string;
+  restoredBy: string | { _id: string; name: string; email: string };
   description?: string;
   errorMessage?: string;
   details?: {
@@ -176,9 +182,9 @@ function BackupManagement() {
       const cacheBuster = forceRefresh ? `?_t=${Date.now()}` : ''
       
       const [historyResponse, restoreHistoryResponse, statusResponse] = await Promise.allSettled([
-        apiRequest<{ status: string; data: { backups: BackupHistory[] } }>(`/backup/history${cacheBuster}`, { requireAuth: true }),
-        apiRequest<{ status: string; data: { restores: RestoreHistory[] } }>(`/backup/restore-history${cacheBuster}`, { requireAuth: true }),
-        apiRequest<{ status: string; data: BackupStatus }>(`/backup/status${cacheBuster}`, { requireAuth: true })
+        apiRequest<{ status: string; data: { backups: BackupHistory[] } }>(`admin/backup${cacheBuster}`, { requireAuth: true }),
+        apiRequest<{ status: string; data: { restores: RestoreHistory[] } }>(`admin/backup/restore-history${cacheBuster}`, { requireAuth: true }),
+        apiRequest<{ status: string; data: BackupStatus }>(`admin/backup/stats${cacheBuster}`, { requireAuth: true })
       ])
 
       if (historyResponse.status === 'fulfilled' && historyResponse.value.status === 'success') {
@@ -222,7 +228,7 @@ function BackupManagement() {
     try {
       setActiveOperation('creating')
       
-      const response = await apiRequest<{ status: string; data: any }>('/backup/create', {
+      const response = await apiRequest<{ status: string; data: any }>('admin/backup', {
         method: 'POST',
         body: createBackupForm,
         requireAuth: true
@@ -262,7 +268,7 @@ function BackupManagement() {
     try {
       setActiveOperation(`deleting-${backupId}`)
       
-      const response = await apiRequest<{ status: string }>(`/backup/${backupId}`, {
+      const response = await apiRequest<{ status: string }>(`admin/backup/${backupId}`, {
         method: 'DELETE',
         requireAuth: true
       })
@@ -290,7 +296,7 @@ function BackupManagement() {
   const handleDownloadBackup = async (backupId: string, filename: string) => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
-      const response = await fetch(`${baseUrl}/backup/${backupId}/download`, {
+      const response = await fetch(`${baseUrl}/admin/backup/${backupId}/download`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -327,7 +333,7 @@ function BackupManagement() {
   // Get restore preview
   const handleGetRestorePreview = async (backupId: string) => {
     try {
-      const response = await apiRequest<{ status: string; data: RestorePreview }>(`/backup/restore/preview?backupId=${backupId}`, {
+      const response = await apiRequest<{ status: string; data: RestorePreview }>(`admin/backup/restore/preview?backupId=${backupId}`, {
         requireAuth: true
       })
 
@@ -349,7 +355,7 @@ function BackupManagement() {
     try {
       setActiveOperation('restoring')
       
-      const response = await apiRequest<{ status: string; data: any }>('/backup/restore', {
+      const response = await apiRequest<{ status: string; data: any }>('admin/backup/restore', {
         method: 'POST',
         body: restoreForm,
         requireAuth: true
@@ -1021,11 +1027,11 @@ function BackupManagement() {
                           </div>
                           <div className="text-sm text-muted-foreground">
                             <div>
-                              Created: {formatDate(backup.createdAt)} by {backup.createdBy}
+                              Created: {formatDate(backup.createdAt)} by {typeof backup.createdBy === 'string' ? backup.createdBy : backup.createdBy?.name || backup.createdBy?.email || 'Unknown'}
                             </div>
                             <div>
                               Size: {formatFileSize(backup.size)} • 
-                              Collections: {backup.collections.join(', ')} •
+                              Collections: {backup.metadata?.collections?.join(', ') || backup.collections?.join(', ') || 'Unknown'} •
                               {backup.compression && ' Compressed'}
                             </div>
                             {backup.description && (
@@ -1121,7 +1127,7 @@ function BackupManagement() {
                           </div>
                           <div className="text-sm text-muted-foreground">
                             <div>
-                              Restored: {formatDate(restore.createdAt)} by {restore.restoredBy}
+                              Restored: {formatDate(restore.createdAt)} by {typeof restore.restoredBy === 'string' ? restore.restoredBy : restore.restoredBy?.name || restore.restoredBy?.email || 'Unknown'}
                             </div>
                             <div>
                               Collections: {restore.collectionsRestored.length > 0 

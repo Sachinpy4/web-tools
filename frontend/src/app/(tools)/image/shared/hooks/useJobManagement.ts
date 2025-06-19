@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { pollJobStatus } from '@/lib/api/statusApi';
+import { apiRequest } from '@/lib/apiClient';
 
 interface JobStatus {
   position?: number | null;
@@ -87,118 +87,151 @@ export const useJobManagement = ({
     file: File,
     resultProcessor: (jobResult: any, file: File) => any
   ) => {
-    // Add job to tracking
-    setJobIds(prev => [...prev, jobId]);
+    console.log('🔍 FRONTEND - Starting job polling:', { jobId, toolType, fileIndex, originalFilename: file?.name });
     
-    // Map file index to job ID
-    setFileJobMapping(prev => ({
-      ...prev,
-      [fileIndex]: jobId
-    }));
+    setJobIds(prev => [...prev, jobId]);
+    setFileJobMapping(prev => ({ ...prev, [fileIndex]: jobId }));
+    setJobProgress(prev => ({ ...prev, [jobId]: 0 }));
+    
+    const pollInterval = setInterval(async () => {
+      try {
+        console.log('🔍 FRONTEND - Polling job status:', jobId);
+        
+        const response = await apiRequest<any>(`images/status/${jobId}?type=${toolType}`, {
+          method: 'GET',
+        });
 
-    // Start polling this job
-    pollJobStatus(jobId, toolType, {
-      intervalMs: 1000,
-      onProgress: (progress, queuePosition, estimatedWaitTime) => {
-        // Update visual progress for queued jobs (use actual progress)
-        setVisualProgress(prev => ({
-          ...prev,
-          [fileIndex]: progress
-        }));
-        
-        setJobProgress(prev => ({
-          ...prev,
-          [jobId]: progress
-        }));
-        
-        // Update queue status
-        setQueueStatus(prev => ({
-          ...prev,
-          [jobId]: {
-            position: queuePosition,
-            waitTime: estimatedWaitTime,
-            isProcessing: progress > 0
-          }
-        }));
-      },
-      onQueueStatus: (position, waitTime) => {
-        setQueueStatus(prev => ({
-          ...prev,
-          [jobId]: {
-            position,
-            waitTime,
-            isProcessing: false
-          }
-        }));
-      },
-      onComplete: async (jobResult) => {
-        // Process the result using the provided processor
-        const resultObj = resultProcessor(jobResult, file);
-        
-        // Show progress completion and then result
-        setVisualProgress(prev => ({
-          ...prev,
-          [fileIndex]: 100
-        }));
-        
-        // Wait a brief moment for the 100% to be visible, then show result
-        setTimeout(() => {
-          setResults(prevResults => {
-            const newResults = [...prevResults];
-            newResults[fileIndex] = resultObj;
-            return newResults;
-          });
-          
-          // Clean up progress state
-          setVisualProgress(prev => {
-            const newProgress = { ...prev };
-            delete newProgress[fileIndex];
-            return newProgress;
-          });
-          
-          setProcessingFiles(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(fileIndex);
-            return newSet;
-          });
-          
-          // Show success notification
-          const successMessage = getSuccessMessage(toolType, file, jobResult);
-          toast({
-            title: "✅ Processing completed!",
-            description: successMessage,
-          });
-        }, 100);
-        
-        // Clean up job state
-        cleanupJobState(jobId, fileIndex);
-      },
-      onError: (error) => {
-        // Clean up progress state on error
-        setVisualProgress(prev => {
-          const newProgress = { ...prev };
-          delete newProgress[fileIndex];
-          return newProgress;
+        console.log('📊 FRONTEND - Job status response:', response);
+        console.log('📊 FRONTEND - Response structure check:', {
+          hasResponse: !!response,
+          hasData: !!(response && response.data),
+          directData: response,
+          nestedData: response?.data
         });
         
-        setProcessingFiles(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(fileIndex);
-          return newSet;
-        });
+        // Handle both response structures: direct data or nested in .data
+        const jobData = response?.data || response;
+        
+        if (jobData) {
+          const { progress, state, result, error, queuePosition, estimatedWaitTime } = jobData;
+          
+          console.log('📈 FRONTEND - Job details:', { progress, state, result, error });
+          console.log('🔍 FRONTEND - State check:', { 
+            state, 
+            isCompleted: state === 'completed', 
+            hasResult: !!result,
+            resultType: typeof result,
+            condition: state === 'completed' && result 
+          });
+          
+          // Update progress if available
+          if (progress !== undefined) {
+            setVisualProgress(prev => ({
+              ...prev,
+              [fileIndex]: progress
+            }));
+            
+            setJobProgress(prev => ({
+              ...prev,
+              [jobId]: progress
+            }));
+          }
+          
+          // Update queue status
+          if (queuePosition !== undefined || estimatedWaitTime !== undefined) {
+            setQueueStatus(prev => ({
+              ...prev,
+              [jobId]: {
+                position: queuePosition,
+                waitTime: estimatedWaitTime,
+                isProcessing: progress > 0
+              }
+            }));
+          }
+          
+          // Handle completion
+          console.log('🎯 FRONTEND - Before completion check:', { 
+            state, 
+            result, 
+            condition: state === 'completed' && result,
+            stateMatch: state === 'completed',
+            hasResult: !!result,
+            resultDetails: result
+          });
+          
+          if (state === 'completed' && result) {
+            console.log('✅ FRONTEND - Job completed:', { jobId, result });
+            console.log('🛑 FRONTEND - Clearing polling interval for job:', jobId);
+            
+            clearInterval(pollInterval);
+            
+            const resultObj = resultProcessor(result, file);
+            console.log('🎯 FRONTEND - Processed result:', resultObj);
+            
+            setResults(prevResults => {
+              const newResults = [...prevResults];
+              newResults[fileIndex] = resultObj;
+              return newResults;
+            });
+            
+            // Clean up states
+            setVisualProgress(prev => {
+              const newProgress = { ...prev };
+              delete newProgress[fileIndex];
+              return newProgress;
+            });
+            
+            setProcessingFiles(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(fileIndex);
+              return newSet;
+            });
+            
+            // Show success notification
+            const successMessage = getSuccessMessage(toolType, file, result);
+            toast({
+              title: "✅ Processing completed!",
+              description: successMessage,
+            });
+            
+            // Clean up job state
+            cleanupJobState(jobId, fileIndex);
+            
+            console.log('🧹 FRONTEND - Job cleanup completed for:', jobId);
+            return; // Exit early to prevent further polling
+            
+          } else if (state === 'failed') {
+            console.error('❌ FRONTEND - Job failed:', { jobId, error });
+            console.log('🛑 FRONTEND - Clearing polling interval for failed job:', jobId);
+            
+            clearInterval(pollInterval);
+            
+            toast({
+              title: `${toolType.charAt(0).toUpperCase() + toolType.slice(1)} failed`,
+              description: error || "Job failed to complete",
+              variant: "destructive"
+            });
+            
+            // Clean up job state
+            cleanupJobState(jobId, fileIndex);
+            return; // Exit early to prevent further polling
+          }
+        }
+      } catch (error) {
+        console.error('❌ FRONTEND - Job polling error:', { jobId, error });
+        
+        clearInterval(pollInterval);
         
         toast({
-          title: `${toolType.charAt(0).toUpperCase() + toolType.slice(1)} failed`,
-          description: error,
+          title: "Processing failed",
+          description: "Failed to check job status",
           variant: "destructive"
         });
         
         // Clean up job state
         cleanupJobState(jobId, fileIndex);
       }
-    }).catch(error => {
-      // Silent error handling
-    });
+    }, 2000);
   }, [setJobIds, setFileJobMapping, setVisualProgress, setJobProgress, setQueueStatus, setResults, setProcessingFiles, toast, cleanupJobState]);
 
   const clearAllJobs = useCallback(() => {
@@ -234,7 +267,7 @@ const getSuccessMessage = (toolType: 'compress' | 'convert' | 'resize' | 'crop',
     case 'compress':
       return `${file.name} compressed successfully (${jobResult.compressionRatio}% file size reduction)`;
     case 'convert':
-      return `${file.name} converted to ${jobResult.convertedFormat.toUpperCase()}`;
+      return `${file.name} converted to ${(jobResult.convertedFormat || 'unknown format').toUpperCase()}`;
     case 'resize':
       return `${file.name} resized to ${jobResult.width}×${jobResult.height}`;
     case 'crop':

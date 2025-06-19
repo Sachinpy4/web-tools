@@ -210,13 +210,31 @@ function NewBlogPage() {
         .replace(/^-+|-+$/g, '')   // Remove leading/trailing hyphens
         .substring(0, 100);        // Limit to 100 characters for reasonable URL length
       
+      // Clean payload - only include fields that are in CreateBlogDto
       const payload = {
-        ...formData,
+        title: formData.title,
+        excerpt: formData.excerpt,
+        content: formData.content,
+        category: formData.category,
         tags: processedTags,
         slug: slug,
-        date: new Date(),
-        views: 0,
-        author: user?.id,
+        status: formData.status,
+        featuredImage: formData.featuredImage || undefined,
+        // SEO fields
+        metaTitle: formData.metaTitle || undefined,
+        metaDescription: formData.metaDescription || undefined,
+        metaKeywords: formData.metaKeywords || undefined,
+        canonicalUrl: formData.canonicalUrl && formData.canonicalUrl.trim() ? formData.canonicalUrl : undefined,
+        ogImage: formData.ogImage || undefined,
+        // Comment settings
+        commentsEnabled: formData.commentsEnabled,
+        requireCommentApproval: formData.requireCommentApproval,
+        limitCommentsPerIp: formData.limitCommentsPerIp,
+        // Date fields - only include if they have valid values
+        ...(formData.status === 'scheduled' && formData.scheduledPublishDate ? {
+          scheduledPublishDate: new Date(formData.scheduledPublishDate).toISOString()
+        } : {}),
+        // Note: date, views, and author are set server-side
       }
       
       // Submit to API using apiClient

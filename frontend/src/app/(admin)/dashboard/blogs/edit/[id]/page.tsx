@@ -300,11 +300,30 @@ function EditBlogPage() {
         .replace(/^-+|-+$/g, '')  // Remove leading/trailing hyphens
         .substring(0, 100);       // Limit to 100 characters for reasonable URL length
       
-      // Create payload
+      // Clean payload - only include fields that are in UpdateBlogDto
       const payload = {
-        ...formData,
+        title: formData.title,
+        excerpt: formData.excerpt,
+        content: formData.content,
+        category: formData.category,
         tags: processedTags,
-        slug: slug // Always update slug to match current title
+        slug: slug,
+        status: formData.status,
+        featuredImage: formData.featuredImage || undefined,
+        // SEO fields
+        metaTitle: formData.metaTitle || undefined,
+        metaDescription: formData.metaDescription || undefined,
+        metaKeywords: formData.metaKeywords || undefined,
+        canonicalUrl: formData.canonicalUrl && formData.canonicalUrl.trim() ? formData.canonicalUrl : undefined,
+        ogImage: formData.ogImage || undefined,
+        // Comment settings
+        commentsEnabled: formData.commentsEnabled,
+        requireCommentApproval: formData.requireCommentApproval,
+        limitCommentsPerIp: formData.limitCommentsPerIp,
+        // Date fields - only include if they have valid values
+        ...(formData.status === 'scheduled' && formData.scheduledPublishDate ? {
+          scheduledPublishDate: new Date(formData.scheduledPublishDate).toISOString()
+        } : {}),
       };
       
       // Submit to API using apiClient

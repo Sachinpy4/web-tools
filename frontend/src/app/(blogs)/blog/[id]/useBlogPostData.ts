@@ -97,7 +97,7 @@ export function useBlogPostData(blogId: string) {
             const response = await apiRequest<{
               status: string;
               data: BlogPost;
-            }>(`/blogs/by-slug/${encodeURIComponent(blogId)}`, { 
+            }>(`/blogs/slug/${encodeURIComponent(blogId)}`, { 
               noRedirect: true 
             });
             

@@ -160,10 +160,12 @@ export function MediaLibrary({
     
     // Add each file to the form data
     for (let i = 0; i < files.length; i++) {
-      formData.append('file', files[i])
-      // Add alt text based on filename (without extension)
-      formData.append(`alt[${i}]`, files[i].name.split('.')[0])
+      formData.append('files', files[i])
     }
+    
+    // Add alt text array as JSON string
+    const altTexts = Array.from(files).map(file => file.name.split('.')[0])
+    formData.append('alt', JSON.stringify(altTexts))
     
     try {
       setUploading(true)
@@ -356,6 +358,9 @@ export function MediaLibrary({
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Media Library</DialogTitle>
+          <DialogDescription>
+            Browse, upload, and select media files for your content. You can upload images and documents, then click on any item to select it.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="mt-4 grid gap-4">

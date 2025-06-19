@@ -449,7 +449,7 @@ export default function ConvertTool() {
                             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                               <p className="text-xs text-muted-foreground">
                                 {results[index] ? (
-                                  <span>{results[index].originalFormat.toUpperCase()} → {results[index].convertedFormat.toUpperCase()}</span>
+                                  <span>{(results[index].originalFormat || getFileExtension(file.name)).toUpperCase()} → {(results[index].convertedFormat || 'unknown').toUpperCase()}</span>
                                 ) : (
                                   <span>Format: {getFileExtension(file.name).toUpperCase()}</span>
                                 )}
@@ -512,7 +512,7 @@ export default function ConvertTool() {
                     {results[selectedFileIndex] && (
                       <div className="mt-3 pt-3 border-t">
                         <p className="font-medium text-green-600 mb-2">Conversion Results:</p>
-                        <p className="mb-3">New format: {results[selectedFileIndex].convertedFormat.toUpperCase()}</p>
+                        <p className="mb-3">New format: {(results[selectedFileIndex].convertedFormat || 'unknown').toUpperCase()}</p>
                         <div>
                           <a 
                             href={`${getApiUrl().replace('/api', '')}${results[selectedFileIndex].downloadUrl}`}

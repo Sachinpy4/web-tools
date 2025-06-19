@@ -14,7 +14,7 @@ async function getBlogPost(id: string) {
       return process.env.NEXT_PUBLIC_API_URL || 'https://toolscandy.com/api'
     }
     
-    // In development, try multiple local URLs
+    // In development, always use localhost unless explicitly overridden
     return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
   }
   
@@ -28,11 +28,11 @@ async function getBlogPost(id: string) {
     const primaryUrl = getServerApiUrl()
     urlsToTry.push(primaryUrl)
     
-    // Add fallback development URLs if not already included
+    // Add fallback development URLs if not already included (prioritize localhost)
     const fallbackUrls = [
       'http://localhost:5000/api',
-      'http://backend:5000/api', 
       'http://127.0.0.1:5000/api'
+      // Removed 'http://backend:5000/api' as it's only for Docker environments
     ]
     
     fallbackUrls.forEach(url => {
@@ -49,7 +49,7 @@ async function getBlogPost(id: string) {
       
       if (isSlug) {
         try {
-          const slugResponse = await fetch(`${baseUrl}/blogs/by-slug/${encodeURIComponent(id)}`, {
+          const slugResponse = await fetch(`${baseUrl}/blogs/slug/${encodeURIComponent(id)}`, {
             cache: 'no-store',
             headers: {
               'Content-Type': 'application/json',
@@ -83,7 +83,7 @@ async function getBlogPost(id: string) {
     } catch (error) {
       // Log error in development, continue trying other URLs
       if (process.env.NODE_ENV === 'development') {
-        console.error(`Failed to fetch from ${baseUrl}:`, error)
+        console.warn(`Failed to fetch from ${baseUrl}:`, error instanceof Error ? error.message : String(error))
       }
       continue // Try next URL
     }

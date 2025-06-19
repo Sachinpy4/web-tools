@@ -4,13 +4,13 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Package lock files (allow frontend to keep theirs)
+backend/package-lock.json
+
 # Environment files
 .env
-.env.local
-.env.development
-.env.test
-.env.production
-.env.staging
+.env.*
+!.env.example
 
 # Build outputs
 dist/
@@ -32,14 +32,8 @@ coverage/
 .nyc_output
 
 # Logs
-logs
+logs/
 *.log
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
 
 # Optional npm cache directory
 .npm
@@ -105,6 +99,10 @@ Thumbs.db
 # TypeScript cache
 *.tsbuildinfo
 
+# ======================================
+# BACKEND SPECIFIC
+# ======================================
+
 # Upload directories (keep structure but ignore content)
 backend/uploads/*
 !backend/uploads/.gitkeep
@@ -112,12 +110,136 @@ backend/uploads/*
 # Test files
 backend/test-files/*
 
-# Archive files
+# Archive files  
 backend/uploads/archives/*
 backend/uploads/processed/*
 
 # Log files
 backend/logs/*
 
+# ======================================
+# BACKEND SPECIFIC (NestJS)
+# ======================================
+
+# Backup files
+backend/backups/*
+!backend/backups/.gitkeep
+
+# ======================================
+# FRONTEND SPECIFIC
+# ======================================
+
+# Frontend build outputs
+frontend/.next/
+frontend/out/
+frontend/dist/
+
+# Frontend environment files
+frontend/.env*
+!frontend/.env.example
+
+# ======================================
+# DEVELOPMENT & DEPLOYMENT
+# ======================================
+
 # Redis dump
-dump.rdb 
+dump.rdb
+
+# PM2 files
+.pm2/
+ecosystem.config.js.backup
+
+# Docker files
+.docker/
+docker-compose.override.yml
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.csr
+
+# Database dumps
+*.sql
+*.dump
+
+# IDE files
+.vscode/settings.json
+.idea/workspace.xml
+.idea/tasks.xml
+
+# MacOS files
+.AppleDouble
+.LSOverride
+
+# Windows files
+*.lnk
+
+# Linux files
+*~
+
+# ======================================
+# SECURITY & SECRETS
+# ======================================
+
+# Secrets and keys
+secrets/
+*.secret
+*.private
+.secrets
+
+# Auth tokens
+.auth
+.token
+
+# API keys
+.api-keys
+
+# ======================================
+# TESTING & CI/CD
+# ======================================
+
+# Jest coverage
+coverage/
+.nyc_output/
+
+# Test results
+test-results/
+test-reports/
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# ======================================
+# MONITORING & ANALYTICS
+# ======================================
+
+# Monitoring data
+monitoring/
+metrics/
+
+# Error tracking
+sentry/
+.sentry/
+
+# ======================================
+# MISC
+# ======================================
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# Temporary files
+*.tmp
+*.temp 
+backend/.env
