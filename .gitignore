@@ -216,9 +216,11 @@ playwright/.cache/
 # MONITORING & ANALYTICS
 # ======================================
 
-# Monitoring data
-monitoring/
-metrics/
+# Monitoring data files (not source code)
+/monitoring/
+/metrics/
+*.monitoring
+*.metrics
 
 # Error tracking
 sentry/
