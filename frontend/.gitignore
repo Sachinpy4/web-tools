@@ -21,13 +21,38 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
 # local env files
+.env
+.env.*
 .env*.local
+!.env.example
 
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts 
+next-env.d.ts
+
+# Additional security files
+.secrets
+*.secret
+*.private
+.auth
+.token
+.api-keys
+
+# IDE files
+.vscode/settings.json
+.idea/
+
+# OS files
+Thumbs.db
+.DS_Store?
+._*
+
+# Temporary files
+tmp/
+temp/ 
