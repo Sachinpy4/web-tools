@@ -100,6 +100,18 @@ export const toolThemes: Record<string, ToolTheme> = {
     buttonHover: 'from-blue-600 to-indigo-600',
     accent: 'blue-500',
     accentLight: 'blue-100'
+  },
+  'background-removal': {
+    name: 'background-removal',
+    primaryColor: 'rgb(236, 72, 153)', // pink-500
+    primaryHover: 'rgb(219, 39, 119)', // pink-600
+    progressGradient: 'from-pink-500 to-rose-500',
+    progressBackground: 'bg-pink-50 dark:bg-pink-950/20',
+    progressText: 'text-pink-700 dark:text-pink-300',
+    buttonGradient: 'from-pink-500 to-rose-500',
+    buttonHover: 'from-pink-600 to-rose-600',
+    accent: 'pink-500',
+    accentLight: 'pink-100'
   }
 }
 

@@ -51,7 +51,7 @@ import { useScrollTracking } from './useScrollTracking'
 // Import editor styles for proper content rendering
 import { EditorStyles } from '@/components/editor/styles/EditorStyles'
 // Import syntax highlighting
-import { common, createLowlight } from 'lowlight'
+import { lowlight } from 'lowlight'
 import { toHtml } from 'hast-util-to-html'
 
 interface BlogPostClientProps {
@@ -109,8 +109,7 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
 
   // Add code block copy functionality and syntax highlighting
   React.useEffect(() => {
-    // Initialize lowlight with common languages
-    const lowlight = createLowlight(common)
+    // lowlight is already initialized with common languages in v2
 
     const addCopyButtonsToCodeBlocks = () => {
       const codeBlocks = document.querySelectorAll('pre:not([data-copy-processed])')

@@ -87,7 +87,7 @@ export const useJobManagement = ({
     file: File,
     resultProcessor: (jobResult: any, file: File) => any
   ) => {
-    console.log('🔍 FRONTEND - Starting job polling:', { jobId, toolType, fileIndex, originalFilename: file?.name });
+    // Starting job polling
     
     setJobIds(prev => [...prev, jobId]);
     setFileJobMapping(prev => ({ ...prev, [fileIndex]: jobId }));
@@ -100,13 +100,13 @@ export const useJobManagement = ({
     const pollJobStatus = async () => {
       try {
         pollAttempts++;
-        console.log(`🔍 FRONTEND - Polling job status (attempt ${pollAttempts}/${maxPollAttempts}):`, jobId);
+        // Polling job status
         
         const response = await apiRequest<any>(`images/status/${jobId}?type=${toolType}`, {
           method: 'GET',
         });
 
-        console.log('📊 FRONTEND - Job status response:', response);
+        // Job status response received
         
         // Handle both response structures: direct data or nested in .data
         const jobData = response?.data || response;
@@ -114,7 +114,7 @@ export const useJobManagement = ({
         if (jobData) {
           const { progress, state, result, error, queuePosition, estimatedWaitTime } = jobData;
           
-          console.log('📈 FRONTEND - Job details:', { progress, state, result, error });
+          // Processing job details
           
           // Update progress if available
           if (progress !== undefined) {
@@ -143,11 +143,11 @@ export const useJobManagement = ({
           
           // Handle completion
           if (state === 'completed' && result) {
-            console.log('✅ FRONTEND - Job completed:', { jobId, result });
+            // Job completed successfully
             clearInterval(pollInterval);
             
             const resultObj = resultProcessor(result, file);
-            console.log('🎯 FRONTEND - Processed result:', resultObj);
+            // Result processed
             
             setResults(prevResults => {
               const newResults = [...prevResults];
@@ -178,11 +178,11 @@ export const useJobManagement = ({
             // Clean up job state
             cleanupJobState(jobId, fileIndex);
             
-            console.log('🧹 FRONTEND - Job cleanup completed for:', jobId);
+            // Job cleanup completed
             return;
             
           } else if (state === 'failed') {
-            console.error('❌ FRONTEND - Job failed:', { jobId, error });
+            // Job failed
             clearInterval(pollInterval);
             
             toast({
@@ -199,7 +199,7 @@ export const useJobManagement = ({
         
         // Check if we've exceeded max attempts
         if (pollAttempts >= maxPollAttempts) {
-          console.error(`💥 FRONTEND - Max polling attempts exceeded for job ${jobId}`);
+          // Max polling attempts exceeded
           clearInterval(pollInterval);
           
           // Clean up job state
@@ -226,7 +226,7 @@ export const useJobManagement = ({
         }
         
       } catch (pollingError: any) {
-        console.error('🚨 FRONTEND - Job polling failed:', pollingError);
+        // Job polling failed
         
         // Check for network errors
         const isNetworkError = 
@@ -237,7 +237,7 @@ export const useJobManagement = ({
         
         // If network error or we've exceeded attempts, clean up
         if (isNetworkError || pollAttempts >= maxPollAttempts) {
-          console.warn(`🚨 FRONTEND - Stopping polling for job ${jobId} due to error or timeout`);
+          // Stopping polling due to error or timeout
           clearInterval(pollInterval);
           
           // Clean up job state

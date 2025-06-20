@@ -13,7 +13,7 @@ import TableRow from '@tiptap/extension-table-row'
 import TableHeader from '@tiptap/extension-table-header'
 import TableCell from '@tiptap/extension-table-cell'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
-import { common, createLowlight } from 'lowlight'
+import { lowlight } from 'lowlight'
 import { 
   Bold, 
   Italic, 
@@ -63,8 +63,7 @@ import { AutoSaveStatus } from './controls/AutoSaveStatus'
 import { EditorStyles } from './styles/EditorStyles'
 import { RichTextEditorProps, SelectedImage } from './types/editor'
 
-// Create lowlight instance with common languages
-const lowlight = createLowlight(common)
+  // lowlight v2 is already initialized with common languages
 
 // Extended Image extension with custom attributes for alignment
 const CustomImage = Image.extend({

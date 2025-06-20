@@ -9,7 +9,7 @@ import { toast } from '@/components/ui/use-toast'
 import { Badge } from '@/components/ui/badge'
 import { getProxiedImageUrl } from '@/lib/imageProxy'
 // Import syntax highlighting
-import { common, createLowlight } from 'lowlight'
+import { lowlight } from 'lowlight'
 import { toHtml } from 'hast-util-to-html'
 
 export default function BlogPreviewPage() {
@@ -48,8 +48,7 @@ export default function BlogPreviewPage() {
 
   // Add code block copy functionality and syntax highlighting
   useEffect(() => {
-    // Initialize lowlight with common languages
-    const lowlight = createLowlight(common)
+    // lowlight is already initialized with common languages in v2
 
     const addCopyButtonsToCodeBlocks = () => {
       const codeBlocks = document.querySelectorAll('pre:not([data-copy-processed])')

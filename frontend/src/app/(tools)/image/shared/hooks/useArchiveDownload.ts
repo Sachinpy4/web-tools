@@ -72,7 +72,7 @@ export const useArchiveDownload = ({
         description: `Your ${toolName} images are being downloaded as a ZIP file`
       });
     } catch (error: any) {
-      console.error('Archive error:', error);
+              // Archive creation failed
 
       // Special handling for rate limit errors
       if (error.status === 429) {

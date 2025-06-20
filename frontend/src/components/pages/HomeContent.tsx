@@ -40,7 +40,7 @@ const structuredData = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
   "name": "ToolsCandy - Free Online Image Editor",
-  "description": "Free online image editor and optimizer. Compress, resize, crop, convert images without losing quality. No signup required, 100% privacy-focused.",
+  "description": "Free online image editor and optimizer. Compress, resize, crop, convert, and remove backgrounds from images with AI. No signup required, 100% privacy-focused.",
   "url": "https://toolscandy.com",
   "applicationCategory": "MultimediaApplication",
   "operatingSystem": "Web Browser",
@@ -51,9 +51,10 @@ const structuredData = {
   },
   "featureList": [
     "Image Compression",
-    "Image Resizing",
+    "Image Resizing", 
     "Format Conversion",
     "Image Cropping",
+    "AI Background Removal",
     "EXIF Data Extraction",
     "Privacy-First Processing"
   ],
@@ -357,7 +358,7 @@ export default function HomeContent() {
               variants={container}
               initial="hidden"
               animate="show"
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 sm:gap-6"
             >
               {/* Image Compression Tool - SEO Optimized */}
               <article>
@@ -455,6 +456,31 @@ export default function HomeContent() {
                       </p>
                       <div className="flex items-center font-semibold text-sm text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 mt-auto">
                         Crop Images <ArrowRight size={14} className="ml-2" aria-hidden="true" />
+                      </div>
+                    </div>
+                  </motion.div>
+                </Link>
+              </article>
+
+              {/* Background Removal Tool - SEO Optimized */}
+              <article>
+                <Link href="/image/background-removal" className="group" title="AI-powered background remover - Remove backgrounds from images with precision">
+                  <motion.div variants={item}>
+                    <div className="relative h-[350px] rounded-xl border-2 border-transparent bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 dark:from-purple-950/30 dark:via-pink-950/30 dark:to-purple-900/30 p-6 transition-all duration-500 hover:shadow-xl hover:shadow-purple-500/20 hover:border-purple-300/50 hover:-translate-y-1 hover:scale-105 overflow-hidden flex flex-col">
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                      
+                      <div className="relative mb-4 inline-flex p-3 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg group-hover:shadow-xl group-hover:shadow-purple-500/30 transition-all duration-300">
+                        <Sparkles size={20} aria-hidden="true" />
+                      </div>
+                      
+                      <h3 className="text-lg sm:text-xl font-bold mb-3 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                        Background Remover
+                      </h3>
+                      <p className="text-muted-foreground mb-4 text-sm leading-relaxed flex-1">
+                        AI-powered background removal with professional edge refinement. Perfect for portraits and product photos.
+                      </p>
+                      <div className="flex items-center font-semibold text-sm text-purple-600 dark:text-purple-400 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 mt-auto">
+                        Remove Background <ArrowRight size={14} className="ml-2" aria-hidden="true" />
                       </div>
                     </div>
                   </motion.div>

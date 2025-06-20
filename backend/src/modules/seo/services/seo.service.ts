@@ -348,6 +348,17 @@ export class SeoService {
           priority: 7,
         },
         {
+          pagePath: '/image/background-removal',
+          pageType: 'tool' as const,
+          pageName: 'Background Removal Tool',
+          metaTitle: 'Free AI Background Removal Tool - Remove Image Backgrounds Online',
+          metaDescription: 'Remove backgrounds from images with AI precision. Free online tool with privacy-first processing, no uploads required. Professional quality results in seconds.',
+          metaKeywords: ['background removal', 'remove background online', 'AI background remover', 'image background removal', 'free background remover', 'privacy background removal'],
+          ogType: 'website',
+          twitterCard: 'summary_large_image',
+          priority: 8,
+        },
+        {
           pagePath: '/about',
           pageType: 'about' as const,
           pageName: 'About Us',
@@ -356,7 +367,7 @@ export class SeoService {
           metaKeywords: ['ToolsCandy about', 'privacy-focused tools', 'browser image processing', 'no upload tools', 'free image tools'],
           ogType: 'website',
           twitterCard: 'summary_large_image',
-          priority: 8,
+          priority: 9,
         },
         {
           pagePath: '/privacy',
@@ -367,7 +378,7 @@ export class SeoService {
           metaKeywords: ['ToolsCandy privacy', 'privacy policy', 'data protection', 'browser processing', 'no data collection'],
           ogType: 'website',
           twitterCard: 'summary_large_image',
-          priority: 9,
+          priority: 10,
         },
         {
           pagePath: '/terms',
@@ -378,7 +389,7 @@ export class SeoService {
           metaKeywords: ['ToolsCandy terms', 'terms of service', 'usage terms', 'free tool terms', 'fair usage'],
           ogType: 'website',
           twitterCard: 'summary_large_image',
-          priority: 10,
+          priority: 11,
         },
         {
           pagePath: '/contact',
@@ -389,7 +400,7 @@ export class SeoService {
           metaKeywords: ['ToolsCandy contact', 'support', 'feedback', 'help', 'customer service'],
           ogType: 'website',
           twitterCard: 'summary_large_image',
-          priority: 11,
+          priority: 12,
         },
         {
           pagePath: '/disclaimer',
@@ -400,7 +411,7 @@ export class SeoService {
           metaKeywords: ['ToolsCandy disclaimer', 'usage disclaimer', 'tool limitations', 'responsible use', 'important information'],
           ogType: 'website',
           twitterCard: 'summary_large_image',
-          priority: 12,
+          priority: 13,
         },
       ];
 

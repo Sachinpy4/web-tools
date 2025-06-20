@@ -12,7 +12,8 @@ import {
   Newspaper,
   Info,
   Sun,
-  Moon
+  Moon,
+  Scissors
 } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
@@ -109,6 +110,20 @@ export function MobileMenu({ isMenuOpen, closeMenu }: MobileMenuProps) {
             <div>
               <div className="font-semibold">Metadata</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">Image analysis</div>
+            </div>
+          </Link>
+          
+          <Link
+            href="/image/background-removal"
+            className={`group flex items-center px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 mx-2 ${isActiveLink('/image/background-removal') ? 'bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-950/50 dark:to-rose-950/50 text-pink-700 dark:text-pink-300 border border-pink-200 dark:border-pink-800' : 'hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-800 dark:hover:to-gray-750 text-gray-700 dark:text-gray-300'}`}
+            onClick={closeMenu}
+          >
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500 to-rose-600 text-white mr-3">
+              <Scissors className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="font-semibold">Background Removal</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Remove backgrounds</div>
             </div>
           </Link>
         </div>
