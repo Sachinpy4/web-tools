@@ -7,6 +7,9 @@ import morgan from 'morgan';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { Logger } from '@nestjs/common';
+import { SanitizationPipe } from './common/pipes/sanitization.pipe';
+import { AdvancedSecurityGuard } from './common/guards/advanced-security.guard';
+import { Reflector } from '@nestjs/core';
 
 // Import worker setup (same pattern as original backend)
 import { startImageWorkers } from './worker';
@@ -83,6 +86,9 @@ async function bootstrap() {
   // Logging middleware (same as Express version)
   app.use(morgan('dev'));
 
+  // Global sanitization pipe (applied first, with smart filtering)
+  app.useGlobalPipes(new SanitizationPipe());
+
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
@@ -97,6 +103,9 @@ async function bootstrap() {
 
   // Global exception filter
   app.useGlobalFilters(new AllExceptionsFilter());
+
+  // Advanced security guard (only for high-risk endpoints)
+  app.useGlobalGuards(new AdvancedSecurityGuard(app.get(Reflector)));
 
   // API prefix (same as Express version)
   app.setGlobalPrefix('api');

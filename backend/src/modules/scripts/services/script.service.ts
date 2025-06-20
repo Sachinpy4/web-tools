@@ -97,11 +97,6 @@ export class ScriptService {
     try {
       const { name, description, content, placement, platform, priority, targetPages, excludePages, isActive } = createScriptDto;
 
-      // Validation
-      if (!name || !content || !placement) {
-        throw new BadRequestException('Name, content, and placement are required');
-      }
-
       const script = await this.scriptModel.create({
         name,
         description,

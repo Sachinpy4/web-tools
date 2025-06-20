@@ -17,21 +17,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    let status: number;
-    let message: string;
-    let code: string | undefined;
-    let details: any;
+    let status = 500;
+    let message = 'Internal server error';
+    let error = 'Internal Server Error';
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
       
-      if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-        message = (exceptionResponse as any).message || exception.message;
-        code = (exceptionResponse as any).code;
-        details = (exceptionResponse as any).details;
-      } else {
-        message = exceptionResponse as string;
+      if (typeof exceptionResponse === 'string') {
+        message = exceptionResponse;
+      } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
+        message = (exceptionResponse as any).message || message;
+        error = (exceptionResponse as any).error || error;
       }
     } else if (exception instanceof Error) {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -48,40 +46,69 @@ export class AllExceptionsFilter implements ExceptionFilter {
         status = HttpStatus.BAD_REQUEST;
         message = 'Validation failed';
       }
-    } else {
-      status = HttpStatus.INTERNAL_SERVER_ERROR;
-      message = 'Internal server error';
     }
 
-    // Log error (same as original)
-    const errorLog = {
-      timestamp: new Date().toISOString(),
-      method: request.method,
-      url: request.url,
-      status,
-      message,
-      stack: exception instanceof Error ? exception.stack : undefined,
-      userAgent: request.get('User-Agent'),
-      ip: request.ip,
-    };
-
-    if (status >= 500) {
-      this.logger.error(errorLog);
+    // Security: Sanitize authentication errors to prevent information disclosure
+    if (this.isAuthenticationEndpoint(request.url)) {
+      // For auth endpoints, return generic messages regardless of the actual error
+      if (status === 401) {
+        message = 'Authentication failed';
+        error = 'Unauthorized';
+      } else if (status === 400) {
+        message = 'Invalid request';
+        error = 'Bad Request';
+      } else if (status === 429) {
+        message = 'Too many attempts';
+        error = 'Too Many Requests';
+      }
+      
+      // Don't log sensitive auth details in production
+      if (process.env.NODE_ENV !== 'production') {
+        this.logger.error(`Auth error on ${request.method} ${request.url}:`, {
+          status,
+          message: typeof exception === 'object' && exception !== null ? (exception as any).message : exception,
+          stack: exception instanceof Error ? exception.stack : undefined,
+        });
+      }
     } else {
-      this.logger.warn(errorLog);
+      // Log non-auth errors normally
+      this.logger.error(`Error on ${request.method} ${request.url}:`, {
+        status,
+        message,
+        stack: exception instanceof Error ? exception.stack : undefined,
+      });
     }
 
-    // Return error response (same format as original)
-    const errorResponse = {
+    // Security: Remove stack traces and detailed error info in production
+    const responseBody: any = {
       status: 'error',
       message,
-      ...(code && { code }),
-      ...(details && { details }),
-      ...(process.env.NODE_ENV === 'development' && {
-        stack: exception instanceof Error ? exception.stack : undefined,
-      }),
+      timestamp: new Date().toISOString(),
     };
 
-    response.status(status).json(errorResponse);
+    // Only include path for non-auth endpoints
+    if (!this.isAuthenticationEndpoint(request.url)) {
+      responseBody.path = request.url;
+    }
+
+    // Only include detailed error info in development
+    if (process.env.NODE_ENV !== 'production') {
+      responseBody.error = error;
+      if (exception instanceof Error && exception.stack) {
+        responseBody.stack = exception.stack;
+      }
+    }
+
+    response.status(status).json(responseBody);
+  }
+
+  private isAuthenticationEndpoint(url: string): boolean {
+    const authEndpoints = [
+      '/api/auth/login',
+      '/api/auth/register',
+      '/api/auth/setup-admin',
+    ];
+    
+    return authEndpoints.some(endpoint => url.includes(endpoint));
   }
 } 

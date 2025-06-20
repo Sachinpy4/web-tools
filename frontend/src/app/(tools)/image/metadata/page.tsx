@@ -11,8 +11,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { Separator } from '@/components/ui/separator'
 import { ToolHeader } from '@/components/tools/ToolHeader'
 import ImageDropzone from '@/components/tools/ImageDropzone'
-import { useEnhancedMetadata } from '../shared'
-import { LocalRateLimitIndicator, useRateLimitTracking, useApiWithRateLimit, ThemedButton, toolThemes, type ToolTheme } from '../shared'
+import { useEnhancedMetadata, ThemedButton, toolThemes, type ToolTheme } from '../shared'
 
 // Enhanced ImagePreview component
 interface ImagePreviewProps {
@@ -473,12 +472,18 @@ export default function MetadataAnalysisTool() {
   const [isConvertingPreviews, setIsConvertingPreviews] = useState(false)
   
   const { toast } = useToast()
-  const { rateLimitUsage, setRateLimitUsage, updateRateLimitFromError } = useRateLimitTracking()
-  const { makeApiRequestWithRateLimitTracking } = useApiWithRateLimit()
   
   // Get the metadata tool theme
   const toolTheme = toolThemes.metadata
-  const { formatFileSize } = useEnhancedMetadata()
+  
+  // Helper function to format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
 
   // Helper function to convert HEIC to JPEG for preview
   const convertHeicToPreview = async (file: File): Promise<string> => {
@@ -684,41 +689,27 @@ export default function MetadataAnalysisTool() {
     setShouldClearDropzone(false)
   }
 
-  // Analyze image with server-side processing
+  // Use the enhanced metadata hook for client-side analysis
+  const { analyzeImage: analyzeImageMetadata, isAnalyzing: isAnalyzingMetadata } = useEnhancedMetadata()
+  
+  // Analyze image with client-side processing
   const analyzeImage = async (file: File) => {
     setIsAnalyzing(true)
     setMetadata(null)
     
     try {
-      const formData = new FormData()
-      formData.append('image', file)
+      const result = await analyzeImageMetadata(file)
+      setMetadata(result)
       
-      const response = await makeApiRequestWithRateLimitTracking<{
-        status: string
-        data: any
-        message?: string
-      }>('/images/metadata', {
-        method: 'POST',
-        body: formData,
-        isFormData: true
+      // Show appropriate message based on file type
+      const isHEIC = file.type === 'image/heic' || file.type === 'image/heif'
+      
+      toast({
+        title: "Analysis complete",
+        description: isHEIC 
+          ? "Metadata extracted successfully. Note: HEIC files have limited color analysis capabilities."
+          : "Comprehensive metadata extracted successfully",
       })
-      
-      if (response.status === 'success') {
-        setMetadata(response.data)
-        
-        // Show appropriate message based on file type and processing notes
-        const isHEIC = file.type === 'image/heic' || file.type === 'image/heif'
-        const hasProcessingNotes = response.data.processingNotes
-        
-        toast({
-          title: "Analysis complete",
-          description: hasProcessingNotes 
-            ? "Metadata extracted successfully. Note: HEIC files have limited color analysis capabilities."
-            : "Comprehensive metadata extracted successfully",
-        })
-      } else {
-        throw new Error(response.message || 'Metadata analysis failed')
-      }
     } catch (error: any) {
       console.error('Metadata analysis failed:', error)
       toast({
@@ -822,13 +813,7 @@ export default function MetadataAnalysisTool() {
                   onClearComplete={handleDropzoneClearComplete}
                 />
                 
-                {/* Rate Limit Indicator */}
-                <LocalRateLimitIndicator 
-                  usage={rateLimitUsage.used} 
-                  limit={rateLimitUsage.limit} 
-                  resetsIn={rateLimitUsage.resetsIn}
-                  isLimitReached={rateLimitUsage.isLimitReached}
-                />
+                {/* Note: No rate limiting needed for client-side analysis */}
               </CardContent>
             </Card>
 

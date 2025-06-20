@@ -164,18 +164,30 @@ export default function CropTool() {
     };
     
     if (crop.unit === '%') {
-      // Convert from percentage to pixels
-      pixelCrop.x = Math.round((crop.x / 100) * imageWidth);
-      pixelCrop.y = Math.round((crop.y / 100) * imageHeight);
-      pixelCrop.width = Math.round((crop.width / 100) * imageWidth);
-      pixelCrop.height = Math.round((crop.height / 100) * imageHeight);
+      // Convert from percentage to pixels with better precision
+      pixelCrop.x = Math.max(0, Math.round((crop.x / 100) * imageWidth));
+      pixelCrop.y = Math.max(0, Math.round((crop.y / 100) * imageHeight));
+      pixelCrop.width = Math.max(1, Math.round((crop.width / 100) * imageWidth));
+      pixelCrop.height = Math.max(1, Math.round((crop.height / 100) * imageHeight));
     } else {
-      // Already in pixels, just round values
-      pixelCrop.x = Math.round(crop.x);
-      pixelCrop.y = Math.round(crop.y);
-      pixelCrop.width = Math.round(crop.width);
-      pixelCrop.height = Math.round(crop.height);
+      // Already in pixels, just round values and ensure minimum bounds
+      pixelCrop.x = Math.max(0, Math.round(crop.x));
+      pixelCrop.y = Math.max(0, Math.round(crop.y));
+      pixelCrop.width = Math.max(1, Math.round(crop.width));
+      pixelCrop.height = Math.max(1, Math.round(crop.height));
     }
+    
+    // Ensure crop doesn't exceed image bounds
+    if (pixelCrop.x + pixelCrop.width > imageWidth) {
+      pixelCrop.width = imageWidth - pixelCrop.x;
+    }
+    if (pixelCrop.y + pixelCrop.height > imageHeight) {
+      pixelCrop.height = imageHeight - pixelCrop.y;
+    }
+    
+    // Final validation - ensure minimum size
+    pixelCrop.width = Math.max(1, pixelCrop.width);
+    pixelCrop.height = Math.max(1, pixelCrop.height);
     
     return pixelCrop;
   };

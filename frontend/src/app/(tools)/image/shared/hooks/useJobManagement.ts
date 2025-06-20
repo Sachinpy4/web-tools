@@ -93,25 +93,20 @@ export const useJobManagement = ({
     setFileJobMapping(prev => ({ ...prev, [fileIndex]: jobId }));
     setJobProgress(prev => ({ ...prev, [jobId]: 0 }));
     
-    // Use adaptive polling: faster initially, slower as job progresses
-    let pollDelay = 500; // Start with 500ms
-    const maxPollDelay = 2000; // Max 2 seconds
+    let pollAttempts = 0;
+    const maxPollAttempts = 60; // 60 attempts = 2 minutes with 2s intervals
+    let pollInterval: NodeJS.Timeout;
     
-    const adaptivePoll = async () => {
+    const pollJobStatus = async () => {
       try {
-        console.log('🔍 FRONTEND - Polling job status:', jobId);
+        pollAttempts++;
+        console.log(`🔍 FRONTEND - Polling job status (attempt ${pollAttempts}/${maxPollAttempts}):`, jobId);
         
         const response = await apiRequest<any>(`images/status/${jobId}?type=${toolType}`, {
           method: 'GET',
         });
 
         console.log('📊 FRONTEND - Job status response:', response);
-        console.log('📊 FRONTEND - Response structure check:', {
-          hasResponse: !!response,
-          hasData: !!(response && response.data),
-          directData: response,
-          nestedData: response?.data
-        });
         
         // Handle both response structures: direct data or nested in .data
         const jobData = response?.data || response;
@@ -120,13 +115,6 @@ export const useJobManagement = ({
           const { progress, state, result, error, queuePosition, estimatedWaitTime } = jobData;
           
           console.log('📈 FRONTEND - Job details:', { progress, state, result, error });
-          console.log('🔍 FRONTEND - State check:', { 
-            state, 
-            isCompleted: state === 'completed', 
-            hasResult: !!result,
-            resultType: typeof result,
-            condition: state === 'completed' && result 
-          });
           
           // Update progress if available
           if (progress !== undefined) {
@@ -154,20 +142,9 @@ export const useJobManagement = ({
           }
           
           // Handle completion
-          console.log('🎯 FRONTEND - Before completion check:', { 
-            state, 
-            result, 
-            condition: state === 'completed' && result,
-            stateMatch: state === 'completed',
-            hasResult: !!result,
-            resultDetails: result
-          });
-          
           if (state === 'completed' && result) {
             console.log('✅ FRONTEND - Job completed:', { jobId, result });
-            console.log('🛑 FRONTEND - Stopping polling for job:', jobId);
-            
-            // No need to clear interval in adaptive polling
+            clearInterval(pollInterval);
             
             const resultObj = resultProcessor(result, file);
             console.log('🎯 FRONTEND - Processed result:', resultObj);
@@ -202,13 +179,11 @@ export const useJobManagement = ({
             cleanupJobState(jobId, fileIndex);
             
             console.log('🧹 FRONTEND - Job cleanup completed for:', jobId);
-            return; // Exit early to prevent further polling
+            return;
             
           } else if (state === 'failed') {
             console.error('❌ FRONTEND - Job failed:', { jobId, error });
-            console.log('🛑 FRONTEND - Stopping polling for failed job:', jobId);
-            
-            // No need to clear interval in adaptive polling
+            clearInterval(pollInterval);
             
             toast({
               title: `${toolType.charAt(0).toUpperCase() + toolType.slice(1)} failed`,
@@ -218,32 +193,85 @@ export const useJobManagement = ({
             
             // Clean up job state
             cleanupJobState(jobId, fileIndex);
-            return; // Exit early to prevent further polling
-          } else {
-            // Job is still processing, increase poll delay gradually
-            pollDelay = Math.min(pollDelay * 1.2, maxPollDelay);
+            return;
           }
         }
-      } catch (error) {
-        console.error('❌ FRONTEND - Job polling error:', { jobId, error });
         
-        toast({
-          title: "Processing failed",
-          description: "Failed to check job status",
-          variant: "destructive"
-        });
+        // Check if we've exceeded max attempts
+        if (pollAttempts >= maxPollAttempts) {
+          console.error(`💥 FRONTEND - Max polling attempts exceeded for job ${jobId}`);
+          clearInterval(pollInterval);
+          
+          // Clean up job state
+          cleanupJobState(jobId, fileIndex);
+          
+          // Update UI to show error state
+          setVisualProgress(prev => {
+            const newProgress = { ...prev };
+            delete newProgress[fileIndex];
+            return newProgress;
+          });
+          
+          setProcessingFiles(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(fileIndex);
+            return newSet;
+          });
+          
+          toast({
+            title: "❌ Processing timeout",
+            description: "Job took too long to complete. Please try again.",
+            variant: "destructive"
+          });
+        }
         
-        // Clean up job state
-        cleanupJobState(jobId, fileIndex);
-        return; // Stop polling on error
+      } catch (pollingError: any) {
+        console.error('🚨 FRONTEND - Job polling failed:', pollingError);
+        
+        // Check for network errors
+        const isNetworkError = 
+          pollingError instanceof TypeError && 
+          (pollingError.message?.includes('Failed to fetch') || 
+           pollingError.message?.includes('NetworkError') ||
+           pollingError.message?.includes('Network request failed'));
+        
+        // If network error or we've exceeded attempts, clean up
+        if (isNetworkError || pollAttempts >= maxPollAttempts) {
+          console.warn(`🚨 FRONTEND - Stopping polling for job ${jobId} due to error or timeout`);
+          clearInterval(pollInterval);
+          
+          // Clean up job state
+          cleanupJobState(jobId, fileIndex);
+          
+          // Update UI to show error state
+          setVisualProgress(prev => {
+            const newProgress = { ...prev };
+            delete newProgress[fileIndex];
+            return newProgress;
+          });
+          
+          setProcessingFiles(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(fileIndex);
+            return newSet;
+          });
+          
+          toast({
+            title: "❌ Processing failed",
+            description: isNetworkError ? "Network error occurred while processing. Please try again." : "Processing timeout. Please try again.",
+            variant: "destructive"
+          });
+        }
+        // For other errors, continue polling (the interval will handle the next attempt)
       }
-      
-      // Schedule next poll with adaptive delay
-      setTimeout(adaptivePoll, pollDelay);
     };
     
-    // Start adaptive polling
-    adaptivePoll();
+    // Start polling with 2-second intervals
+    pollInterval = setInterval(pollJobStatus, 2000);
+    
+    // Start the first poll immediately
+    pollJobStatus();
+    
   }, [setJobIds, setFileJobMapping, setVisualProgress, setJobProgress, setQueueStatus, setResults, setProcessingFiles, toast, cleanupJobState]);
 
   const clearAllJobs = useCallback(() => {

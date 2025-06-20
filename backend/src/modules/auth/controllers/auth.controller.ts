@@ -56,7 +56,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 10, ttl: 900000 } }) // 10 attempts per 15 minutes (same as original)
+  @Throttle({ default: { limit: 5, ttl: 900000 } }) // Reduced to 5 attempts per 15 minutes for security
   @ApiOperation({ summary: 'Login a user with enhanced security' })
   @ApiResponse({
     status: 200,

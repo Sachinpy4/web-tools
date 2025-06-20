@@ -3,12 +3,30 @@
 // Check if code is running in browser environment
 const isBrowser = typeof window !== 'undefined';
 
-// Only import heic2any in browser environment
-let heic2any: any;
-if (isBrowser) {
-  import('heic2any').then(module => {
-    heic2any = module.default;
-  });
+// Cache for the heic2any module to avoid repeated imports
+let heic2anyModule: any = null;
+let heic2anyPromise: Promise<any> | null = null;
+
+/**
+ * Lazy load heic2any module with proper error handling
+ */
+async function getHeic2Any() {
+  if (heic2anyModule) {
+    return heic2anyModule;
+  }
+  
+  if (!heic2anyPromise) {
+    heic2anyPromise = import('heic2any').then(module => {
+      heic2anyModule = module.default;
+      return heic2anyModule;
+    }).catch(error => {
+      // Reset promise on error so it can be retried
+      heic2anyPromise = null;
+      throw new Error(`Failed to load HEIC converter: ${error.message}`);
+    });
+  }
+  
+  return heic2anyPromise;
 }
 
 /**
@@ -25,10 +43,8 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
   }
 
   try {
-    // Make sure heic2any is loaded
-    if (!heic2any) {
-      heic2any = (await import('heic2any')).default;
-    }
+    // Get the heic2any module with proper async handling
+    const heic2any = await getHeic2Any();
 
     // Convert the HEIC file to JPEG
     const jpegBlob = await heic2any({
@@ -43,7 +59,7 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
     return new File([jpegBlob], fileName, { type: 'image/jpeg' });
   } catch (error: any) {
     console.error('Error converting HEIC/HEIF to JPEG:', error);
-    throw new Error(`Failed to convert HEIC/HEIF image. ${error.message || ''}`);
+    throw new Error(`Failed to convert HEIC/HEIF image: ${error.message || 'Unknown error'}`);
   }
 }
 
@@ -62,7 +78,7 @@ export async function processHeicFiles(files: File[]): Promise<File[]> {
     try {
       return await convertHeicToJpeg(file);
     } catch (error: any) {
-      console.error(`Error processing file ${file.name}:`, error);
+      console.warn(`Error processing file ${file.name}:`, error);
       return file; // Return original file if conversion fails
     }
   });

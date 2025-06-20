@@ -174,9 +174,18 @@ export default function ImageDropzone({
       if (file.size > maxSize) {
         return {
           code: 'file-too-large',
-          message: `File size exceeds the ${maxSize / (1024 * 1024)}MB limit.`
+          message: `File "${file.name}" is ${(file.size / (1024 * 1024)).toFixed(1)}MB, which exceeds the ${(maxSize / (1024 * 1024)).toFixed(0)}MB limit.`
         };
       }
+      
+      // Additional validation for very large files that might cause memory issues
+      if (file.size > 100 * 1024 * 1024) { // 100MB
+        return {
+          code: 'file-too-large',
+          message: `File "${file.name}" is extremely large (${(file.size / (1024 * 1024)).toFixed(1)}MB). Consider using a smaller image for better performance.`
+        };
+      }
+      
       // Let the built-in validators handle other errors
       return null;
     }
