@@ -46,8 +46,8 @@ Disallow: /*?page=*
 # CRAWL DELAY: Be respectful to server resources
 Crawl-delay: 1
 
-# SITEMAP: Point to sitemap location (when you create one)
-# Sitemap: https://toolscandy.com/sitemap.xml
+# SITEMAP: Point to sitemap location
+Sitemap: https://toolscandy.com/sitemap.xml
 
 # SPECIFIC RULES FOR MAJOR SEARCH ENGINES
 

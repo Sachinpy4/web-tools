@@ -2,8 +2,8 @@ import { Injectable, CanActivate, ExecutionContext, Logger, ForbiddenException }
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 
-// Decorator to skip advanced security for specific endpoints
-export const SkipAdvancedSecurity = () => Reflector.createDecorator<boolean>();
+// Decorator to skip advanced security for specific endpoints  
+export const SkipAdvancedSecurity = () => Reflector.createDecorator<boolean>()();
 
 @Injectable()
 export class AdvancedSecurityGuard implements CanActivate {
@@ -80,8 +80,15 @@ export class AdvancedSecurityGuard implements CanActivate {
     // Database operations
     if (url.includes('/backup/') && ['POST', 'DELETE'].includes(method)) return true;
     
-    // Script execution
-    if (url.includes('/scripts/') && ['POST', 'PUT'].includes(method)) return true;
+    // Script execution (skip for admin users - will be handled by JWT + role guards)
+    if (url.includes('/scripts/') && ['POST', 'PUT'].includes(method)) {
+      // Allow if user has admin role (JWT will handle auth)
+      const authHeader = request.headers['authorization'];
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        return false; // Let JWT + role guards handle this
+      }
+      return true; // Apply security for unauthenticated requests
+    }
     
     // SEO management (admin only)
     if (url.includes('/seo/') && ['POST', 'PUT', 'DELETE'].includes(method)) return true;

@@ -4,7 +4,7 @@
 const CACHE_NAME = 'toolscandy-v1';
 const OFFLINE_URL = '/offline';
 const MAX_CACHE_SIZE = 50; // Maximum number of cached items
-const CACHE_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+const CACHE_EXPIRY = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
 
 // Assets to cache immediately when service worker installs
 const STATIC_ASSETS = [
