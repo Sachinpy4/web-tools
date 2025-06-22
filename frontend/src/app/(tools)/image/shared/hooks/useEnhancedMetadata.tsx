@@ -5,6 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Progress } from '@/components/ui/progress'
 import exifr from 'exifr'
 
+
+
 interface ImageMetadata {
   // Basic file information
   fileName: string
@@ -47,6 +49,18 @@ interface ImageMetadata {
     whiteBalance?: string
     exposureMode?: string
     meteringMode?: string
+    sceneCaptureType?: string
+    contrast?: string
+    saturation?: string
+    sharpness?: string
+    digitalZoomRatio?: string
+    subjectDistance?: string
+    lightSource?: string
+    artist?: string
+    copyright?: string
+    software?: string
+    imageDescription?: string
+    userComment?: string
   }
   
   // Content analysis
@@ -104,7 +118,9 @@ export function useEnhancedMetadata() {
   // Extract EXIF data
   const extractExifData = async (file: File): Promise<any> => {
     try {
+      // Use comprehensive EXIF extraction options
       const exifData = await exifr.parse(file, {
+        // Enable all possible data segments
         tiff: true,
         exif: true,
         gps: true,
@@ -112,94 +128,195 @@ export function useEnhancedMetadata() {
         iptc: true,
         jfif: true,
         ihdr: true, // PNG chunks
+        
+        // Processing options
         sanitize: false,
-        mergeOutput: false,
+        mergeOutput: true, // Changed to true for better data access
         translateKeys: true,
         translateValues: true,
-        reviveValues: true
+        reviveValues: true,
+        
+        // Include additional segments
+        makerNote: true,
+        userComment: true,
+        
+        // Ensure we get all available tags
+        pick: undefined, // Don't filter any tags
+        skip: undefined  // Don't skip any tags
       })
 
-      if (!exifData) {
+      if (!exifData || (typeof exifData === 'object' && Object.keys(exifData).length === 0)) {
         return {}
       }
 
       // Format the data for display
       const formattedExif: any = {}
 
-      // Camera information
-      if (exifData.Make || exifData.Model) {
-        formattedExif.camera = `${exifData.Make || ''} ${exifData.Model || ''}`.trim()
+      // Camera information - check multiple possible fields
+      if (exifData.Make || exifData.Model || exifData.CameraMake || exifData.CameraModel) {
+        const make = exifData.Make || exifData.CameraMake || '';
+        const model = exifData.Model || exifData.CameraModel || '';
+        formattedExif.camera = `${make} ${model}`.trim();
       }
 
-      // Lens information
-      if (exifData.LensModel || exifData.LensMake) {
-        formattedExif.lens = `${exifData.LensMake || ''} ${exifData.LensModel || ''}`.trim()
+      // Lens information - check multiple possible fields
+      if (exifData.LensModel || exifData.LensMake || exifData.LensInfo || exifData.Lens) {
+        const lensMake = exifData.LensMake || '';
+        const lensModel = exifData.LensModel || exifData.Lens || '';
+        formattedExif.lens = `${lensMake} ${lensModel}`.trim();
       }
 
-      // Camera settings
-      if (exifData.FocalLength) {
-        formattedExif.focalLength = `${exifData.FocalLength}mm`
+      // Camera settings with better field checking
+      if (exifData.FocalLength || exifData.FocalLengthIn35mmFormat) {
+        const focal = exifData.FocalLength || exifData.FocalLengthIn35mmFormat;
+        formattedExif.focalLength = `${focal}mm`;
       }
 
-      if (exifData.FNumber) {
-        formattedExif.aperture = `f/${exifData.FNumber}`
+             if (exifData.FNumber || exifData.ApertureValue) {
+         const aperture = exifData.FNumber || exifData.ApertureValue;
+         // Handle aperture values that might be already formatted or need conversion
+         const apertureStr = String(aperture);
+         if (apertureStr.includes('f/')) {
+           formattedExif.aperture = apertureStr;
+         } else {
+           formattedExif.aperture = `f/${aperture}`;
+         }
+       }
+
+      if (exifData.ExposureTime || exifData.ShutterSpeedValue) {
+        const exposure = exifData.ExposureTime || exifData.ShutterSpeedValue;
+        formattedExif.shutterSpeed = exposure < 1 
+          ? `1/${Math.round(1 / exposure)}s`
+          : `${exposure}s`;
       }
 
-      if (exifData.ExposureTime) {
-        formattedExif.shutterSpeed = exifData.ExposureTime < 1 
-          ? `1/${Math.round(1 / exifData.ExposureTime)}s`
-          : `${exifData.ExposureTime}s`
-      }
-
-      if (exifData.ISO) {
-        formattedExif.iso = `ISO ${exifData.ISO}`
+      if (exifData.ISO || exifData.ISOSpeedRatings || exifData.PhotographicSensitivity) {
+        const iso = exifData.ISO || exifData.ISOSpeedRatings || exifData.PhotographicSensitivity;
+        formattedExif.iso = `ISO ${iso}`;
       }
 
       if (exifData.Flash !== undefined) {
-        formattedExif.flash = exifData.Flash === 0 ? 'No Flash' : 'Flash'
+        // Flash field is a bitmask, check if flash fired
+        const flashFired = (exifData.Flash & 0x01) !== 0;
+        formattedExif.flash = flashFired ? 'Flash Fired' : 'No Flash';
       }
 
-      // Date and time
-      if (exifData.DateTimeOriginal || exifData.DateTime || exifData.CreateDate) {
-        const date = exifData.DateTimeOriginal || exifData.DateTime || exifData.CreateDate
-        formattedExif.dateTime = date instanceof Date ? date.toLocaleString() : String(date)
+      // Date and time - check multiple fields
+      const dateFields = [
+        exifData.DateTimeOriginal,
+        exifData.DateTime, 
+        exifData.CreateDate,
+        exifData.DateTimeDigitized,
+        exifData.ModifyDate
+      ];
+      
+      const dateValue = dateFields.find(date => date);
+      if (dateValue) {
+        formattedExif.dateTime = dateValue instanceof Date 
+          ? dateValue.toLocaleString() 
+          : String(dateValue);
       }
 
-      // GPS information
-      if (exifData.latitude && exifData.longitude) {
-        formattedExif.gps = {
-          latitude: parseFloat(String(exifData.latitude)),
-          longitude: parseFloat(String(exifData.longitude)),
-          altitude: exifData.GPSAltitude ? parseFloat(String(exifData.GPSAltitude)) : undefined
-        }
-      }
+             // GPS information - check multiple coordinate formats
+       const lat = exifData.latitude || exifData.GPSLatitude;
+       const lon = exifData.longitude || exifData.GPSLongitude;
+       
+       if (lat && lon && lat !== null && lon !== null && lat !== 0 && lon !== 0) {
+         formattedExif.gps = {
+           latitude: parseFloat(String(lat)),
+           longitude: parseFloat(String(lon)),
+           altitude: exifData.GPSAltitude ? parseFloat(String(exifData.GPSAltitude)) : undefined
+         };
+       }
 
       // Orientation
       if (exifData.Orientation) {
-        formattedExif.orientation = exifData.Orientation
+        formattedExif.orientation = exifData.Orientation;
       }
 
-      // Additional technical data
-      if (exifData.ColorSpace) {
-        formattedExif.colorSpace = exifData.ColorSpace
-      }
+             // Additional technical data
+       if (exifData.ColorSpace) {
+         // Convert numeric color space values to readable names
+         const colorSpace = exifData.ColorSpace;
+         if (colorSpace === 1) {
+           formattedExif.colorSpace = 'sRGB';
+         } else if (colorSpace === 2) {
+           formattedExif.colorSpace = 'Adobe RGB';
+         } else if (colorSpace === 0xFFFF) {
+           formattedExif.colorSpace = 'Uncalibrated';
+         } else {
+           formattedExif.colorSpace = String(colorSpace);
+         }
+       }
 
       if (exifData.WhiteBalance) {
-        formattedExif.whiteBalance = exifData.WhiteBalance
+        formattedExif.whiteBalance = exifData.WhiteBalance;
       }
 
       if (exifData.ExposureMode) {
-        formattedExif.exposureMode = exifData.ExposureMode
+        formattedExif.exposureMode = exifData.ExposureMode;
       }
 
       if (exifData.MeteringMode) {
-        formattedExif.meteringMode = exifData.MeteringMode
+        formattedExif.meteringMode = exifData.MeteringMode;
       }
 
-      return formattedExif
+      // Additional fields that are commonly available
+      if (exifData.SceneCaptureType) {
+        formattedExif.sceneCaptureType = exifData.SceneCaptureType;
+      }
+
+      if (exifData.Contrast) {
+        formattedExif.contrast = exifData.Contrast;
+      }
+
+      if (exifData.Saturation) {
+        formattedExif.saturation = exifData.Saturation;
+      }
+
+      if (exifData.Sharpness) {
+        formattedExif.sharpness = exifData.Sharpness;
+      }
+
+             if (exifData.DigitalZoomRatio) {
+         const ratio = parseFloat(String(exifData.DigitalZoomRatio));
+         formattedExif.digitalZoomRatio = ratio === 1 ? 'None' : `${ratio}x`;
+       }
+
+      if (exifData.SubjectDistance) {
+        formattedExif.subjectDistance = exifData.SubjectDistance;
+      }
+
+      if (exifData.LightSource) {
+        formattedExif.lightSource = exifData.LightSource;
+      }
+
+      // Copyright and metadata
+      if (exifData.Artist) {
+        formattedExif.artist = exifData.Artist;
+      }
+
+      if (exifData.Copyright) {
+        formattedExif.copyright = exifData.Copyright;
+      }
+
+      if (exifData.Software) {
+        formattedExif.software = exifData.Software;
+      }
+
+      if (exifData.ImageDescription) {
+        formattedExif.imageDescription = exifData.ImageDescription;
+      }
+
+      if (exifData.UserComment) {
+        formattedExif.userComment = exifData.UserComment;
+      }
+
+             return formattedExif;
+       
     } catch (error) {
-      console.warn('Failed to extract EXIF data:', error)
-      return {}
+      console.warn('Failed to extract EXIF data:', error);
+      return {};
     }
   }
   
@@ -292,62 +409,68 @@ export function useEnhancedMetadata() {
   const analyzeImage = useCallback(async (file: File): Promise<ImageMetadata> => {
     setIsAnalyzing(true)
     
-    return new Promise((resolve, reject) => {
-      const img = new Image()
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')
+    try {
+      // Extract EXIF data FIRST from the original file (before any processing)
+      const exifData = await extractExifData(file)
       
-      img.onload = async () => {
-        try {
-          canvas.width = img.width
-          canvas.height = img.height
-          ctx?.drawImage(img, 0, 0)
-          
-          // Extract EXIF data
-          const exifData = await extractExifData(file)
-          
-          // Analyze content
-          const contentAnalysis = ctx ? analyzeImageContent(canvas, ctx) : {
-            isPhotographic: true,
-            hasTransparency: false,
-            dominantColors: [],
-            brightness: 0,
-            contrast: 0,
-            sharpness: 0,
-            compressionPotential: { jpeg: 0, webp: 0, avif: 0 }
+      // Then process the image for visual analysis
+      return new Promise((resolve, reject) => {
+        const img = new Image()
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        
+        img.onload = async () => {
+          try {
+            canvas.width = img.width
+            canvas.height = img.height
+            ctx?.drawImage(img, 0, 0)
+            
+            // Analyze content
+            const contentAnalysis = ctx ? analyzeImageContent(canvas, ctx) : {
+              isPhotographic: true,
+              hasTransparency: false,
+              dominantColors: [],
+              brightness: 0,
+              contrast: 0,
+              sharpness: 0,
+              compressionPotential: { jpeg: 0, webp: 0, avif: 0 }
+            }
+            
+            const metadata: ImageMetadata = {
+              fileName: file.name,
+              fileSize: file.size,
+              fileSizeFormatted: formatFileSize(file.size),
+              format: file.name.split('.').pop()?.toUpperCase() || 'UNKNOWN',
+              mimeType: file.type,
+              width: img.width,
+              height: img.height,
+              aspectRatio: calculateAspectRatio(img.width, img.height),
+              megapixels: ((img.width * img.height) / 1000000).toFixed(1),
+              hasTransparency: contentAnalysis.hasTransparency,
+              exif: exifData, // Use the EXIF data extracted from original file
+              contentAnalysis
+            }
+            
+            setMetadata(metadata)
+            setIsAnalyzing(false)
+            resolve(metadata)
+          } catch (error) {
+            setIsAnalyzing(false)
+            reject(error)
           }
-          
-          const metadata: ImageMetadata = {
-            fileName: file.name,
-            fileSize: file.size,
-            fileSizeFormatted: formatFileSize(file.size),
-            format: file.name.split('.').pop()?.toUpperCase() || 'UNKNOWN',
-            mimeType: file.type,
-            width: img.width,
-            height: img.height,
-            aspectRatio: calculateAspectRatio(img.width, img.height),
-            megapixels: ((img.width * img.height) / 1000000).toFixed(1),
-            hasTransparency: contentAnalysis.hasTransparency,
-            exif: exifData,
-            contentAnalysis
-          }
-          
-          setMetadata(metadata)
-          setIsAnalyzing(false)
-          resolve(metadata)
-        } catch (error) {
-          setIsAnalyzing(false)
-          reject(error)
         }
-      }
-      
-      img.onerror = () => {
-        setIsAnalyzing(false)
-        reject(new Error('Failed to load image'))
-      }
-      
-      img.src = URL.createObjectURL(file)
-    })
+        
+        img.onerror = () => {
+          setIsAnalyzing(false)
+          reject(new Error('Failed to load image'))
+        }
+        
+        img.src = URL.createObjectURL(file)
+      })
+    } catch (error) {
+      setIsAnalyzing(false)
+      throw error
+    }
   }, [])
   
   // Render metadata display

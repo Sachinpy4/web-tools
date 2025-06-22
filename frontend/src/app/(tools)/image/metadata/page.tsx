@@ -90,15 +90,15 @@ const ColorPalette: React.FC<{ colors: string[], title?: string }> = ({ colors, 
         {colors.map((color, index) => (
           <div
             key={index}
-            className="group cursor-pointer transition-transform hover:scale-110"
+            className="group cursor-pointer transition-transform hover:scale-110 active:scale-95"
             onClick={() => copyColor(color)}
             title={`Click to copy ${color}`}
           >
             <div
-              className="w-8 h-8 rounded-lg border-2 border-white shadow-md"
+              className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg border-2 border-white shadow-md touch-manipulation"
               style={{ backgroundColor: color }}
             />
-            <p className="text-xs text-center mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <p className="text-xs text-center mt-1 opacity-0 group-hover:opacity-100 sm:group-hover:opacity-100 transition-opacity">
               {color.replace('rgb(', '').replace(')', '')}
             </p>
           </div>
@@ -376,15 +376,52 @@ const QuickStats: React.FC<{ metadata: any }> = ({ metadata }) => {
 const parseCameraComment = (comment: string) => {
   if (!comment || typeof comment !== 'string') return null;
   
-  // Check if it looks like MediaTek structured data
+  // Check if it's a long numeric string (might be encoded data)
+  if (/^\d+$/.test(comment) && comment.length > 50) {
+    // This appears to be encoded/binary data, don't try to parse it
+    return null;
+  }
+  
+  // Check if it's a hex string
+  if (/^[0-9a-fA-F]+$/.test(comment) && comment.length > 20) {
+    // This appears to be hex-encoded data, don't try to parse it
+    return null;
+  }
+  
+  // Check if it looks like MediaTek structured data (with semicolons and colons)
   if (comment.includes(';') && comment.includes(':')) {
-    const pairs = comment.split(';').map(pair => pair.trim()).filter(Boolean);
+    // Split by both semicolons and newlines to handle mixed formatting
+    const pairs = comment.split(/[;\n]/).map(pair => pair.trim()).filter(Boolean);
     const parsed: Record<string, string> = {};
     
     pairs.forEach(pair => {
-      const [key, value] = pair.split(':').map(str => str.trim());
-      if (key && value !== undefined) {
-        parsed[key] = value;
+      const colonIndex = pair.indexOf(':');
+      if (colonIndex > 0) {
+        const key = pair.substring(0, colonIndex).trim();
+        const value = pair.substring(colonIndex + 1).trim();
+        if (key && value !== undefined) {
+          parsed[key] = value;
+        }
+      }
+    });
+    
+    return Object.keys(parsed).length > 0 ? parsed : null;
+  }
+  
+  // Check for other structured formats (key=value pairs)
+  if (comment.includes('=') && (comment.includes(';') || comment.includes('&'))) {
+    const separator = comment.includes(';') ? ';' : '&';
+    const pairs = comment.split(separator).map(pair => pair.trim()).filter(Boolean);
+    const parsed: Record<string, string> = {};
+    
+    pairs.forEach(pair => {
+      const equalIndex = pair.indexOf('=');
+      if (equalIndex > 0) {
+        const key = pair.substring(0, equalIndex).trim();
+        const value = pair.substring(equalIndex + 1).trim();
+        if (key && value !== undefined) {
+          parsed[key] = value;
+        }
       }
     });
     
@@ -399,12 +436,61 @@ const CameraCommentDisplay: React.FC<{ comment: string }> = ({ comment }) => {
   const parsedData = parseCameraComment(comment);
   
   if (!parsedData) {
-    return <p className="font-medium text-sm leading-relaxed">{comment}</p>;
+    // Handle different types of unstructured comments
+    if (comment.length > 100) {
+      // Long comment - likely encoded data
+      if (/^\d+$/.test(comment)) {
+        return (
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">Binary/Encoded Data</p>
+            <div className="bg-muted/30 p-3 rounded-lg">
+              <p className="font-mono text-xs break-all leading-relaxed">
+                {comment.substring(0, 100)}...
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                {comment.length} characters of encoded data
+              </p>
+            </div>
+          </div>
+        );
+      } else if (/^[0-9a-fA-F]+$/.test(comment)) {
+        return (
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">Hexadecimal Data</p>
+            <div className="bg-muted/30 p-3 rounded-lg">
+              <p className="font-mono text-xs break-all leading-relaxed">
+                {comment.substring(0, 100)}...
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                {comment.length} characters of hex data
+              </p>
+            </div>
+          </div>
+        );
+      } else {
+        // Long text comment
+        return (
+          <div className="space-y-2">
+            <details className="cursor-pointer">
+              <summary className="text-sm font-medium hover:text-primary">
+                View full comment ({comment.length} characters)
+              </summary>
+              <div className="mt-2 bg-muted/30 p-3 rounded-lg">
+                <p className="text-sm leading-relaxed break-words">{comment}</p>
+              </div>
+            </details>
+          </div>
+        );
+      }
+    } else {
+      // Short comment - display normally
+      return <p className="font-medium text-sm leading-relaxed break-words">{comment}</p>;
+    }
   }
   
   // Group parameters by category
   const categories = {
-    'Camera Settings': ['filter', 'filterIntensity', 'filterMask', 'captureOrientation', 'sceneMode', 'module'],
+    'Camera Settings': ['filter', 'filterIntensity', 'fileterIntensity', 'filterMask', 'captureOrientation', 'sceneMode', 'module'],
     'Processing': ['algolist', 'multi-frame', 'hw-remosaic', 'brp_mask', 'brp_del_th', 'brp_del_sen'],
     'Scene Analysis': ['AI_Scene', 'aec_lux', 'aec_lux_index', 'cct_value', 'motionLevel'],
     'Environment': ['weatherinfo', 'temperature', 'touch', 'albedo', 'confidence', 'delta']
@@ -541,19 +627,7 @@ export default function MetadataAnalysisTool() {
       'image/jpx',
       'image/jpm',
       'image/mj2',
-      // Common RAW camera formats - metadata extraction only
-      'image/x-canon-cr2',
-      'image/x-canon-cr3',
-      'image/x-canon-crw',
-      'image/x-nikon-nef',
-      'image/x-sony-arw',
-      'image/x-adobe-dng',
-      'image/x-panasonic-raw',
-      'image/x-olympus-orf',
-      'image/x-fuji-raf',
-      'image/x-pentax-pef',
-      'image/x-samsung-srw',
-      'image/x-sigma-x3f'
+      // Note: RAW formats not currently supported due to browser limitations
     ]
     
     const imageFiles = droppedFiles.filter(file => 
@@ -792,9 +866,9 @@ export default function MetadataAnalysisTool() {
       />
       
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {/* Left: Upload & Controls */}
-          <div className="xl:col-span-1 space-y-6">
+          <div className="lg:col-span-1 xl:col-span-1 space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -802,7 +876,7 @@ export default function MetadataAnalysisTool() {
                   Upload Images
                 </CardTitle>
                 <CardDescription>
-                  Upload images to analyze their metadata and properties. Supports JPEG, PNG, WebP, TIFF, BMP, HEIC, and more.
+                  Upload images to analyze their metadata and properties. Supports JPEG, PNG, WebP, TIFF, BMP, HEIC, AVIF, and more. RAW camera formats not supported.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -926,7 +1000,7 @@ export default function MetadataAnalysisTool() {
           </div>
 
           {/* Center: Image Preview */}
-          <div className="xl:col-span-1">
+          <div className="lg:col-span-1 xl:col-span-1">
             <Card className="h-fit">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -965,7 +1039,7 @@ export default function MetadataAnalysisTool() {
           </div>
 
           {/* Right: Metadata Analysis */}
-          <div className="xl:col-span-2">
+          <div className="lg:col-span-1 xl:col-span-2">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1078,6 +1152,7 @@ export default function MetadataAnalysisTool() {
                     </TabsContent>
                     
                     <TabsContent value="camera" className="space-y-6 mt-6">
+
                       {metadata.exif && Object.keys(metadata.exif).length > 0 ? (
                         <>
                           {/* Camera Information */}
@@ -1174,7 +1249,7 @@ export default function MetadataAnalysisTool() {
                             </div>
                           </div>
 
-                          {metadata.exif.gps && (
+                          {metadata.exif.gps && metadata.exif.gps.latitude && metadata.exif.gps.longitude && (
                             <>
                               <Separator />
                               {/* GPS Information */}
@@ -1329,19 +1404,83 @@ export default function MetadataAnalysisTool() {
                           )}
                         </>
                       ) : (
-                        <div className="text-center py-16 text-muted-foreground">
+                                                <div className="text-center py-16 text-muted-foreground">
                           <Camera className="h-16 w-16 mx-auto mb-4 opacity-30" />
                           <p className="text-lg font-medium">No Camera Data</p>
-                          <div className="space-y-2 text-sm">
+                          <div className="space-y-4 text-sm">
                             <p>This image doesn't contain EXIF camera information</p>
+                            
+                            {/* Diagnostic Information */}
+                            <div className="bg-muted/30 p-4 rounded-lg text-left">
+                              <h4 className="font-medium mb-2 text-center">Diagnostic Info</h4>
+                              <div className="space-y-1 text-xs">
+                                <div className="flex justify-between">
+                                  <span>File Format:</span>
+                                  <span className="font-medium">{metadata.format}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>File Size:</span>
+                                  <span className="font-medium">{metadata.fileSizeFormatted}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>MIME Type:</span>
+                                  <span className="font-mono text-xs">{metadata.mimeType}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Any EXIF Data:</span>
+                                  <span className="font-medium">
+                                    {metadata.exif && Object.keys(metadata.exif).length > 0 ? 'Yes' : 'No'}
+                                  </span>
+                                </div>
+                                {metadata.exif && Object.keys(metadata.exif).length > 0 && (
+                                  <div className="flex justify-between">
+                                    <span>EXIF Fields:</span>
+                                    <span className="font-medium">{Object.keys(metadata.exif).length}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
                             <div className="text-xs opacity-75">
-                              <p>Common reasons:</p>
-                              <ul className="list-disc list-inside space-y-1 mt-1">
-                                <li>Screenshot or generated image</li>
-                                <li>Edited/processed image with stripped metadata</li>
-                                <li>Web image without camera info</li>
-                                <li>Privacy settings removed EXIF data</li>
-                              </ul>
+                              <p className="font-medium mb-2">Common reasons for missing camera data:</p>
+                              <div className="grid grid-cols-1 gap-2 text-left">
+                                {/* Format-specific reasons */}
+                                {(metadata.format === 'PNG' || metadata.format === 'GIF' || metadata.format === 'SVG') && (
+                                  <div className="bg-yellow-50 dark:bg-yellow-950/20 p-2 rounded border border-yellow-200 dark:border-yellow-800">
+                                    <span className="text-yellow-800 dark:text-yellow-200 font-medium">
+                                      {metadata.format} format has limited or no EXIF support
+                                    </span>
+                                  </div>
+                                )}
+                                
+                                {/* Size-based detection */}
+                                {metadata.fileSize < 50000 && (
+                                  <div className="bg-blue-50 dark:bg-blue-950/20 p-2 rounded border border-blue-200 dark:border-blue-800">
+                                    <span className="text-blue-800 dark:text-blue-200 font-medium">
+                                      Small file size suggests processed/compressed image
+                                    </span>
+                                  </div>
+                                )}
+
+                                {/* Dimension-based detection */}
+                                {(metadata.width % 16 === 0 && metadata.height % 9 === 0) && (
+                                  <div className="bg-purple-50 dark:bg-purple-950/20 p-2 rounded border border-purple-200 dark:border-purple-800">
+                                    <span className="text-purple-800 dark:text-purple-200 font-medium">
+                                      Standard aspect ratio suggests screenshot or edited image
+                                    </span>
+                                  </div>
+                                )}
+
+                                {/* General reasons */}
+                                <ul className="list-disc list-inside space-y-1 mt-2">
+                                  <li>Screenshot or generated image</li>
+                                  <li>Social media download (metadata stripped)</li>
+                                  <li>Edited/processed image</li>
+                                  <li>Privacy settings removed EXIF data</li>
+                                  <li>Web image without camera info</li>
+                                  <li>Scanned document or photo</li>
+                                </ul>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1402,13 +1541,8 @@ export default function MetadataAnalysisTool() {
                             </div>
                           )}
 
-                          {/* Face Color Analysis */}
-                          {metadata.faceAnalysis && (
-                            <>
-                              <Separator />
-                              <FaceColorPalette faceAnalysis={metadata.faceAnalysis} />
-                            </>
-                          )}
+                                    {/* Face Color Analysis - Feature planned for future */}
+          {/* TODO: Implement face detection and color analysis */}
                         </>
                       )}
                     </TabsContent>
