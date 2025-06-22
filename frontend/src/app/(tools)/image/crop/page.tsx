@@ -50,9 +50,18 @@ export default function CropTool() {
   const [originalDimensions, setOriginalDimensions] = useState<{width: number, height: number}>({ width: 0, height: 0 })
   const [isLoading, setIsLoading] = useState(false)
   const [results, setResults] = useState<any[]>([])
+  const [isMobile, setIsMobile] = useState(false)
   
   const { toast } = useToast()
   const { processingMode } = useProcessingMode()
+  
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // Add rate limit tracking
   const { rateLimitUsage, setRateLimitUsage, updateRateLimitFromError } = useRateLimitTracking();
@@ -190,6 +199,100 @@ export default function CropTool() {
     pixelCrop.height = Math.max(1, pixelCrop.height);
     
     return pixelCrop;
+  };
+  
+  // NEW: Improved scaling calculation that accounts for aspect ratio preservation
+  const calculateProperScaling = (imageElement: HTMLImageElement, originalWidth: number, originalHeight: number) => {
+    // Get the actual displayed dimensions
+    const displayedWidth = imageElement.width;
+    const displayedHeight = imageElement.height;
+    
+    // Calculate aspect ratios
+    const originalAspect = originalWidth / originalHeight;
+    const displayedAspect = displayedWidth / displayedHeight;
+    
+    // Determine how the image is actually scaled (object-contain behavior)
+    let actualDisplayedWidth: number;
+    let actualDisplayedHeight: number;
+    
+    if (originalAspect > displayedAspect) {
+      // Original image is wider - constrained by width
+      actualDisplayedWidth = displayedWidth;
+      actualDisplayedHeight = displayedWidth / originalAspect;
+    } else {
+      // Original image is taller - constrained by height  
+      actualDisplayedHeight = displayedHeight;
+      actualDisplayedWidth = displayedHeight * originalAspect;
+    }
+    
+    // Calculate the scaling factors
+    const scaleX = originalWidth / actualDisplayedWidth;
+    const scaleY = originalHeight / actualDisplayedHeight;
+    
+    // Calculate offsets if image is centered in the display area
+    const offsetX = (displayedWidth - actualDisplayedWidth) / 2;
+    const offsetY = (displayedHeight - actualDisplayedHeight) / 2;
+    
+    return {
+      scaleX,
+      scaleY,
+      offsetX,
+      offsetY,
+      actualDisplayedWidth,
+      actualDisplayedHeight
+    };
+  };
+
+  // NEW: Comprehensive bounds validation function
+  const validateAndClampCropBounds = (cropData: { x: number; y: number; width: number; height: number }) => {
+    const { width: maxWidth, height: maxHeight } = originalDimensions;
+    
+    // Ensure minimum sizes
+    const minSize = 1;
+    let { x, y, width, height } = cropData;
+    
+    // Clamp width and height to minimums and maximums
+    width = Math.max(minSize, Math.min(width, maxWidth));
+    height = Math.max(minSize, Math.min(height, maxHeight));
+    
+    // Clamp x and y to valid ranges (considering crop dimensions)
+    x = Math.max(0, Math.min(x, maxWidth - width));
+    y = Math.max(0, Math.min(y, maxHeight - height));
+    
+    return { x, y, width, height };
+  };
+
+  // NEW: Synchronized state update function to keep crop and completedCrop in sync
+  const updateCropState = (newCropData: Partial<{ x: number; y: number; width: number; height: number }>) => {
+    // Get current values or defaults
+    const currentCrop = completedCrop || { x: 0, y: 0, width: 0, height: 0, unit: 'px' as const };
+    
+    // Merge new data with current values
+    const updatedCrop = {
+      x: newCropData.x !== undefined ? newCropData.x : currentCrop.x,
+      y: newCropData.y !== undefined ? newCropData.y : currentCrop.y,
+      width: newCropData.width !== undefined ? newCropData.width : currentCrop.width,
+      height: newCropData.height !== undefined ? newCropData.height : currentCrop.height,
+    };
+    
+    // Validate and clamp bounds
+    const validatedCrop = validateAndClampCropBounds(updatedCrop);
+    
+    // Update both states synchronously
+    const newCrop: CropType = {
+      unit: 'px',
+      ...validatedCrop
+    };
+    
+    const newCompletedCrop: PixelCrop = {
+      unit: 'px',
+      ...validatedCrop
+    };
+    
+    setCrop(newCrop);
+    setCompletedCrop(newCompletedCrop);
+    
+    return validatedCrop;
   };
   
   // Function to attempt crop with retry
@@ -341,13 +444,12 @@ export default function CropTool() {
       }
       
       // Calculate scaling ratio between displayed image and original
-      const scaleX = imageWidth / imageElement.width;
-      const scaleY = imageHeight / imageElement.height;
+      const { scaleX, scaleY, offsetX, offsetY, actualDisplayedWidth, actualDisplayedHeight } = calculateProperScaling(imageElement, imageWidth, imageHeight);
       
-      // Scale the crop coordinates to match the original image dimensions
+      // Adjust crop coordinates to account for centering offset, then scale to original dimensions
       const scaledCrop = {
-        x: Math.round(pixelCrop.x * scaleX),
-        y: Math.round(pixelCrop.y * scaleY),
+        x: Math.round((pixelCrop.x - offsetX) * scaleX),
+        y: Math.round((pixelCrop.y - offsetY) * scaleY),
         width: Math.round(pixelCrop.width * scaleX),
         height: Math.round(pixelCrop.height * scaleY)
       };
@@ -366,9 +468,11 @@ export default function CropTool() {
       
       console.log('Image element size:', imageElement.width, 'x', imageElement.height);
       console.log('Original dimensions:', imageWidth, 'x', imageHeight);
+      console.log('Actual displayed size:', actualDisplayedWidth, 'x', actualDisplayedHeight);
+      console.log('Offsets:', { offsetX, offsetY });
+      console.log('Scale factors:', { scaleX, scaleY });
       console.log('Original crop:', completedCrop);
       console.log('Pixel crop:', pixelCrop);
-      console.log('Scale factors:', scaleX, scaleY);
       console.log('Scaled crop:', scaledCrop);
       
       // Process the crop with retry mechanism
@@ -659,9 +763,9 @@ export default function CropTool() {
         
         {/* Crop Area */}
         {selectedFileIndex !== null && (
-          <Card className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-              <h3 className="text-lg font-medium">Crop Image</h3>
+          <Card className="p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-4 sm:mb-6">
+              <h3 className="text-base sm:text-lg font-medium">Crop Image</h3>
               {processingMode === 'queued' && (
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <Server className="h-3 w-3" /> Queue mode
@@ -669,10 +773,10 @@ export default function CropTool() {
               )}
             </div>
             
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
               {/* Image preview with crop */}
               <div className="xl:col-span-2">
-                <div className="bg-accent/10 rounded-lg p-4 overflow-hidden">
+                <div className="bg-accent/10 rounded-lg p-2 sm:p-4 overflow-hidden">
                   {previews[selectedFileIndex] && (
                     <div className="flex justify-center">
                       <ReactCrop
@@ -681,13 +785,16 @@ export default function CropTool() {
                         onComplete={(c: PixelCrop) => setCompletedCrop(c)}
                         aspect={undefined}
                         circularCrop={false}
+                        minWidth={20} // Larger minimum for mobile
+                        minHeight={20}
+                        className="max-w-full"
                       >
                         <img
                           ref={imgRef}
                           src={previews[selectedFileIndex]}
                           alt={files[selectedFileIndex].name}
                           style={{ 
-                            maxHeight: '450px', 
+                            maxHeight: isMobile ? '300px' : '450px', // Smaller on mobile
                             maxWidth: '100%',
                             height: 'auto',
                             width: 'auto'
@@ -707,27 +814,27 @@ export default function CropTool() {
                     </div>
                   )}
                   
-                  <div className="w-full mt-4 text-sm text-center text-muted-foreground">
-                    <p>Click and drag on the image to select the area you want to crop.</p>
+                  <div className="w-full mt-2 sm:mt-4 text-xs sm:text-sm text-center text-muted-foreground">
+                    <p className="hidden sm:block">Click and drag on the image to select the area you want to crop.</p>
+                    <p className="sm:hidden">Tap and drag to select crop area. Use controls below for precise adjustments.</p>
                   </div>
                 </div>
               </div>
               
               {/* Crop controls */}
-              <div className="xl:col-span-1 space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="xl:col-span-1 space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-2 gap-2 sm:gap-4">
                   <div>
                     <Label htmlFor="crop-x" className="text-sm font-medium">X Position</Label>
                     <Input
                       id="crop-x"
                       type="number"
                       min="0"
-                      max={originalDimensions.width - (completedCrop?.width || 0)}
+                      max={Math.max(0, originalDimensions.width - (completedCrop?.width || 1))}
                       value={Math.round(completedCrop?.x || 0)}
                       onChange={(e) => {
-                        const x = parseInt(e.target.value) || 0
-                        setCrop((prev: CropType) => ({ ...prev, x }))
-                        setCompletedCrop((prev: PixelCrop | null) => prev ? { ...prev, x } : null)
+                        const x = parseInt(e.target.value) || 0;
+                        updateCropState({ x });
                       }}
                       className="w-full"
                     />
@@ -738,12 +845,11 @@ export default function CropTool() {
                       id="crop-y"
                       type="number"
                       min="0"
-                      max={originalDimensions.height - (completedCrop?.height || 0)}
+                      max={Math.max(0, originalDimensions.height - (completedCrop?.height || 1))}
                       value={Math.round(completedCrop?.y || 0)}
                       onChange={(e) => {
-                        const y = parseInt(e.target.value) || 0
-                        setCrop((prev: CropType) => ({ ...prev, y }))
-                        setCompletedCrop((prev: PixelCrop | null) => prev ? { ...prev, y } : null)
+                        const y = parseInt(e.target.value) || 0;
+                        updateCropState({ y });
                       }}
                       className="w-full"
                     />
@@ -757,9 +863,8 @@ export default function CropTool() {
                       max={originalDimensions.width}
                       value={Math.round(completedCrop?.width || 0)}
                       onChange={(e) => {
-                        const width = parseInt(e.target.value) || 0
-                        setCrop((prev: CropType) => ({ ...prev, width }))
-                        setCompletedCrop((prev: PixelCrop | null) => prev ? { ...prev, width } : null)
+                        const width = parseInt(e.target.value) || 1;
+                        updateCropState({ width });
                       }}
                       className="w-full"
                     />
@@ -773,22 +878,21 @@ export default function CropTool() {
                       max={originalDimensions.height}
                       value={Math.round(completedCrop?.height || 0)}
                       onChange={(e) => {
-                        const height = parseInt(e.target.value) || 0
-                        setCrop((prev: CropType) => ({ ...prev, height }))
-                        setCompletedCrop((prev: PixelCrop | null) => prev ? { ...prev, height } : null)
+                        const height = parseInt(e.target.value) || 1;
+                        updateCropState({ height });
                       }}
                       className="w-full"
                     />
                   </div>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {/* Info box */}
-                  <div className="bg-accent/20 rounded p-3 text-sm">
-                    <p><strong>Original Size:</strong> {originalDimensions.width} × {originalDimensions.height} px</p>
+                  <div className="bg-accent/20 rounded p-2 sm:p-3 text-xs sm:text-sm">
+                    <p className="mb-1"><strong>Original:</strong> {originalDimensions.width} × {originalDimensions.height} px</p>
                     {completedCrop && (
                       <>
-                        <p><strong>Crop Size:</strong> {Math.round(completedCrop.width)} × {Math.round(completedCrop.height)} px</p>
+                        <p className="mb-1"><strong>Crop Size:</strong> {Math.round(completedCrop.width)} × {Math.round(completedCrop.height)} px</p>
                         <p><strong>Position:</strong> X: {Math.round(completedCrop.x)}, Y: {Math.round(completedCrop.y)}</p>
                       </>
                     )}

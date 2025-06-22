@@ -619,7 +619,91 @@ export default function BackgroundRemovalTool() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Panel - Upload and Settings */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Model Selection */}
+            {/* Upload Area - MOVED TO TOP for better UX */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ImageIcon className="h-5 w-5" />
+                  Upload Images
+                </CardTitle>
+                <CardDescription>
+                  Drag and drop or click to upload images (max 15MB each)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ImageDropzone
+                  onImageDrop={handleImageDrop}
+                  maxSize={15 * 1024 * 1024}
+                  accept={{
+                    'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.heic', '.heif']
+                  }}
+                  shouldClear={shouldClearDropzone}
+                  onClearComplete={handleDropzoneClearComplete}
+                />
+                {renderHeicWarning({ files, selectedFileIndex })}
+              </CardContent>
+            </Card>
+
+            {/* Processing Controls - MOVED TO SECOND position for immediate action */}
+            {files.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="h-5 w-5" />
+                    Process Images
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-col gap-3">
+                    <ThemedButton
+                      onClick={handleRemoveBackgroundSingle}
+                      disabled={isProcessing || selectedFileIndex === null}
+                      className="w-full"
+                      toolTheme={toolTheme}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Scissors className="h-4 w-4 mr-2" />
+                          Remove Background (Selected)
+                        </>
+                      )}
+                    </ThemedButton>
+
+                    <ThemedButton
+                      onClick={handleRemoveBackgroundAll}
+                      disabled={isProcessing || files.length === 0}
+                      variant="secondary"
+                      className="w-full"
+                      toolTheme={toolTheme}
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Process All Images ({files.length})
+                    </ThemedButton>
+                  </div>
+
+
+
+                  {files.length > 1 && (
+                    <Button
+                      onClick={handleRemoveAllFiles}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Clear All Files
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Model Selection - MOVED TO THIRD position for logical flow */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -674,7 +758,7 @@ export default function BackgroundRemovalTool() {
               </CardContent>
             </Card>
 
-            {/* Post-Processing Options */}
+            {/* Post-Processing Options - REMAINS in third position */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -737,31 +821,6 @@ export default function BackgroundRemovalTool() {
               </CardContent>
             </Card>
 
-            {/* Upload Area */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ImageIcon className="h-5 w-5" />
-                  Upload Images
-                </CardTitle>
-                <CardDescription>
-                  Drag and drop or click to upload images (max 15MB each)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ImageDropzone
-                  onImageDrop={handleImageDrop}
-                  maxSize={15 * 1024 * 1024}
-                  accept={{
-                    'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.heic', '.heif']
-                  }}
-                  shouldClear={shouldClearDropzone}
-                  onClearComplete={handleDropzoneClearComplete}
-                />
-                {renderHeicWarning({ files, selectedFileIndex })}
-              </CardContent>
-            </Card>
-
             {/* Rate Limit Info */}
             <LocalRateLimitIndicator 
               usage={rateLimitUsage.used} 
@@ -769,79 +828,6 @@ export default function BackgroundRemovalTool() {
               resetsIn={rateLimitUsage.resetsIn}
               isLimitReached={rateLimitUsage.isLimitReached}
             />
-
-            {/* Processing Controls */}
-            {files.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="h-5 w-5" />
-                    Process Images
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex flex-col gap-3">
-                    <ThemedButton
-                      onClick={handleRemoveBackgroundSingle}
-                      disabled={isProcessing || selectedFileIndex === null}
-                      className="w-full"
-                      toolTheme={toolTheme}
-                    >
-                      {isProcessing ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <Scissors className="h-4 w-4 mr-2" />
-                          Remove Background (Selected)
-                        </>
-                      )}
-                    </ThemedButton>
-
-                    <ThemedButton
-                      onClick={handleRemoveBackgroundAll}
-                      disabled={isProcessing || files.length === 0}
-                      variant="secondary"
-                      className="w-full"
-                      toolTheme={toolTheme}
-                    >
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      Process All Images ({files.length})
-                    </ThemedButton>
-                  </div>
-
-                  {/* Model Download Progress */}
-                  {Object.keys(downloadProgress).length > 0 && (
-                    <div className="space-y-2">
-                      <div className="text-sm font-medium">Downloading AI Model...</div>
-                      {Object.entries(downloadProgress).map(([key, progress]) => (
-                        <div key={key} className="space-y-1">
-                          <div className="flex justify-between text-xs">
-                            <span>{key}</span>
-                            <span>{progress}%</span>
-                          </div>
-                          <Progress value={progress} className="h-2" />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {files.length > 1 && (
-                    <Button
-                      onClick={handleRemoveAllFiles}
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Clear All Files
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            )}
           </div>
 
           {/* Right Panel - Preview and Results */}
