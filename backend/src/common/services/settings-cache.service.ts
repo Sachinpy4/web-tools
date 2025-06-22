@@ -36,6 +36,13 @@ export interface CachedSettings {
   jobTimeoutMs: number;
   jobRetryAttempts: number;
 
+  // Polling configuration settings
+  jobStatusPollingIntervalMs: number;
+  processingModePollingIntervalMs: number;
+  processingModeMaxPollingIntervalMs: number;
+  maxPollingAttempts: number;
+  enableAdaptivePolling: boolean;
+
   // Cache metadata
   lastUpdated: Date;
   version: number;
@@ -71,6 +78,11 @@ export class SettingsCacheService implements OnModuleInit {
     nodeMemoryLimit: 4096,
     jobTimeoutMs: 180000,
     jobRetryAttempts: 3,
+    jobStatusPollingIntervalMs: 2000, // 2 seconds
+    processingModePollingIntervalMs: 30000, // 30 seconds
+    processingModeMaxPollingIntervalMs: 300000, // 5 minutes
+    maxPollingAttempts: 60, // 60 attempts
+    enableAdaptivePolling: true,
   };
 
   constructor(
@@ -225,6 +237,13 @@ export class SettingsCacheService implements OnModuleInit {
       nodeMemoryLimit: settings.nodeMemoryLimit || this.defaultSettings.nodeMemoryLimit,
       jobTimeoutMs: settings.jobTimeoutMs || this.defaultSettings.jobTimeoutMs,
       jobRetryAttempts: settings.jobRetryAttempts || this.defaultSettings.jobRetryAttempts,
+
+      // Polling configuration settings
+      jobStatusPollingIntervalMs: settings.jobStatusPollingIntervalMs || this.defaultSettings.jobStatusPollingIntervalMs,
+      processingModePollingIntervalMs: settings.processingModePollingIntervalMs || this.defaultSettings.processingModePollingIntervalMs,
+      processingModeMaxPollingIntervalMs: settings.processingModeMaxPollingIntervalMs || this.defaultSettings.processingModeMaxPollingIntervalMs,
+      maxPollingAttempts: settings.maxPollingAttempts || this.defaultSettings.maxPollingAttempts,
+      enableAdaptivePolling: settings.enableAdaptivePolling ?? this.defaultSettings.enableAdaptivePolling,
 
       // Cache metadata
       lastUpdated: new Date(),

@@ -170,6 +170,45 @@ export class SystemSettings {
     max: [10, 'Cannot exceed 10 retry attempts']
   })
   jobRetryAttempts: number;
+
+  // Polling Configuration Settings
+  @Prop({
+    type: Number,
+    default: 2000, // 2 seconds - job status polling
+    min: [500, 'Job polling interval must be at least 500ms'],
+    max: [30000, 'Job polling interval cannot exceed 30 seconds']
+  })
+  jobStatusPollingIntervalMs: number;
+
+  @Prop({
+    type: Number,
+    default: 30000, // 30 seconds - processing mode initial
+    min: [5000, 'Processing mode polling interval must be at least 5 seconds'],
+    max: [300000, 'Processing mode polling interval cannot exceed 5 minutes']
+  })
+  processingModePollingIntervalMs: number;
+
+  @Prop({
+    type: Number,
+    default: 300000, // 5 minutes - processing mode maximum
+    min: [30000, 'Processing mode max interval must be at least 30 seconds'],
+    max: [900000, 'Processing mode max interval cannot exceed 15 minutes']
+  })
+  processingModeMaxPollingIntervalMs: number;
+
+  @Prop({
+    type: Number,
+    default: 60, // 60 attempts (2 minutes with 2s intervals)
+    min: [10, 'Must allow at least 10 polling attempts'],
+    max: [300, 'Cannot exceed 300 polling attempts']
+  })
+  maxPollingAttempts: number;
+
+  @Prop({
+    type: Boolean,
+    default: true
+  })
+  enableAdaptivePolling: boolean;
 }
 
 export const SystemSettingsSchema = SchemaFactory.createForClass(SystemSettings);

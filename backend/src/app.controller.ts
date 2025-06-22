@@ -103,6 +103,35 @@ export class AppController {
     return this.adminService.getRateLimitSettings();
   }
 
+  @Get('admin/settings/polling')
+  @ApiOperation({
+    summary: 'Get polling configuration (Public)',
+    description: 'Retrieve current polling configuration for frontend real-time updates. No authentication required.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Polling settings retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'string', example: 'success' },
+        data: {
+          type: 'object',
+          properties: {
+            jobStatusPollingIntervalMs: { type: 'number', example: 2000 },
+            processingModePollingIntervalMs: { type: 'number', example: 30000 },
+            processingModeMaxPollingIntervalMs: { type: 'number', example: 300000 },
+            maxPollingAttempts: { type: 'number', example: 60 },
+            enableAdaptivePolling: { type: 'boolean', example: true },
+          },
+        },
+      },
+    },
+  })
+  async getPollingSettings() {
+    return this.adminService.getPollingSettings();
+  }
+
   @Get('favicon.ico')
   @ApiOperation({ summary: 'Favicon' })
   getFavicon(@Res() res: Response) {

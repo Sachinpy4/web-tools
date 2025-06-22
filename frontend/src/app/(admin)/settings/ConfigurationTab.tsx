@@ -419,6 +419,127 @@ export function ConfigurationTab({
         </CardContent>
       </Card>
 
+      {/* Polling Configuration Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Polling Configuration</CardTitle>
+          <CardDescription>
+            Configure real-time polling intervals for job status and processing mode monitoring
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Adaptive Polling Toggle */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="enableAdaptivePolling" 
+                checked={settings.enableAdaptivePolling}
+                onCheckedChange={(checked) => updateSetting('enableAdaptivePolling', !!checked)}
+              />
+              <Label htmlFor="enableAdaptivePolling" className="text-base font-medium">
+                Enable Adaptive Polling
+              </Label>
+            </div>
+            <p className="text-sm text-muted-foreground ml-6">
+              When enabled, polling intervals will automatically adjust based on system load and response times
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Job Status Polling */}
+            <div className="space-y-2">
+              <Label htmlFor="jobStatusPollingIntervalMs">Job Status Polling (seconds)</Label>
+              <Input
+                id="jobStatusPollingIntervalMs"
+                type="number"
+                min={0.5}
+                max={30}
+                step={0.5}
+                value={settings.jobStatusPollingIntervalMs / 1000}
+                onChange={(e) => updateSetting('jobStatusPollingIntervalMs', parseFloat(e.target.value) * 1000)}
+              />
+              <p className="text-sm text-muted-foreground">
+                How often to check job processing status (0.5s - 30s)
+              </p>
+            </div>
+
+            {/* Processing Mode Initial Polling */}
+            <div className="space-y-2">
+              <Label htmlFor="processingModePollingIntervalMs">Processing Mode Initial Polling (seconds)</Label> 
+              <Input
+                id="processingModePollingIntervalMs"
+                type="number"
+                min={5}
+                max={300}
+                value={settings.processingModePollingIntervalMs / 1000}
+                onChange={(e) => updateSetting('processingModePollingIntervalMs', parseInt(e.target.value) * 1000)}
+              />
+              <p className="text-sm text-muted-foreground">
+                Initial interval for processing mode checks (5s - 5min)
+              </p>
+            </div>
+
+            {/* Processing Mode Max Polling */}
+            <div className="space-y-2">
+              <Label htmlFor="processingModeMaxPollingIntervalMs">Processing Mode Max Polling (seconds)</Label>
+              <Input
+                id="processingModeMaxPollingIntervalMs"
+                type="number"
+                min={30}
+                max={900}
+                value={settings.processingModeMaxPollingIntervalMs / 1000}
+                onChange={(e) => updateSetting('processingModeMaxPollingIntervalMs', parseInt(e.target.value) * 1000)}
+                disabled={!settings.enableAdaptivePolling}
+              />
+              <p className="text-sm text-muted-foreground">
+                Maximum interval for adaptive polling (30s - 15min)
+              </p>
+            </div>
+
+            {/* Max Polling Attempts */}
+            <div className="space-y-2">
+              <Label htmlFor="maxPollingAttempts">Max Polling Attempts</Label>
+              <Input
+                id="maxPollingAttempts"
+                type="number"
+                min={10}
+                max={300}
+                value={settings.maxPollingAttempts}
+                onChange={(e) => updateSetting('maxPollingAttempts', parseInt(e.target.value))}
+              />
+              <p className="text-sm text-muted-foreground">
+                Maximum attempts before giving up (10-300)
+              </p>
+            </div>
+          </div>
+
+          {/* Current Status */}
+          <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <h4 className="font-medium mb-2">Current Polling Configuration</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+              <div>
+                <span className="text-muted-foreground">Job Status: </span>
+                <span className="font-medium">{settings.jobStatusPollingIntervalMs / 1000}s</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Processing Mode: </span>
+                <span className="font-medium">{settings.processingModePollingIntervalMs / 1000}s - {settings.processingModeMaxPollingIntervalMs / 1000}s</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Max Attempts: </span>
+                <span className="font-medium">{settings.maxPollingAttempts}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Adaptive: </span>
+                <span className={`font-medium ${settings.enableAdaptivePolling ? 'text-green-600' : 'text-orange-600'}`}>
+                  {settings.enableAdaptivePolling ? 'Enabled' : 'Disabled'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* System Performance Settings */}
       <Card>
         <CardHeader>

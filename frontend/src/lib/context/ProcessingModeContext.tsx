@@ -1,5 +1,13 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { ProcessingMode, getProcessingMode } from '../api/statusApi';
+import { apiRequest } from '../apiClient';
+
+// Type for polling settings
+interface PollingSettings {
+  processingModePollingIntervalMs: number;
+  processingModeMaxPollingIntervalMs: number;
+  enableAdaptivePolling: boolean;
+}
 
 // Enhanced server state to differentiate between different types of connection issues
 export type ServerState = 
@@ -48,10 +56,32 @@ export const ProcessingModeProvider: React.FC<{
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [pollingInterval, setPollingInterval] = useState<number>(30000);
+  const [maxPollingInterval, setMaxPollingInterval] = useState<number>(300000);
+  const [adaptivePollingEnabled, setAdaptivePollingEnabled] = useState<boolean>(true);
   const [consecutiveErrors, setConsecutiveErrors] = useState(0);
   const [initialChecksDone, setInitialChecksDone] = useState(false);
   const [nextRetryTime, setNextRetryTime] = useState<number | null>(null);
   const [circuitOpenTime, setCircuitOpenTime] = useState<number | null>(null);
+
+  // Fetch polling settings from admin configuration
+  const fetchPollingSettings = useCallback(async () => {
+    try {
+      const response = await apiRequest<{ status: string; data: PollingSettings }>('admin/settings/polling', {
+        requireAuth: false // Public endpoint, no auth needed
+      });
+      
+      const settings = response.data;
+      setPollingInterval(settings.processingModePollingIntervalMs);
+      setMaxPollingInterval(settings.processingModeMaxPollingIntervalMs);
+      setAdaptivePollingEnabled(settings.enableAdaptivePolling);
+    } catch (error) {
+      // Fallback to default values if settings fetch fails
+      console.warn('Failed to fetch polling settings, using defaults:', error);
+      setPollingInterval(30000); // 30 seconds default
+      setMaxPollingInterval(300000); // 5 minutes default
+      setAdaptivePollingEnabled(true);
+    }
+  }, []);
 
   const fetchProcessingMode = async () => {
     if (isLoading) return;
@@ -74,8 +104,9 @@ export const ProcessingModeProvider: React.FC<{
       setNextRetryTime(null);
       setCircuitOpenTime(null);
       
-      if (pollingInterval > 30000) {
-        setPollingInterval(30000);
+      // Reset to initial interval on successful connection (if adaptive polling is enabled)
+      if (adaptivePollingEnabled && pollingInterval > maxPollingInterval / 10) {
+        setPollingInterval(maxPollingInterval / 10); // Reset to 10% of max interval
       }
     } catch (err) {
       setIsConnected(false);
@@ -112,9 +143,9 @@ export const ProcessingModeProvider: React.FC<{
       // Increment consecutive errors
       setConsecutiveErrors(prev => prev + 1);
       
-      // Exponential backoff for polling with maximum of 5 minutes
-      if (consecutiveErrors > 2) {
-        const newInterval = Math.min(pollingInterval * 1.5, 5 * 60 * 1000);
+      // Exponential backoff for polling with configured maximum
+      if (adaptivePollingEnabled && consecutiveErrors > 2) {
+        const newInterval = Math.min(pollingInterval * 1.5, maxPollingInterval);
         setPollingInterval(newInterval);
         
         // Set next retry time
@@ -145,6 +176,9 @@ export const ProcessingModeProvider: React.FC<{
   }, []);
 
   useEffect(() => {
+    // Fetch polling settings on component mount
+    fetchPollingSettings();
+    
     // Initial fetch - try to connect quickly first
     const quickCheckInterval = 1000;
     
@@ -165,7 +199,7 @@ export const ProcessingModeProvider: React.FC<{
         if (typeof timeout === 'number') clearTimeout(timeout);
       });
     };
-  }, []);
+  }, [fetchPollingSettings]);
   
   // Regular polling after initial checks
   useEffect(() => {

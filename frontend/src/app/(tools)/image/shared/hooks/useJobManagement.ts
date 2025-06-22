@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { apiRequest } from '@/lib/apiClient';
 
@@ -39,6 +39,12 @@ interface UseJobManagementReturn {
   clearAllJobs: () => void;
 }
 
+// Type for job polling settings
+interface JobPollingSettings {
+  jobStatusPollingIntervalMs: number;
+  maxPollingAttempts: number;
+}
+
 export const useJobManagement = ({
   setVisualProgress,
   setProcessingFiles,
@@ -49,8 +55,34 @@ export const useJobManagement = ({
   const [jobProgress, setJobProgress] = useState<Record<string, number>>({});
   const [queueStatus, setQueueStatus] = useState<Record<string, JobStatus>>({});
   const [fileJobMapping, setFileJobMapping] = useState<Record<number, string>>({});
+  
+  // Dynamic polling settings
+  const [pollingIntervalMs, setPollingIntervalMs] = useState<number>(2000);
+  const [maxPollAttempts, setMaxPollAttempts] = useState<number>(60);
 
   const { toast } = useToast();
+
+  // Fetch polling settings from admin configuration
+  useEffect(() => {
+    const fetchPollingSettings = async () => {
+      try {
+        const response = await apiRequest<{ status: string; data: JobPollingSettings }>('admin/settings/polling', {
+          requireAuth: false // Public endpoint, no auth needed
+        });
+        
+        const settings = response.data;
+        setPollingIntervalMs(settings.jobStatusPollingIntervalMs);
+        setMaxPollAttempts(settings.maxPollingAttempts);
+      } catch (error) {
+        // Fallback to default values if settings fetch fails
+        console.warn('Failed to fetch job polling settings, using defaults:', error);
+        setPollingIntervalMs(2000); // 2 seconds default
+        setMaxPollAttempts(60); // 60 attempts default
+      }
+    };
+    
+    fetchPollingSettings();
+  }, []);
 
   const cleanupJobState = useCallback((jobId: string, fileIndex?: number) => {
     // Remove job from active jobs
@@ -94,7 +126,6 @@ export const useJobManagement = ({
     setJobProgress(prev => ({ ...prev, [jobId]: 0 }));
     
     let pollAttempts = 0;
-    const maxPollAttempts = 60; // 60 attempts = 2 minutes with 2s intervals
     let pollInterval: NodeJS.Timeout;
     
     const pollJobStatus = async () => {
@@ -266,13 +297,13 @@ export const useJobManagement = ({
       }
     };
     
-    // Start polling with 2-second intervals
-    pollInterval = setInterval(pollJobStatus, 2000);
+    // Start polling with configured interval
+    pollInterval = setInterval(pollJobStatus, pollingIntervalMs);
     
     // Start the first poll immediately
     pollJobStatus();
     
-  }, [setJobIds, setFileJobMapping, setVisualProgress, setJobProgress, setQueueStatus, setResults, setProcessingFiles, toast, cleanupJobState]);
+  }, [setJobIds, setFileJobMapping, setVisualProgress, setJobProgress, setQueueStatus, setResults, setProcessingFiles, toast, cleanupJobState, pollingIntervalMs, maxPollAttempts]);
 
   const clearAllJobs = useCallback(() => {
     setJobIds([]);

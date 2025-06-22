@@ -242,6 +242,63 @@ export class UpdateSystemSettingsDto {
   @Min(1, { message: 'Must allow at least 1 attempt' })
   @Max(10, { message: 'Cannot exceed 10 retry attempts' })
   jobRetryAttempts?: number;
+
+  // Polling Configuration Settings
+  @ApiPropertyOptional({
+    description: 'Job status polling interval in milliseconds',
+    example: 2000,
+    minimum: 500,
+    maximum: 30000,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(500, { message: 'Job polling interval must be at least 500ms' })
+  @Max(30000, { message: 'Job polling interval cannot exceed 30 seconds' })
+  jobStatusPollingIntervalMs?: number;
+
+  @ApiPropertyOptional({
+    description: 'Processing mode initial polling interval in milliseconds',
+    example: 30000,
+    minimum: 5000,
+    maximum: 300000,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(5000, { message: 'Processing mode polling interval must be at least 5 seconds' })
+  @Max(300000, { message: 'Processing mode polling interval cannot exceed 5 minutes' })
+  processingModePollingIntervalMs?: number;
+
+  @ApiPropertyOptional({
+    description: 'Processing mode maximum polling interval in milliseconds',
+    example: 300000,
+    minimum: 30000,
+    maximum: 900000,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(30000, { message: 'Processing mode max interval must be at least 30 seconds' })
+  @Max(900000, { message: 'Processing mode max interval cannot exceed 15 minutes' })
+  processingModeMaxPollingIntervalMs?: number;
+
+  @ApiPropertyOptional({
+    description: 'Maximum number of polling attempts before giving up',
+    example: 60,
+    minimum: 10,
+    maximum: 300,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(10, { message: 'Must allow at least 10 polling attempts' })
+  @Max(300, { message: 'Cannot exceed 300 polling attempts' })
+  maxPollingAttempts?: number;
+
+  @ApiPropertyOptional({
+    description: 'Enable adaptive polling (dynamic interval adjustment)',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  enableAdaptivePolling?: boolean;
 }
 
 export class CleanupOptionsDto {

@@ -51,6 +51,11 @@ export interface SystemSettings {
   nodeMemoryLimit: number;
   jobTimeoutMs: number;
   jobRetryAttempts: number;
+  jobStatusPollingIntervalMs: number;
+  processingModePollingIntervalMs: number;
+  processingModeMaxPollingIntervalMs: number;
+  maxPollingAttempts: number;
+  enableAdaptivePolling: boolean;
 }
 
 export interface SystemStatus {

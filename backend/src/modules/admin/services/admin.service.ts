@@ -160,6 +160,29 @@ export class AdminService {
   }
 
   /**
+   * Get polling configuration settings for frontend real-time updates
+   */
+  async getPollingSettings() {
+    try {
+      const settings = await (this.systemSettingsModel as any).getCurrentSettings();
+      
+      return {
+        status: 'success',
+        data: {
+          jobStatusPollingIntervalMs: settings.jobStatusPollingIntervalMs,
+          processingModePollingIntervalMs: settings.processingModePollingIntervalMs,
+          processingModeMaxPollingIntervalMs: settings.processingModeMaxPollingIntervalMs,
+          maxPollingAttempts: settings.maxPollingAttempts,
+          enableAdaptivePolling: settings.enableAdaptivePolling,
+        },
+      };
+    } catch (error) {
+      this.logger.error('Failed to get polling settings:', error);
+      throw new InternalServerErrorException(`Failed to get polling settings: ${error.message}`);
+    }
+  }
+
+  /**
    * Run system cleanup
    */
   async cleanupImages(cleanupOptionsDto: CleanupOptionsDto) {
