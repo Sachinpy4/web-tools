@@ -597,6 +597,123 @@ export function ConfigurationTab({
           </div>
         </CardContent>
       </Card>
+
+      {/* CRITICAL FIX: Queue Management Settings (for job cleanup bug fix) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Queue Management Settings</CardTitle>
+          <CardDescription>
+            Configure Redis queue job retention to prevent "job not found" errors during high traffic
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+            <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">⚠️ Important for High Traffic</h4>
+            <p className="text-sm text-yellow-700 dark:text-yellow-300">
+              These settings prevent "job not found" errors by controlling how long completed and failed jobs are kept in the Redis queue. 
+              Higher values provide better reliability during concurrent processing but use more memory.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Job Retention Settings */}
+            <div className="space-y-2">
+              <Label htmlFor="queueRemoveOnComplete">Completed Jobs Retention</Label>
+              <Input
+                id="queueRemoveOnComplete"
+                type="number"
+                min={10}
+                max={500}
+                value={settings.queueRemoveOnComplete}
+                onChange={(e) => updateSetting('queueRemoveOnComplete', parseInt(e.target.value))}
+              />
+              <p className="text-sm text-muted-foreground">
+                Number of completed jobs to keep in queue (10-500)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="queueRemoveOnFail">Failed Jobs Retention</Label>
+              <Input
+                id="queueRemoveOnFail"
+                type="number"
+                min={5}
+                max={200}
+                value={settings.queueRemoveOnFail}
+                onChange={(e) => updateSetting('queueRemoveOnFail', parseInt(e.target.value))}
+              />
+              <p className="text-sm text-muted-foreground">
+                Number of failed jobs to keep in queue (5-200)
+              </p>
+            </div>
+
+            {/* TTL and Stalled Settings */}
+            <div className="space-y-2">
+              <Label htmlFor="queueJobTtlMs">Job TTL (hours)</Label>
+              <Input
+                id="queueJobTtlMs"
+                type="number"
+                min={1}
+                max={168}
+                value={settings.queueJobTtlMs / (1000 * 60 * 60)}
+                onChange={(e) => updateSetting('queueJobTtlMs', parseInt(e.target.value) * 1000 * 60 * 60)}
+              />
+              <p className="text-sm text-muted-foreground">
+                Maximum job lifetime in queue (1h - 7 days)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="queueStalledIntervalMs">Stalled Check Interval (seconds)</Label>
+              <Input
+                id="queueStalledIntervalMs"
+                type="number"
+                min={5}
+                max={300}
+                value={settings.queueStalledIntervalMs / 1000}
+                onChange={(e) => updateSetting('queueStalledIntervalMs', parseInt(e.target.value) * 1000)}
+              />
+              <p className="text-sm text-muted-foreground">
+                How often to check for stalled jobs (5s - 5min)
+              </p>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="queueMaxStalledCount">Max Stalled Count</Label>
+              <Input
+                id="queueMaxStalledCount"
+                type="number"
+                min={1}
+                max={5}
+                value={settings.queueMaxStalledCount}
+                onChange={(e) => updateSetting('queueMaxStalledCount', parseInt(e.target.value))}
+              />
+              <p className="text-sm text-muted-foreground">
+                Maximum times a job can become stalled before being failed (1-5)
+              </p>
+            </div>
+          </div>
+
+          {/* Current Status */}
+          <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <h4 className="font-medium mb-2">Current Queue Configuration</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+              <div>
+                <span className="text-muted-foreground">Completed Jobs: </span>
+                <span className="font-medium">{settings.queueRemoveOnComplete}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Failed Jobs: </span>
+                <span className="font-medium">{settings.queueRemoveOnFail}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Job TTL: </span>
+                <span className="font-medium">{(settings.queueJobTtlMs / (1000 * 60 * 60)).toFixed(1)} hours</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 } 

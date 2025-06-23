@@ -60,6 +60,74 @@ export class MonitoringService {
   }
 
   /**
+   * Record job creation for tracking (CRITICAL FIX for "job not found" bug)
+   * This ensures jobs appear in monitoring even if they get cleaned up quickly from Redis
+   */
+  async recordJobCreation(
+    jobId: string,
+    jobType: 'compress' | 'resize' | 'convert' | 'crop',
+    additionalData?: {
+      fileSize?: number;
+      userAgent?: string;
+      ipAddress?: string;
+      originalFilename?: string;
+    }
+  ): Promise<void> {
+    try {
+      // Only record if mongoose is connected
+      if (this.connection.readyState !== 1) {
+        this.logger.warn(`Cannot record job creation: MongoDB not connected (readyState: ${this.connection.readyState})`);
+        return;
+      }
+
+      // Create and save a new job record with 'started' status
+      await this.jobTrackingModel.create({
+        jobId, // Store the actual job ID for correlation
+        jobType,
+        processingTime: 0, // Will be updated when job completes
+        status: 'started', // New status to track job creation
+        createdAt: new Date(),
+        ...additionalData,
+      });
+
+      this.logger.debug(`Recorded job creation: ${jobType} job ${jobId} for monitoring`);
+    } catch (error) {
+      // Just log the error but don't fail the operation
+      this.logger.error(`Failed to record job creation: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Check if a job exists in the monitoring system (CRITICAL FIX for "job not found" bug)
+   * This helps identify jobs that were cleaned from Redis but were actually processed
+   */
+  async checkJobExists(
+    jobId: string,
+    jobType: 'compress' | 'resize' | 'convert' | 'crop'
+  ): Promise<boolean> {
+    try {
+      // Only check if mongoose is connected
+      if (this.connection.readyState !== 1) {
+        this.logger.warn(`Cannot check job existence: MongoDB not connected (readyState: ${this.connection.readyState})`);
+        return false;
+      }
+
+      const jobRecord = await this.jobTrackingModel.findOne({
+        jobId,
+        jobType
+      });
+
+      const exists = !!jobRecord;
+      this.logger.debug(`Job existence check for ${jobId}: ${exists ? 'FOUND' : 'NOT FOUND'}`);
+      
+      return exists;
+    } catch (error) {
+      this.logger.error(`Failed to check job existence: ${error instanceof Error ? error.message : String(error)}`);
+      return false;
+    }
+  }
+
+  /**
    * Get tool usage statistics
    */
   async getToolUsageStats(timeRange: string = 'today') {

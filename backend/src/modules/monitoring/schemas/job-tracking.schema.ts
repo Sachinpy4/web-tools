@@ -19,12 +19,15 @@ export class JobTracking {
 
   @Prop({
     required: true,
-    enum: ['completed', 'failed'],
+    enum: ['started', 'completed', 'failed'],
   })
-  status: 'completed' | 'failed';
+  status: 'started' | 'completed' | 'failed';
 
   @Prop({ default: Date.now })
   createdAt: Date;
+
+  @Prop()
+  jobId?: string; // Redis job ID for correlation
 
   // Additional fields for enhanced monitoring
   @Prop()
@@ -44,6 +47,9 @@ export class JobTracking {
 
   @Prop()
   ipAddress?: string; // Client IP (anonymized)
+
+  @Prop()
+  originalFilename?: string; // Original filename for reference
 }
 
 export const JobTrackingSchema = SchemaFactory.createForClass(JobTracking);

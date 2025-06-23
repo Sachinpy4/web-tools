@@ -742,10 +742,13 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
       this.cachedQueueOptions = {
         attempts: settings.jobRetryAttempts || 3,
         backoff: { type: 'exponential', delay: 2000 },
-        removeOnComplete: 10,
-        removeOnFail: 5,
+        removeOnComplete: settings.queueRemoveOnComplete || 100,
+        removeOnFail: settings.queueRemoveOnFail || 50,
         delay: 0,
         timeout: settings.jobTimeoutMs || 180000, // 3 minutes default
+        jobTtl: settings.queueJobTtlMs || 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+        stalledInterval: settings.queueStalledIntervalMs || 30 * 1000,   // 30 seconds
+        maxStalledCount: settings.queueMaxStalledCount || 1,
       };
       
       this.queueOptionsCacheExpiry = now + this.QUEUE_CACHE_TTL;
@@ -757,14 +760,17 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       this.logger.warn('Failed to get dynamic queue options, using defaults:', error);
       
-      // Cache fallback options too
+      // Cache fallback options too - SAME FIX APPLIED HERE with dynamic defaults
       this.cachedQueueOptions = {
         attempts: 3,
         backoff: { type: 'exponential', delay: 2000 },
-        removeOnComplete: 10,
-        removeOnFail: 5,
+        removeOnComplete: 100, // Keep 100 completed jobs (schema default)
+        removeOnFail: 50,      // Keep 50 failed jobs (schema default)
         delay: 0,
         timeout: 180000,
+        jobTtl: 24 * 60 * 60 * 1000, // 24 hours in milliseconds (schema default)
+        stalledInterval: 30 * 1000,   // 30 seconds (schema default)
+        maxStalledCount: 1,           // 1 attempt (schema default)
       };
       
       this.queueOptionsCacheExpiry = now + this.QUEUE_CACHE_TTL;

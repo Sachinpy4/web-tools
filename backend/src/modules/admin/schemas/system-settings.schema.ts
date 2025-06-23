@@ -209,6 +209,47 @@ export class SystemSettings {
     default: true
   })
   enableAdaptivePolling: boolean;
+
+  // CRITICAL FIX: BullMQ Queue Management Settings (for job cleanup bug fix)
+  @Prop({
+    type: Number,
+    default: 100, // FIXED: Increased from 10 to prevent "job not found" errors
+    min: [10, 'Must keep at least 10 completed jobs'],
+    max: [500, 'Cannot keep more than 500 completed jobs']
+  })
+  queueRemoveOnComplete: number;
+
+  @Prop({
+    type: Number,
+    default: 50, // FIXED: Increased from 5 to prevent "job not found" errors
+    min: [5, 'Must keep at least 5 failed jobs'],
+    max: [200, 'Cannot keep more than 200 failed jobs']
+  })
+  queueRemoveOnFail: number;
+
+  @Prop({
+    type: Number,
+    default: 86400000, // 24 hours in milliseconds
+    min: [3600000, 'Job TTL must be at least 1 hour'],
+    max: [604800000, 'Job TTL cannot exceed 7 days']
+  })
+  queueJobTtlMs: number;
+
+  @Prop({
+    type: Number,
+    default: 30000, // 30 seconds
+    min: [5000, 'Stalled interval must be at least 5 seconds'],
+    max: [300000, 'Stalled interval cannot exceed 5 minutes']
+  })
+  queueStalledIntervalMs: number;
+
+  @Prop({
+    type: Number,
+    default: 1,
+    min: [1, 'Must allow at least 1 stalled attempt'],
+    max: [5, 'Cannot exceed 5 stalled attempts']
+  })
+  queueMaxStalledCount: number;
 }
 
 export const SystemSettingsSchema = SchemaFactory.createForClass(SystemSettings);

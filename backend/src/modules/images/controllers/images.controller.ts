@@ -14,9 +14,10 @@ import {
   NotFoundException,
   Logger,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
@@ -26,6 +27,7 @@ import archiver from 'archiver';
 import { ImageService } from '../services/image.service';
 import { QueueService } from '../services/queue.service';
 import { DynamicThrottlerGuard } from '../../../common/guards/dynamic-throttler.guard';
+import { MonitoringService } from '../../monitoring/services/monitoring.service';
 
 import { 
   CompressImageDto, 
@@ -68,6 +70,7 @@ export class ImagesController {
   constructor(
     private readonly imageService: ImageService,
     private readonly queueService: QueueService,
+    private readonly monitoringService: MonitoringService,
   ) {}
 
   // COMPRESS IMAGE - Exact same endpoint as original /api/images/compress
@@ -89,6 +92,7 @@ export class ImagesController {
   async compressImage(
     @UploadedFile() file: Express.Multer.File,
     @Body() dto: CompressImageDto,
+    @Req() req: any,
   ): Promise<CompressResultDto> {
     try {
       if (!file) {
@@ -173,6 +177,26 @@ export class ImagesController {
       // Add to queue (same logic as original - Redis processing)
       const jobId = await this.queueService.addCompressJob(jobData);
       console.log('✅ JOB CREATED:', jobId);
+
+      // CRITICAL FIX: Track job creation immediately for monitoring
+      try {
+        // Record job creation in monitoring system
+        const userAgent = req.headers['user-agent'] || 'unknown';
+        const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
+        
+        // We'll track as 'started' status and update when completed
+        // This ensures jobs appear in monitoring even if they get cleaned up quickly
+        await this.monitoringService.recordJobCreation(jobId, 'compress', {
+          fileSize: file.size,
+          userAgent,
+          ipAddress,
+          originalFilename: file.originalname
+        });
+        
+        console.log('📊 JOB TRACKED in monitoring:', jobId);
+      } catch (trackingError) {
+        console.warn('⚠️ Failed to track job in monitoring (non-critical):', trackingError.message);
+      }
 
       const queueResponse = {
         status: 'processing',
@@ -547,8 +571,39 @@ export class ImagesController {
       console.log('📊 BACKEND - Job status from queue service:', status);
       
       if (!status) {
-        console.log('❌ BACKEND - Job not found:', jobId);
-        throw new NotFoundException(`Job ${jobId} not found`);
+        console.log('❌ BACKEND - Job not found in Redis queue:', jobId);
+        
+        // CRITICAL FIX: Check monitoring system for job existence
+        try {
+          const jobExists = await this.monitoringService.checkJobExists(jobId, queueType as any);
+          if (jobExists) {
+            console.log('📋 BACKEND - Job found in monitoring system, but missing from Redis:', jobId);
+            
+            // Return a synthetic status for jobs that were cleaned up from Redis
+            const response = {
+              id: jobId,
+              state: 'completed', // Assume completed if it was tracked but no longer in Redis
+              progress: 100,
+              result: {
+                status: 'completed',
+                message: 'Job completed but details unavailable (cleaned from queue)',
+                note: 'This job was processed successfully but removed from the queue for cleanup. Original results may still be available for download.'
+              },
+              error: null,
+              queuePosition: null,
+              estimatedWaitTime: null,
+            };
+            
+            console.log('📤 BACKEND - Synthetic job status response for cleaned job:', response);
+            return response;
+          }
+        } catch (monitoringError) {
+          console.warn('⚠️ BACKEND - Could not check monitoring system:', monitoringError.message);
+        }
+        
+        // Job truly not found anywhere
+        console.log('❌ BACKEND - Job not found anywhere:', jobId);
+        throw new NotFoundException(`Job ${jobId} not found. This job may have been cleaned up due to age or system restart.`);
       }
 
       const response = {

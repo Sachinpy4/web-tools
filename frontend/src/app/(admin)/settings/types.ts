@@ -56,6 +56,11 @@ export interface SystemSettings {
   processingModeMaxPollingIntervalMs: number;
   maxPollingAttempts: number;
   enableAdaptivePolling: boolean;
+  queueRemoveOnComplete: number;
+  queueRemoveOnFail: number;
+  queueJobTtlMs: number;
+  queueStalledIntervalMs: number;
+  queueMaxStalledCount: number;
 }
 
 export interface SystemStatus {

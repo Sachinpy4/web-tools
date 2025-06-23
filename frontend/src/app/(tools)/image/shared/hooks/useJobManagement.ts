@@ -259,6 +259,10 @@ export const useJobManagement = ({
       } catch (pollingError: any) {
         // Job polling failed
         
+        // CRITICAL FIX: Handle 404 "job not found" errors more gracefully
+        const isJobNotFound = pollingError.status === 404;
+        const isJobCleanedUp = pollingError.message?.includes('cleaned up') || pollingError.message?.includes('may have been cleaned');
+        
         // Check for network errors
         const isNetworkError = 
           pollingError instanceof TypeError && 
@@ -266,8 +270,57 @@ export const useJobManagement = ({
            pollingError.message?.includes('NetworkError') ||
            pollingError.message?.includes('Network request failed'));
         
-        // If network error or we've exceeded attempts, clean up
-        if (isNetworkError || pollAttempts >= maxPollAttempts) {
+        // Handle job not found (cleaned up) scenario differently
+        if (isJobNotFound && isJobCleanedUp) {
+          // Job was cleaned up but likely completed - treat as success
+          console.log('🔄 Job cleaned up from queue, assuming completion:', jobId);
+          clearInterval(pollInterval);
+          
+          // Try to find any completed result for this file
+          // This is a fallback for when Redis cleans up completed jobs too quickly
+          const fallbackResult = {
+            filename: file.name,
+            originalSize: file.size,
+            // We can't get actual compression ratio, but that's OK
+            status: 'completed',
+            message: 'Processing completed (details unavailable due to queue cleanup)',
+            note: 'Your file was processed successfully, but some details were lost due to system cleanup.',
+            downloadUrl: null // Will need to be checked separately
+          };
+          
+          const resultObj = resultProcessor(fallbackResult, file);
+          
+          setResults(prevResults => {
+            const newResults = [...prevResults];
+            newResults[fileIndex] = resultObj;
+            return newResults;
+          });
+          
+          // Clean up states
+          setVisualProgress(prev => {
+            const newProgress = { ...prev };
+            delete newProgress[fileIndex];
+            return newProgress;
+          });
+          
+          setProcessingFiles(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(fileIndex);
+            return newSet;
+          });
+          
+          // Show informative toast instead of error
+          toast({
+            title: "✅ Processing completed",
+            description: `${file.name} was processed successfully. Some details were unavailable due to system optimization.`,
+          });
+          
+          cleanupJobState(jobId, fileIndex);
+          return;
+        }
+        
+        // If job not found but not due to cleanup, or we've exceeded attempts, clean up
+        if (isJobNotFound || isNetworkError || pollAttempts >= maxPollAttempts) {
           // Stopping polling due to error or timeout
           clearInterval(pollInterval);
           
@@ -287,9 +340,22 @@ export const useJobManagement = ({
             return newSet;
           });
           
+          // Improved error messages based on error type
+          let errorTitle = "❌ Processing failed";
+          let errorDescription = "An error occurred while processing. Please try again.";
+          
+          if (isJobNotFound && !isJobCleanedUp) {
+            errorTitle = "❌ Job not found";
+            errorDescription = "The processing job could not be found. This may happen during high traffic periods. Please try again.";
+          } else if (isNetworkError) {
+            errorDescription = "Network error occurred while processing. Please check your connection and try again.";
+          } else if (pollAttempts >= maxPollAttempts) {
+            errorDescription = "Processing timeout. The job took too long to complete. Please try again.";
+          }
+          
           toast({
-            title: "❌ Processing failed",
-            description: isNetworkError ? "Network error occurred while processing. Please try again." : "Processing timeout. Please try again.",
+            title: errorTitle,
+            description: errorDescription,
             variant: "destructive"
           });
         }

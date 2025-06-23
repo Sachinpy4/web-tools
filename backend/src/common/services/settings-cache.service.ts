@@ -43,6 +43,13 @@ export interface CachedSettings {
   maxPollingAttempts: number;
   enableAdaptivePolling: boolean;
 
+  // CRITICAL FIX: BullMQ Queue Management Settings (for job cleanup bug fix)
+  queueRemoveOnComplete: number;
+  queueRemoveOnFail: number;
+  queueJobTtlMs: number;
+  queueStalledIntervalMs: number;
+  queueMaxStalledCount: number;
+
   // Cache metadata
   lastUpdated: Date;
   version: number;
@@ -83,6 +90,12 @@ export class SettingsCacheService implements OnModuleInit {
     processingModeMaxPollingIntervalMs: 300000, // 5 minutes
     maxPollingAttempts: 60, // 60 attempts
     enableAdaptivePolling: true,
+    // CRITICAL FIX: Use schema defaults for consistency
+    queueRemoveOnComplete: 100, // Schema default: prevents "job not found" errors
+    queueRemoveOnFail: 50,      // Schema default: keeps failed jobs for debugging
+    queueJobTtlMs: 86400000,    // Schema default: 24 hours
+    queueStalledIntervalMs: 30000,  // Schema default: 30 seconds
+    queueMaxStalledCount: 1,    // Schema default: 1 attempt
   };
 
   constructor(
@@ -244,6 +257,13 @@ export class SettingsCacheService implements OnModuleInit {
       processingModeMaxPollingIntervalMs: settings.processingModeMaxPollingIntervalMs || this.defaultSettings.processingModeMaxPollingIntervalMs,
       maxPollingAttempts: settings.maxPollingAttempts || this.defaultSettings.maxPollingAttempts,
       enableAdaptivePolling: settings.enableAdaptivePolling ?? this.defaultSettings.enableAdaptivePolling,
+
+      // CRITICAL FIX: BullMQ Queue Management Settings (for job cleanup bug fix)
+      queueRemoveOnComplete: settings.queueRemoveOnComplete || this.defaultSettings.queueRemoveOnComplete,
+      queueRemoveOnFail: settings.queueRemoveOnFail || this.defaultSettings.queueRemoveOnFail,
+      queueJobTtlMs: settings.queueJobTtlMs || this.defaultSettings.queueJobTtlMs,
+      queueStalledIntervalMs: settings.queueStalledIntervalMs || this.defaultSettings.queueStalledIntervalMs,
+      queueMaxStalledCount: settings.queueMaxStalledCount || this.defaultSettings.queueMaxStalledCount,
 
       // Cache metadata
       lastUpdated: new Date(),
