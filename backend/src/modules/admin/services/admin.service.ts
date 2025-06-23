@@ -22,6 +22,7 @@ import {
   SchedulerStatusDto,
   SchedulerTaskType 
 } from '../dto/scheduler-config.dto';
+import { CircuitBreakerService } from '../../monitoring/services/circuit-breaker.service';
 
 @Injectable()
 export class AdminService {
@@ -40,6 +41,7 @@ export class AdminService {
     private cleanupService: CleanupService,
     private settingsCacheService: SettingsCacheService,
     @Inject(forwardRef(() => QueueService)) private queueService: QueueService,
+    private circuitBreakerService: CircuitBreakerService,
   ) {}
 
   // Setter for scheduler service to avoid circular dependency
@@ -380,51 +382,70 @@ export class AdminService {
    * Get real-time system status
    */
   async getSystemStatus() {
-    try {
-      const [memoryUsage, loadAverage, settings] = await Promise.all([
-        this.getMemoryUsage(),
-        this.getLoadAverage(),
-        (this.systemSettingsModel as any).getCurrentSettings()
-      ]);
+    return await this.circuitBreakerService.execute(
+      'mongodb',
+      async () => {
+        const [memoryUsage, loadAverage, settings] = await Promise.all([
+          this.getMemoryUsage(),
+          this.getLoadAverage(),
+          (this.systemSettingsModel as any).getCurrentSettings()
+        ]);
 
-      // Get Redis connection status (if available)
-      let redisConnected = false;
-      try {
-        // Check if Redis is available through any Redis service
-        // This is a simplified check - in practice you'd inject Redis service
-        redisConnected = true; // Default to true, should be checked properly
-      } catch (error) {
-        redisConnected = false;
-      }
-
-      // Simulate active jobs count (should come from actual queue service)
-      const activeJobs = Math.floor(Math.random() * 10); // Replace with actual queue service
-
-      // Determine queue health based on load and memory
-      let queueHealth: 'healthy' | 'degraded' | 'critical' = 'healthy';
-      if (loadAverage > 0.8 || memoryUsage > 85) {
-        queueHealth = 'critical';
-      } else if (loadAverage > 0.6 || memoryUsage > 70) {
-        queueHealth = 'degraded';
-      }
-
-      return {
-        status: 'success',
-        data: {
-          redisConnected,
-          settingsCacheVersion: Date.now(), // Should come from actual cache service
-          settingsCacheLastUpdated: new Date().toISOString(),
-          currentLoadAverage: loadAverage,
-          memoryUsage,
-          activeJobs,
-          queueHealth,
-          timestamp: new Date().toISOString()
+        // Get Redis connection status (if available)
+        let redisConnected = false;
+        try {
+          // Check if Redis is available through any Redis service
+          // This is a simplified check - in practice you'd inject Redis service
+          redisConnected = true; // Default to true, should be checked properly
+        } catch (error) {
+          redisConnected = false;
         }
-      };
-    } catch (error) {
-      this.logger.error('Failed to get system status:', error);
-      throw new InternalServerErrorException(`Failed to get system status: ${error.message}`);
-    }
+
+        // Simulate active jobs count (should come from actual queue service)
+        const activeJobs = Math.floor(Math.random() * 10); // Replace with actual queue service
+
+        // Determine queue health based on load and memory
+        let queueHealth: 'healthy' | 'degraded' | 'critical' = 'healthy';
+        if (loadAverage > 0.8 || memoryUsage > 85) {
+          queueHealth = 'critical';
+        } else if (loadAverage > 0.6 || memoryUsage > 70) {
+          queueHealth = 'degraded';
+        }
+
+        return {
+          status: 'success',
+          data: {
+            redisConnected,
+            settingsCacheVersion: Date.now(), // Should come from actual cache service
+            settingsCacheLastUpdated: new Date().toISOString(),
+            currentLoadAverage: loadAverage,
+            memoryUsage,
+            activeJobs,
+            queueHealth,
+            timestamp: new Date().toISOString()
+          }
+        };
+      },
+      async () => {
+        // Fallback when circuit is open
+        this.logger.warn('System status circuit breaker is open, returning cached/fallback data');
+        return {
+          status: 'success',
+          data: {
+            redisConnected: false,
+            settingsCacheVersion: 0,
+            settingsCacheLastUpdated: new Date().toISOString(),
+            currentLoadAverage: 0,
+            memoryUsage: 0,
+            activeJobs: 0,
+            queueHealth: 'critical' as const,
+            timestamp: new Date().toISOString(),
+            fallbackMode: true,
+            message: 'Database temporarily unavailable (circuit breaker open)'
+          }
+        };
+      }
+    );
   }
 
   /**
@@ -752,39 +773,46 @@ export class AdminService {
    * Perform database operations
    */
   async performDatabaseOperation(databaseOperationDto: DatabaseOperationDto) {
-    try {
-      const { operation, collections = [] } = databaseOperationDto;
-      
-      this.logger.log(`Performing database operation: ${operation}`, { collections });
-      
-      let results: any = {};
-      
-      switch (operation) {
-        case 'compact':
-          results = await this.compactDatabase(collections);
-          break;
-        case 'repair':
-          results = await this.repairDatabase(collections);
-          break;
-        case 'reindex':
-          results = await this.reindexDatabase(collections);
-          break;
-        default:
-          throw new BadRequestException(`Unsupported database operation: ${operation}`);
+    return await this.circuitBreakerService.execute(
+      'mongodb',
+      async () => {
+        const { operation, collections = [] } = databaseOperationDto;
+        
+        this.logger.log(`Performing database operation: ${operation}`, { collections });
+        
+        let results: any = {};
+        
+        switch (operation) {
+          case 'compact':
+            results = await this.compactDatabase(collections);
+            break;
+          case 'repair':
+            results = await this.repairDatabase(collections);
+            break;
+          case 'reindex':
+            results = await this.reindexDatabase(collections);
+            break;
+          default:
+            throw new BadRequestException(`Unsupported database operation: ${operation}`);
+        }
+        
+        return {
+          status: 'success',
+          data: {
+            operation,
+            results,
+            message: `Database ${operation} operation completed successfully`,
+          },
+        };
+      },
+      async () => {
+        // Fallback when circuit is open
+        this.logger.warn(`Database ${databaseOperationDto.operation} operation blocked by circuit breaker`);
+        throw new InternalServerErrorException(
+          `Database operation temporarily unavailable. The database service is experiencing issues and has been temporarily disabled to prevent cascading failures. Please try again later.`
+        );
       }
-      
-      return {
-        status: 'success',
-        data: {
-          operation,
-          results,
-          message: `Database ${operation} operation completed successfully`,
-        },
-      };
-    } catch (error) {
-      this.logger.error(`Database ${databaseOperationDto.operation} operation failed:`, error);
-      throw new InternalServerErrorException(`Database operation failed: ${error.message}`);
-    }
+    );
   }
 
   /**
@@ -915,48 +943,59 @@ export class AdminService {
   }
 
   private async getDatabaseStats() {
-    try {
-      const stats = await this.connection.db.stats();
-      
-      const collections = await this.connection.db.listCollections().toArray();
-      const collectionStats = [];
-      
-      for (const collection of collections) {
-        try {
-          const collStats = await this.connection.db.collection(collection.name).countDocuments();
-          collectionStats.push({
-            name: collection.name,
-            count: collStats || 0,
-            size: 0, // Size not available with countDocuments
-            avgObjSize: 0, // Average object size not available
-          });
-        } catch (error) {
-          // Some collections might not support stats
-          collectionStats.push({
-            name: collection.name,
-            count: 0,
-            size: 0,
-            avgObjSize: 0,
-          });
+    return await this.circuitBreakerService.execute(
+      'mongodb',
+      async () => {
+        const stats = await this.connection.db.stats();
+        
+        const collections = await this.connection.db.listCollections().toArray();
+        const collectionStats = [];
+        
+        for (const collection of collections) {
+          try {
+            const collStats = await this.connection.db.collection(collection.name).countDocuments();
+            collectionStats.push({
+              name: collection.name,
+              count: collStats || 0,
+              size: 0, // Size not available with countDocuments
+              avgObjSize: 0, // Average object size not available
+            });
+          } catch (error) {
+            // Some collections might not support stats
+            collectionStats.push({
+              name: collection.name,
+              count: 0,
+              size: 0,
+              avgObjSize: 0,
+            });
+          }
         }
-      }
 
-      return {
-        connected: this.connection.readyState === 1,
-        collections: collections.length,
-        totalDocuments: collectionStats.reduce((sum, col) => sum + col.count, 0),
-        totalSize: stats.dataSize || 0,
-        totalSizeFormatted: this.formatFileSize(stats.dataSize || 0),
-        indexes: stats.indexes || 0,
-        collectionStats,
-      };
-    } catch (error) {
-      this.logger.error('Error getting database stats:', error);
-      return {
-        connected: false,
-        error: error.message,
-      };
-    }
+        return {
+          connected: this.connection.readyState === 1,
+          collections: collections.length,
+          totalDocuments: collectionStats.reduce((sum, col) => sum + col.count, 0),
+          totalSize: stats.dataSize || 0,
+          totalSizeFormatted: this.formatFileSize(stats.dataSize || 0),
+          indexes: stats.indexes || 0,
+          collectionStats,
+        };
+      },
+      async () => {
+        // Fallback when circuit is open
+        this.logger.warn('Database stats circuit breaker is open, returning cached/fallback data');
+        return {
+          connected: false,
+          error: 'Database temporarily unavailable (circuit breaker open)',
+          collections: 0,
+          totalDocuments: 0,
+          totalSize: 0,
+          totalSizeFormatted: '0 B',
+          indexes: 0,
+          collectionStats: [],
+        };
+      }
+    );
   }
 
   private async getFileSystemStats() {

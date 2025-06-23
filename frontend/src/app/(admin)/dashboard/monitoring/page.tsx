@@ -112,15 +112,23 @@ interface SystemHealth {
 }
 
 interface CircuitBreakerStatus {
-  [key: string]: {
-    state: string;
-    stats: {
-      successes: number;
-      failures: number;
-      timeouts: number;
-      rejects: number;
-    }
-  }
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  openBreakers: string[];
+  totalBreakers: number;
+  healthyBreakers: number;
+  breakers: Record<string, {
+    name: string;
+    state: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
+    failureCount: number;
+    failureThreshold: number;
+    successCount: number;
+    totalRequests: number;
+    successRate: string;
+    timeout: number;
+    nextAttempt?: string | null;
+    lastFailureTime?: string | null;
+    lastSuccessTime?: string | null;
+  }>;
 }
 
 interface LoadBalancerStatus {
@@ -672,9 +680,63 @@ export default function MonitoringPage() {
                   <Skeleton className="h-16 w-full" />
                   <Skeleton className="h-16 w-full" />
                 </div>
-              ) : circuitBreakerStats && Object.keys(circuitBreakerStats).length > 0 ? (
+              ) : circuitBreakerStats && Object.keys(circuitBreakerStats.breakers || {}).length > 0 ? (
                 <div className="space-y-6">
-                  {Object.entries(circuitBreakerStats).map(([name, data]) => (
+                  {/* Overall Status Summary */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Overall Status</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Badge 
+                          variant={
+                            circuitBreakerStats.status === 'healthy' ? 'outline' :
+                            circuitBreakerStats.status === 'degraded' ? 'secondary' : 
+                            'destructive'
+                          }
+                          className="text-sm"
+                        >
+                          {circuitBreakerStats.status.toUpperCase()}
+                        </Badge>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Total Breakers</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{circuitBreakerStats.totalBreakers}</div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Healthy Breakers</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-green-600">{circuitBreakerStats.healthyBreakers}</div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Open Breakers</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-red-600">{circuitBreakerStats.openBreakers.length}</div>
+                        {circuitBreakerStats.openBreakers.length > 0 && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {circuitBreakerStats.openBreakers.join(', ')}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  {/* Individual Circuit Breaker Details */}
+                  {Object.entries(circuitBreakerStats.breakers).map(([name, data]) => (
                     <div key={name} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
@@ -682,8 +744,8 @@ export default function MonitoringPage() {
                           <Badge 
                             className="ml-2"
                             variant={
-                              data.state === 'closed' ? 'outline' :
-                              data.state === 'open' ? 'destructive' : 
+                              data.state === 'CLOSED' ? 'outline' :
+                              data.state === 'OPEN' ? 'destructive' : 
                               'secondary'
                             }
                           >
@@ -695,21 +757,51 @@ export default function MonitoringPage() {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="bg-background/50 p-2 rounded">
                           <p className="text-xs text-muted-foreground">Success Count</p>
-                          <p className="text-xl font-medium">{data.stats?.successes || 0}</p>
+                          <p className="text-xl font-medium">{data.successCount || 0}</p>
                         </div>
                         <div className="bg-background/50 p-2 rounded">
                           <p className="text-xs text-muted-foreground">Failure Count</p>
-                          <p className="text-xl font-medium">{data.stats?.failures || 0}</p>
+                          <p className="text-xl font-medium">{data.failureCount || 0}</p>
                         </div>
                         <div className="bg-background/50 p-2 rounded">
-                          <p className="text-xs text-muted-foreground">Timeout Count</p>
-                          <p className="text-xl font-medium">{data.stats?.timeouts || 0}</p>
+                          <p className="text-xs text-muted-foreground">Total Requests</p>
+                          <p className="text-xl font-medium">{data.totalRequests || 0}</p>
                         </div>
                         <div className="bg-background/50 p-2 rounded">
-                          <p className="text-xs text-muted-foreground">Rejected Count</p>
-                          <p className="text-xl font-medium">{data.stats?.rejects || 0}</p>
+                          <p className="text-xs text-muted-foreground">Success Rate</p>
+                          <p className="text-xl font-medium">{data.successRate || 'N/A'}</p>
                         </div>
                       </div>
+                      
+                      {/* Additional Circuit Breaker Details */}
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Failure Threshold</p>
+                          <p className="font-medium">{data.failureThreshold}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Timeout (ms)</p>
+                          <p className="font-medium">{data.timeout}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Last Success</p>
+                          <p className="font-medium">
+                            {data.lastSuccessTime 
+                              ? new Date(data.lastSuccessTime).toLocaleString()
+                              : 'Never'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {data.state === 'OPEN' && data.nextAttempt && (
+                        <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                          <p className="text-sm font-medium text-destructive">Circuit Open</p>
+                          <p className="text-xs text-muted-foreground">
+                            Next retry attempt: {new Date(data.nextAttempt).toLocaleString()}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

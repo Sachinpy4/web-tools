@@ -12,10 +12,12 @@ import { Media, MediaSchema } from '../media/schemas/media.schema';
 import { User, UserSchema } from '../auth/schemas/user.schema';
 import { CommonModule } from '../../common/common.module';
 import { ImagesModule } from '../images/images.module';
+import { MonitoringModule } from '../monitoring/monitoring.module';
 
 @Module({
   imports: [
     CommonModule,
+    MonitoringModule,
     forwardRef(() => ImagesModule),
     MongooseModule.forFeature([
       { name: SystemSettings.name, schema: SystemSettingsSchema },
