@@ -7,6 +7,7 @@ export enum SchedulerTaskType {
   CACHE = 'cache',
   DATABASE = 'database',
   MEMORY = 'memory',
+  FILES = 'files',
 }
 
 export class CreateSchedulerConfigDto {

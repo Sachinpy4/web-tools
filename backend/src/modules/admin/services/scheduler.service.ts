@@ -143,6 +143,10 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
           result = await this.cleanupService.executeMemoryOptimization();
           break;
 
+        case 'files':
+          result = await this.cleanupService.executeFileCleanup();
+          break;
+
         default:
           this.logger.warn(`Unknown cleanup type: ${type}`);
           return;
@@ -198,7 +202,7 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
   getSchedulerStatus(): { [key: string]: { active: boolean; nextRun?: string; schedule?: string } } {
     const status: { [key: string]: { active: boolean; nextRun?: string; schedule?: string } } = {};
     
-    for (const type of ['images', 'logs', 'cache', 'database', 'memory']) {
+    for (const type of ['images', 'logs', 'cache', 'database', 'memory', 'files']) {
       status[type] = {
         active: this.activeSchedulers.has(type),
         nextRun: undefined,

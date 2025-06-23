@@ -298,6 +298,136 @@ export class CleanupService {
   }
 
   /**
+   * Execute file cleanup - remove orphaned temporary files
+   */
+  async executeFileCleanup(): Promise<CleanupResult> {
+    try {
+      const uploadDir = this.configService.get<string>('upload.dest') || 'uploads';
+      const processedDir = path.join(uploadDir, 'processed');
+      const archiveDir = path.join(uploadDir, 'archives');
+      
+      let totalDeleted = 0;
+      let totalSize = 0;
+      const details: string[] = [];
+      
+      // Clean old processed files (older than 24 hours)
+      try {
+        const processedFiles = await fs.readdir(processedDir);
+        const cutoffTime = Date.now() - (24 * 60 * 60 * 1000); // 24 hours
+        
+        for (const file of processedFiles) {
+          const filePath = path.join(processedDir, file);
+          try {
+            const stats = await fs.stat(filePath);
+            if (stats.mtime.getTime() < cutoffTime) {
+              totalSize += stats.size;
+              await fs.unlink(filePath);
+              totalDeleted++;
+            }
+          } catch (e) {
+            // File might be locked or already deleted - skip it
+            continue;
+          }
+        }
+        
+        if (totalDeleted > 0) {
+          details.push(`Processed files: ${totalDeleted} old files deleted`);
+        } else {
+          details.push('Processed files: No old files found');
+        }
+      } catch (e: any) {
+        details.push(`Processed files: Directory not accessible (${e.message})`);
+      }
+      
+      // Clean old archive files (older than 7 days)
+      try {
+        const archiveFiles = await fs.readdir(archiveDir);
+        const archiveCutoffTime = Date.now() - (7 * 24 * 60 * 60 * 1000); // 7 days
+        let archiveDeleted = 0;
+        
+        for (const file of archiveFiles) {
+          const filePath = path.join(archiveDir, file);
+          try {
+            const stats = await fs.stat(filePath);
+            if (stats.mtime.getTime() < archiveCutoffTime) {
+              totalSize += stats.size;
+              await fs.unlink(filePath);
+              archiveDeleted++;
+            }
+          } catch (e) {
+            // File might be locked or already deleted - skip it
+            continue;
+          }
+        }
+        
+        if (archiveDeleted > 0) {
+          totalDeleted += archiveDeleted;
+          details.push(`Archive files: ${archiveDeleted} old archives deleted`);
+        } else {
+          details.push('Archive files: No old archives found');
+        }
+      } catch (e: any) {
+        details.push(`Archive files: Directory not accessible (${e.message})`);
+      }
+      
+      // Clean orphaned upload files (older than 1 hour)
+      try {
+        const uploadFiles = await fs.readdir(uploadDir);
+        const uploadCutoffTime = Date.now() - (60 * 60 * 1000); // 1 hour
+        let uploadDeleted = 0;
+        
+        for (const file of uploadFiles) {
+          // Skip directories and known files
+          if (file === 'processed' || file === 'archives' || file.startsWith('.')) {
+            continue;
+          }
+          
+          const filePath = path.join(uploadDir, file);
+          try {
+            const stats = await fs.stat(filePath);
+            if (stats.isFile() && stats.mtime.getTime() < uploadCutoffTime) {
+              totalSize += stats.size;
+              await fs.unlink(filePath);
+              uploadDeleted++;
+            }
+          } catch (e) {
+            // File might be locked or already deleted - skip it
+            continue;
+          }
+        }
+        
+        if (uploadDeleted > 0) {
+          totalDeleted += uploadDeleted;
+          details.push(`Upload files: ${uploadDeleted} orphaned files deleted`);
+        } else {
+          details.push('Upload files: No orphaned files found');
+        }
+      } catch (e: any) {
+        details.push(`Upload files: Directory not accessible (${e.message})`);
+      }
+      
+      this.logger.log(`File cleanup completed: ${totalDeleted} files deleted, ${this.formatBytes(totalSize)} recovered`);
+      
+      return {
+        success: true,
+        totalDeleted,
+        sizeRecovered: this.formatBytes(totalSize),
+        message: totalDeleted > 0 ? 
+          `Cleaned ${totalDeleted} files. ${details.join('; ')}` :
+          `No cleanup needed. ${details.join('; ')}`
+      };
+    } catch (error: any) {
+      this.logger.error('File cleanup failed:', error);
+      return {
+        success: false,
+        totalDeleted: 0,
+        sizeRecovered: '0 KB',
+        message: `File cleanup failed: ${error.message}`
+      };
+    }
+  }
+
+  /**
    * Execute memory optimization - force garbage collection and clear module cache
    */
   async executeMemoryOptimization(): Promise<CleanupResult> {

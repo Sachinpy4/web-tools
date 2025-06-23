@@ -15,8 +15,8 @@ interface MaintenanceTabProps {
   schedulerInfo: SchedulerInfo;
   handleCleanup: () => Promise<void>;
   refreshSystemStatus: () => Promise<void>;
-  handleSystemCleanup: (type: 'images' | 'logs' | 'cache' | 'database' | 'memory') => Promise<void>;
-  handleSchedulerSetup: (type: 'images' | 'logs' | 'cache' | 'database' | 'memory', enabled: boolean) => Promise<void>;
+  handleSystemCleanup: (type: 'images' | 'logs' | 'cache' | 'database' | 'memory' | 'files') => Promise<void>;
+  handleSchedulerSetup: (type: 'images' | 'logs' | 'cache' | 'database' | 'memory' | 'files', enabled: boolean) => Promise<void>;
 }
 
 export function MaintenanceTab({
@@ -465,6 +465,80 @@ export function MaintenanceTab({
                 <>
                   <MemoryStick className="mr-2 h-4 w-4" /> 
                   Optimize Memory
+                </>
+              )}
+            </Button>
+          </CardFooter>
+        </Card>
+        
+        {/* File System Cleanup */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <HardDrive className="mr-2 h-5 w-5" />
+              File System Cleanup
+              {schedulerStates.files && (
+                <span className="ml-auto text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                  Scheduled
+                </span>
+              )}
+            </CardTitle>
+            <CardDescription>
+              Clean up orphaned temporary files, old processed images, and expired archives. Helps prevent disk space issues.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Cleanup policy: <strong>Upload files (1 hour), Processed files (24 hours), Archives (7 days)</strong>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                File retention: <strong>Smart cleanup based on file age and type</strong>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Windows compatibility: <strong>Enhanced with retry logic and garbage collection</strong>
+              </p>
+              {schedulerInfo.files && schedulerInfo.files.active && (
+                <p className="text-sm text-green-600">
+                  <ClockIcon className="h-3 w-3 inline mr-1" />
+                  Next cleanup: {schedulerInfo.files.nextRun ? 
+                    new Date(schedulerInfo.files.nextRun).toLocaleString() : 
+                    schedulerInfo.files.schedule || 'Unknown'}
+                </p>
+              )}
+            </div>
+            
+            <div className="flex items-center space-x-2 mt-4">
+              <Checkbox 
+                id="filesScheduler" 
+                checked={schedulerStates.files}
+                onCheckedChange={(checked) => handleSchedulerSetup('files', !!checked)}
+                disabled={isLoading}
+              />
+              <label
+                htmlFor="filesScheduler"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Schedule automatic cleanup (5:00 AM daily)
+              </label>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              onClick={() => handleSystemCleanup('files')} 
+              disabled={isLoading}
+              variant="outline"
+              className="w-full"
+            >
+              {isLoading ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> 
+                  Cleaning...
+                </>
+              ) : (
+                <>
+                  <HardDrive className="mr-2 h-4 w-4" /> 
+                  Clean Files
                 </>
               )}
             </Button>

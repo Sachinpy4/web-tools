@@ -265,19 +265,14 @@ export default function CompressTool() {
             isFormData: true,
           });
           
-          console.log('🔍 FRONTEND COMPRESS - API response:', result);
-          
           // Handle queued response (with jobId) vs direct response
           if (result.status === 'processing' && result.data.jobId) {
-            console.log('🚀 FRONTEND COMPRESS - Queued processing:', result.data);
             // Queued processing - use shared job polling
             startJobPolling(result.data.jobId, 'compress', index, file, createCompressResult);
             
           } else {
-            console.log('⚡ FRONTEND COMPRESS - Direct processing:', result.data);
             // Direct processing - immediate result, but use visual progress
             const resultObj = createCompressResult(result.data, file);
-            console.log('🎯 FRONTEND COMPRESS - Created result object:', resultObj);
             
             // Start visual progress simulation for direct processing
             showResultsAfterProgress(index, resultObj).then(() => {

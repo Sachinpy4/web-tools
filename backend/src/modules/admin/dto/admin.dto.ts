@@ -305,10 +305,10 @@ export class CleanupOptionsDto {
   @ApiProperty({
     description: 'Type of cleanup to perform',
     example: 'images',
-    enum: ['images', 'logs', 'cache', 'database', 'memory']
+    enum: ['images', 'logs', 'cache', 'database', 'memory', 'files']
   })
-  @IsEnum(['images', 'logs', 'cache', 'database', 'memory'])
-  type: 'images' | 'logs' | 'cache' | 'database' | 'memory';
+  @IsEnum(['images', 'logs', 'cache', 'database', 'memory', 'files'])
+  type: 'images' | 'logs' | 'cache' | 'database' | 'memory' | 'files';
 
   @ApiPropertyOptional({
     description: 'Set up automatic cleanup scheduling',

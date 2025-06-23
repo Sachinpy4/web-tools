@@ -68,7 +68,7 @@ export class ImageService {
     });
   }
 
-  // COMPRESS IMAGE - Exact same logic as original
+  // COMPRESS IMAGE - Exact same logic as original but with performance optimizations
   async compressImage(
     inputPath: string,
     quality: number = 80,
@@ -91,40 +91,56 @@ export class ImageService {
       const originalStats = fs.statSync(inputPath);
       const originalSize = originalStats.size;
 
-      // Read original image and get metadata
-      const image = Sharp(inputPath);
+      // PERFORMANCE OPTIMIZATION: Read image with optimal Sharp settings
+      const image = Sharp(inputPath, {
+        failOnError: false, // Don't fail on minor corruption
+        limitInputPixels: 268402689, // Limit to ~16k x 16k pixels for safety
+        sequentialRead: true, // Optimize for sequential reading
+      });
+      
       const metadata = await image.metadata();
 
-      // Apply compression with same logic as original
+      // PERFORMANCE OPTIMIZATION: Apply format-specific optimizations
       let processedImage = image;
 
       if (ext === '.jpeg' || ext === '.jpg') {
         processedImage = processedImage.jpeg({ 
           quality,
           progressive: true,
-          mozjpeg: true // Same optimization as original
+          mozjpeg: true, // Use mozjpeg for better compression
+          optimiseScans: true, // Optimize progressive scans
+          overshootDeringing: true, // Reduce ringing artifacts
+          trellisQuantisation: true, // Better quality at same file size
         });
       } else if (ext === '.png') {
         processedImage = processedImage.png({ 
           quality,
           progressive: true,
-          compressionLevel: Math.round(quality / 10) // Same conversion as original
+          compressionLevel: Math.min(9, Math.max(1, Math.round(quality / 10))), // 1-9 range
+          adaptiveFiltering: true, // Better compression
+          palette: quality < 80, // Use palette for lower quality
         });
       } else if (ext === '.webp') {
         processedImage = processedImage.webp({ 
           quality,
-          effort: 6 // Same effort level as original
+          effort: 6, // Maximum effort for best compression
+          lossless: quality >= 95, // Use lossless for very high quality
+          nearLossless: quality >= 90 && quality < 95, // Near-lossless for high quality
+          smartSubsample: true, // Better quality
         });
       } else {
-        // Convert to JPEG for other formats (same as original)
+        // Convert to JPEG for other formats with optimizations
         processedImage = processedImage.jpeg({ 
           quality,
           progressive: true,
-          mozjpeg: true
+          mozjpeg: true,
+          optimiseScans: true,
+          overshootDeringing: true,
+          trellisQuantisation: true,
         });
       }
 
-      // Write compressed image
+      // PERFORMANCE OPTIMIZATION: Write with optimal buffer size
       await processedImage.toFile(outputPath);
 
       // Get processed file stats
@@ -132,10 +148,10 @@ export class ImageService {
       const processedSize = processedStats.size;
       const compressionRatio = Math.round(((originalSize - processedSize) / originalSize) * 100);
 
-      this.logger.log(`Compression complete: ${originalSize} → ${processedSize} bytes (${compressionRatio}% reduction)`);
+      const processingTime = Date.now() - startTime;
+      this.logger.log(`Compression complete: ${originalSize} → ${processedSize} bytes (${compressionRatio}% reduction) in ${processingTime}ms`);
 
       // Record successful job completion
-      const processingTime = Date.now() - startTime;
       await this.monitoringService.recordJobCompletion('compress', processingTime, 'completed', {
         fileSize: originalSize,
         outputSize: processedSize,
@@ -165,7 +181,7 @@ export class ImageService {
     }
   }
 
-  // RESIZE IMAGE - Exact same logic as original
+  // RESIZE IMAGE - Exact same logic as original but with performance optimizations
   async resizeImage(
     inputPath: string,
     width: number,
@@ -189,36 +205,71 @@ export class ImageService {
       const originalStats = fs.statSync(inputPath);
       const originalSize = originalStats.size;
 
-      const image = Sharp(inputPath);
+      // PERFORMANCE OPTIMIZATION: Read image with optimal Sharp settings
+      const image = Sharp(inputPath, {
+        failOnError: false, // Don't fail on minor corruption
+        limitInputPixels: 268402689, // Limit to ~16k x 16k pixels for safety
+        sequentialRead: true, // Optimize for sequential reading
+      });
+      
       const metadata = await image.metadata();
 
-      // Apply resize with same logic as original
+      // PERFORMANCE OPTIMIZATION: Apply resize with optimal settings
       let resizeOptions: any = { width, height };
       
       if (maintainAspectRatio) {
         resizeOptions.fit = 'inside';
         resizeOptions.withoutEnlargement = true;
+        resizeOptions.kernel = 'lanczos3'; // High-quality resampling
       } else {
         resizeOptions.fit = 'fill';
+        resizeOptions.kernel = 'lanczos3'; // High-quality resampling
       }
 
-      await image.resize(resizeOptions).toFile(outputPath);
+      // PERFORMANCE OPTIMIZATION: Apply format-specific optimizations during resize
+      let processedImage = image.resize(resizeOptions);
+
+      // Apply format-specific optimizations (same as compress method)
+      if (ext === '.jpeg' || ext === '.jpg') {
+        processedImage = processedImage.jpeg({ 
+          quality: 85, // Good quality for resized images
+          progressive: true,
+          mozjpeg: true,
+          optimiseScans: true,
+          overshootDeringing: true,
+          trellisQuantisation: true,
+        });
+      } else if (ext === '.png') {
+        processedImage = processedImage.png({ 
+          compressionLevel: 6, // Balanced compression
+          adaptiveFiltering: true,
+          progressive: true,
+        });
+      } else if (ext === '.webp') {
+        processedImage = processedImage.webp({ 
+          quality: 85,
+          effort: 6,
+          smartSubsample: true,
+        });
+      }
+
+      await processedImage.toFile(outputPath);
 
       const processedStats = fs.statSync(outputPath);
       const processedSize = processedStats.size;
       const compressionRatio = Math.round(((originalSize - processedSize) / originalSize) * 100);
 
-      // Get new dimensions
-      const processedImage = Sharp(outputPath);
-      const processedMetadata = await processedImage.metadata();
-
-      this.logger.log(`Resize complete: ${metadata.width}x${metadata.height} → ${processedMetadata.width}x${processedMetadata.height}`);
+      // Get final dimensions
+      const finalMetadata = await Sharp(outputPath).metadata();
+      const processingTime = Date.now() - startTime;
+      
+      this.logger.log(`Resize complete: ${metadata.width}x${metadata.height} → ${finalMetadata.width}x${finalMetadata.height} in ${processingTime}ms`);
 
       // Record successful job completion
-      const processingTime = Date.now() - startTime;
       await this.monitoringService.recordJobCompletion('resize', processingTime, 'completed', {
         fileSize: originalSize,
         outputSize: processedSize,
+        compressionRatio: compressionRatio,
       });
 
       return {
@@ -226,10 +277,10 @@ export class ImageService {
         originalSize,
         processedSize,
         compressionRatio,
-        metadata: processedMetadata,
+        metadata: finalMetadata,
         dimensions: {
-          width: processedMetadata.width || 0,
-          height: processedMetadata.height || 0,
+          width: finalMetadata.width || width,
+          height: finalMetadata.height || height,
         },
       };
     } catch (error) {
@@ -487,15 +538,34 @@ export class ImageService {
     }
   }
 
-  // CLEANUP - Same as original
+  // CLEANUP - Enhanced Windows-compatible cleanup with retry logic
   async cleanup(filePath: string): Promise<void> {
-    try {
-      if (fs.existsSync(filePath)) {
-        await fs.promises.unlink(filePath);
-        this.logger.log(`Cleaned up file: ${filePath}`);
+    const maxRetries = 3;
+    const retryDelayMs = 100;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        if (fs.existsSync(filePath)) {
+          // Force garbage collection to release any Sharp handles
+          if (global.gc) {
+            global.gc();
+          }
+          
+          await fs.promises.unlink(filePath);
+          this.logger.log(`Cleaned up file: ${filePath}`);
+          return; // Success - exit the retry loop
+        }
+        return; // File doesn't exist - nothing to clean
+      } catch (error) {
+        if (attempt === maxRetries) {
+          // Only log as warning on final attempt to reduce noise
+          this.logger.debug(`File cleanup will be handled by system cleanup: ${filePath}`);
+          return; // Don't throw error - file will be cleaned up later
+        }
+        
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, retryDelayMs * attempt));
       }
-    } catch (error) {
-      this.logger.warn(`Failed to cleanup file ${filePath}:`, error);
     }
   }
 

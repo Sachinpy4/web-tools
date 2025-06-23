@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { apiRequest } from '@/lib/apiClient';
 
@@ -60,7 +60,25 @@ export const useJobManagement = ({
   const [pollingIntervalMs, setPollingIntervalMs] = useState<number>(2000);
   const [maxPollAttempts, setMaxPollAttempts] = useState<number>(60);
 
+  // CRITICAL PERFORMANCE FIX: Track active intervals to prevent memory leaks using ref
+  const activeIntervalsRef = useRef<Set<NodeJS.Timeout>>(new Set());
+
   const { toast } = useToast();
+
+  // CRITICAL PERFORMANCE FIX: Cleanup function to clear all active intervals
+  const cleanupAllIntervals = useCallback(() => {
+    Array.from(activeIntervalsRef.current).forEach(intervalId => {
+      clearInterval(intervalId);
+    });
+    activeIntervalsRef.current = new Set();
+  }, []); // No dependencies needed since we use ref
+
+  // CRITICAL PERFORMANCE FIX: Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cleanupAllIntervals();
+    };
+  }, [cleanupAllIntervals]);
 
   // Fetch polling settings from admin configuration
   useEffect(() => {
@@ -366,17 +384,30 @@ export const useJobManagement = ({
     // Start polling with configured interval
     pollInterval = setInterval(pollJobStatus, pollingIntervalMs);
     
+    // CRITICAL PERFORMANCE FIX: Track the interval for cleanup
+    activeIntervalsRef.current.add(pollInterval);
+    
     // Start the first poll immediately
     pollJobStatus();
     
+    // CRITICAL PERFORMANCE FIX: Return cleanup function
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        activeIntervalsRef.current.delete(pollInterval);
+      }
+    };
   }, [setJobIds, setFileJobMapping, setVisualProgress, setJobProgress, setQueueStatus, setResults, setProcessingFiles, toast, cleanupJobState, pollingIntervalMs, maxPollAttempts]);
 
   const clearAllJobs = useCallback(() => {
+    // CRITICAL PERFORMANCE FIX: Clear all intervals before clearing jobs
+    cleanupAllIntervals();
+    
     setJobIds([]);
     setJobProgress({});
     setQueueStatus({});
     setFileJobMapping({});
-  }, [setJobIds, setJobProgress, setQueueStatus, setFileJobMapping]);
+  }, [setJobIds, setJobProgress, setQueueStatus, setFileJobMapping, cleanupAllIntervals]);
 
   return {
     // State
@@ -398,7 +429,7 @@ export const useJobManagement = ({
   };
 };
 
-// Helper function to generate success messages based on tool type
+// Helper function to generate success messages
 const getSuccessMessage = (toolType: 'compress' | 'convert' | 'resize' | 'crop', file: File, jobResult: any): string => {
   switch (toolType) {
     case 'compress':
@@ -412,4 +443,4 @@ const getSuccessMessage = (toolType: 'compress' | 'convert' | 'resize' | 'crop',
     default:
       return `${file.name} processed successfully`;
   }
-}; 
+};

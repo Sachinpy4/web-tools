@@ -15,7 +15,8 @@ export function useSystemStatus() {
     logs: false,
     cache: false, 
     database: false,
-    memory: false
+    memory: false,
+    files: false
   });
   
   // Detailed scheduler information
@@ -48,7 +49,8 @@ export function useSystemStatus() {
           logs: schedulers.logs?.active || false,
           cache: schedulers.cache?.active || false,
           database: schedulers.database?.active || false,
-          memory: schedulers.memory?.active || false
+          memory: schedulers.memory?.active || false,
+          files: schedulers.files?.active || false
         });
         setSchedulerInfo(schedulers);
       } else if ((response as any).tasks) {
@@ -67,7 +69,8 @@ export function useSystemStatus() {
           logs: schedulers.logs?.active || false,
           cache: schedulers.cache?.active || false,
           database: schedulers.database?.active || false,
-          memory: schedulers.memory?.active || false
+          memory: schedulers.memory?.active || false,
+          files: schedulers.files?.active || false
         });
         setSchedulerInfo(schedulers);
       } else {
@@ -77,7 +80,8 @@ export function useSystemStatus() {
           logs: false,
           cache: false,
           database: false,
-          memory: false
+          memory: false,
+          files: false
         });
         setSchedulerInfo({});
       }
@@ -202,7 +206,8 @@ export function useSystemStatus() {
         logs: { hour: 2, minute: 0 },
         cache: { hour: 1, minute: 0 },
         database: { hour: 4, minute: 0 },
-        memory: { hour: 6, minute: 0 }
+        memory: { hour: 6, minute: 0 },
+        files: { hour: 5, minute: 0 }
       };
       
       const schedule = scheduleMap[type];

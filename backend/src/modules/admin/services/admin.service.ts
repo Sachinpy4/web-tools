@@ -314,6 +314,28 @@ export class AdminService {
           }
           break;
           
+        case 'files':
+          try {
+            const fileCleanupResult = await this.cleanupService.executeFileCleanup();
+            result = {
+              type: 'files',
+              success: fileCleanupResult.success,
+              totalDeleted: fileCleanupResult.totalDeleted,
+              sizeRecovered: fileCleanupResult.sizeRecovered,
+              message: fileCleanupResult.message
+            };
+          } catch (error: any) {
+            this.logger.error('File cleanup failed:', error);
+            result = {
+              type: 'files',
+              success: false,
+              totalDeleted: 0,
+              sizeRecovered: '0 KB',
+              message: `File cleanup failed: ${error.message}`
+            };
+          }
+          break;
+          
         default:
           throw new BadRequestException(`Invalid cleanup type: ${type}`);
       }

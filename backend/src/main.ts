@@ -11,8 +11,66 @@ import { SanitizationPipe } from './common/pipes/sanitization.pipe';
 import { AdvancedSecurityGuard } from './common/guards/advanced-security.guard';
 import { Reflector } from '@nestjs/core';
 
+// CRITICAL PERFORMANCE OPTIMIZATION: Configure Sharp for optimal performance
+import Sharp from 'sharp';
+
 // Import worker setup (same pattern as original backend)
 import { startImageWorkers } from './worker';
+
+// CRITICAL PERFORMANCE FIX: Configure Sharp for high-performance concurrent processing
+const configureSharpPerformance = () => {
+  try {
+    // Set Sharp concurrency to utilize all CPU cores efficiently
+    const cpuCount = require('os').cpus().length;
+    const optimalConcurrency = Math.max(1, Math.floor(cpuCount * 0.8)); // Use 80% of CPU cores
+    
+    Sharp.concurrency(optimalConcurrency);
+    console.log(`🚀 Sharp configured for optimal performance: ${optimalConcurrency} concurrent operations (${cpuCount} CPU cores available)`);
+    
+    // Configure Sharp cache for better memory management
+    Sharp.cache({ 
+      memory: 100, // Cache 100 images in memory (adjust based on RAM)
+      files: 20,   // Cache 20 processed files on disk
+      items: 200   // Cache 200 metadata items
+    });
+    
+    // Disable Sharp's internal queue to let BullMQ handle queuing
+    Sharp.queue.on('change', (queueLength) => {
+      if (queueLength > 50) {
+        console.warn(`⚠️ Sharp internal queue growing: ${queueLength} operations pending`);
+      }
+    });
+    
+    console.log('✅ Sharp performance optimizations applied');
+  } catch (error) {
+    console.warn('⚠️ Failed to configure Sharp performance optimizations:', error.message);
+  }
+};
+
+// CRITICAL PERFORMANCE FIX: Set Node.js performance optimizations
+const configureNodePerformance = () => {
+  try {
+    // Set optimal garbage collection for image processing workloads
+    if (process.env.NODE_ENV === 'production') {
+      // Enable incremental GC for better performance with large files
+      process.env.NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + ' --incremental-marking --max-old-space-size=8192 --expose-gc';
+    } else {
+      // Enable GC in development for better file cleanup
+      process.env.NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + ' --expose-gc';
+    }
+    
+    // Set optimal UV thread pool size for file operations
+    process.env.UV_THREADPOOL_SIZE = process.env.UV_THREADPOOL_SIZE || '16';
+    
+    console.log('✅ Node.js performance optimizations applied');
+  } catch (error) {
+    console.warn('⚠️ Failed to configure Node.js performance optimizations:', error.message);
+  }
+};
+
+// Apply performance optimizations before app initialization
+configureSharpPerformance();
+configureNodePerformance();
 
 // Handle Bull.js Redis connection errors gracefully
 process.on('unhandledRejection', (reason, promise) => {

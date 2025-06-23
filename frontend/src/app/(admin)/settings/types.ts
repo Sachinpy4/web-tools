@@ -97,6 +97,7 @@ export interface SchedulerStates {
   cache: boolean;
   database: boolean;
   memory: boolean;
+  files: boolean;
 }
 
 export interface SchedulerInfo {
@@ -107,4 +108,4 @@ export interface SchedulerInfo {
   };
 }
 
-export type CleanupType = 'images' | 'logs' | 'cache' | 'database' | 'memory'; 
+export type CleanupType = 'images' | 'logs' | 'cache' | 'database' | 'memory' | 'files'; 
