@@ -100,7 +100,7 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
-  const [timeRange, setTimeRange] = useState('30days')
+  const [timeRange, setTimeRange] = useState('7days')
 
   // Animation variants
   const containerVariants = {
@@ -315,7 +315,7 @@ function AdminDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
         <span className="text-sm font-medium">Time Range:</span>
         <div className="flex flex-wrap gap-1 sm:gap-2">
-          {['7days', '30days', '90days'].map((range) => (
+          {['today', '7days', '30days', '1year'].map((range) => (
             <Button
               key={range}
               variant={timeRange === range ? 'default' : 'outline'}
@@ -323,7 +323,7 @@ function AdminDashboard() {
               onClick={() => handleTimeRangeChange(range)}
               className="text-xs sm:text-sm"
             >
-              {range === '7days' ? '7 Days' : range === '30days' ? '30 Days' : '90 Days'}
+              {range === 'today' ? 'Today' : range === '7days' ? '7 Days' : range === '30days' ? '30 Days' : '1 Year'}
             </Button>
           ))}
         </div>

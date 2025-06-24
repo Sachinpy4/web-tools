@@ -205,10 +205,10 @@ function BlogAnalyticsPage() {
           <CardContent>
             <div className="flex justify-between items-center">
               <div className="text-2xl font-bold">
-                {analytics ? analytics.totalViews.toLocaleString() : '0'}
+                {analytics ? (analytics.totalViews || 0).toLocaleString() : '0'}
               </div>
               <div className="text-xs text-green-600 font-medium">
-                +{analytics ? Math.floor(analytics.totalViews * 0.12) : 0}%
+                +{analytics ? Math.floor((analytics.totalViews || 0) * 0.12) : 0}%
               </div>
             </div>
           </CardContent>
@@ -225,10 +225,10 @@ function BlogAnalyticsPage() {
           <CardContent>
             <div className="flex justify-between items-center">
               <div className="text-2xl font-bold">
-                {analytics ? analytics.uniqueVisitors.toLocaleString() : '0'}
+                {analytics ? (analytics.uniqueVisitors || 0).toLocaleString() : '0'}
               </div>
               <div className="text-xs text-blue-600 font-medium">
-                +{analytics ? Math.floor(analytics.uniqueVisitors * 0.08) : 0}%
+                +{analytics ? Math.floor((analytics.uniqueVisitors || 0) * 0.08) : 0}%
               </div>
             </div>
           </CardContent>
@@ -248,7 +248,7 @@ function BlogAnalyticsPage() {
                 {blog ? blog.likes || 0 : '0'}
               </div>
               <div className="text-xs text-red-600 font-medium">
-                {blog && analytics ? `${((blog.likes / analytics.totalViews) * 100 || 0).toFixed(1)}%` : '0%'}
+                {blog && analytics ? `${(((blog.likes || 0) / (analytics.totalViews || 1)) * 100 || 0).toFixed(1)}%` : '0%'}
               </div>
             </div>
           </CardContent>
@@ -309,7 +309,7 @@ function BlogAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-xl font-bold text-muted-foreground">
-              {analytics ? Math.floor(analytics.totalViews * 0.05) : 0}
+              {analytics ? Math.floor((analytics.totalViews || 0) * 0.05) : 0}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Estimated shares (~5% of views)</p>
           </CardContent>
@@ -378,7 +378,7 @@ function BlogAnalyticsPage() {
           </p>
         </CardHeader>
         <CardContent>
-          {(!analytics || analytics.dailyViewsArray.length === 0) ? (
+          {(!analytics || !analytics.dailyViewsArray || analytics.dailyViewsArray.length === 0) ? (
             <div className="flex flex-col items-center justify-center h-64 text-center">
               <Eye className="h-12 w-12 text-muted-foreground/20 mb-4" />
               <p className="text-muted-foreground font-medium">No view data available yet</p>
@@ -393,10 +393,10 @@ function BlogAnalyticsPage() {
                     Total Days: {analytics.dailyViewsArray.length}
                   </span>
                   <span className="text-muted-foreground">
-                    Peak: {Math.max(...analytics.dailyViewsArray.map(d => d.views))} views
+                    Peak: {analytics.dailyViewsArray.length > 0 ? Math.max(...analytics.dailyViewsArray.map(d => d.views || 0)) : 0} views
                   </span>
                   <span className="text-muted-foreground">
-                    Avg: {Math.round(analytics.totalViews / analytics.dailyViewsArray.length)} views/day
+                    Avg: {analytics.dailyViewsArray.length > 0 ? Math.round((analytics.totalViews || 0) / analytics.dailyViewsArray.length) : 0} views/day
                   </span>
                 </div>
               </div>

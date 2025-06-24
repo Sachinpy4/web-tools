@@ -334,11 +334,12 @@ export class BlogService {
     }
 
     const analytics = {
-      views: blog.views,
-      likes: blog.likes,
-      uniqueVisitors: blog.uniqueVisitors,
-      averageTimeOnPage: blog.averageTimeOnPage,
-      bounceRate: blog.bounceRate,
+      totalViews: blog.views || 0,
+      uniqueVisitors: blog.uniqueVisitors || 0,
+      averageTimeOnPage: blog.averageTimeOnPage || 0,
+      bounceRate: blog.bounceRate || 0,
+      dailyViews: {},
+      dailyViewsArray: [],
       readingTime: blog.readingTime,
     };
 

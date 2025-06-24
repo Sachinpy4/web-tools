@@ -299,6 +299,67 @@ export class UpdateSystemSettingsDto {
   @IsOptional()
   @IsBoolean()
   enableAdaptivePolling?: boolean;
+
+  // Queue Management Settings - CRITICAL for preventing "job not found" errors
+  @ApiPropertyOptional({
+    description: 'Number of completed jobs to keep in queue',
+    example: 100,
+    minimum: 10,
+    maximum: 500,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(10, { message: 'Must keep at least 10 completed jobs' })
+  @Max(500, { message: 'Cannot keep more than 500 completed jobs' })
+  queueRemoveOnComplete?: number;
+
+  @ApiPropertyOptional({
+    description: 'Number of failed jobs to keep in queue',
+    example: 50,
+    minimum: 5,
+    maximum: 200,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(5, { message: 'Must keep at least 5 failed jobs' })
+  @Max(200, { message: 'Cannot keep more than 200 failed jobs' })
+  queueRemoveOnFail?: number;
+
+  @ApiPropertyOptional({
+    description: 'Job TTL (time to live) in milliseconds',
+    example: 86400000,
+    minimum: 3600000,
+    maximum: 604800000,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(3600000, { message: 'Job TTL must be at least 1 hour' })
+  @Max(604800000, { message: 'Job TTL cannot exceed 7 days' })
+  queueJobTtlMs?: number;
+
+  @ApiPropertyOptional({
+    description: 'Stalled job check interval in milliseconds',
+    example: 30000,
+    minimum: 5000,
+    maximum: 300000,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(5000, { message: 'Stalled interval must be at least 5 seconds' })
+  @Max(300000, { message: 'Stalled interval cannot exceed 5 minutes' })
+  queueStalledIntervalMs?: number;
+
+  @ApiPropertyOptional({
+    description: 'Maximum number of times a job can become stalled',
+    example: 1,
+    minimum: 1,
+    maximum: 5,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(1, { message: 'Must allow at least 1 stalled attempt' })
+  @Max(5, { message: 'Cannot exceed 5 stalled attempts' })
+  queueMaxStalledCount?: number;
 }
 
 export class CleanupOptionsDto {
