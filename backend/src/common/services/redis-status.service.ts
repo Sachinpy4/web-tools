@@ -212,7 +212,7 @@ export class RedisStatusService extends EventEmitter implements OnModuleInit, On
       password: redisPassword,
       username: redisUsername,
       db: redisDb,
-      maxRetriesPerRequest: 1,
+      maxRetriesPerRequest: null, // BullMQ requires this to be null
       retryStrategy: (times: number) => {
         if (times >= 2) {
           if (!this.redisConnectionErrorLogged) {

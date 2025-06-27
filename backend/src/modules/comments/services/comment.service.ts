@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Comment, CommentDocument } from '../schemas/comment.schema';
@@ -10,6 +10,7 @@ export class CommentService {
   constructor(
     @InjectModel(Comment.name) private commentModel: Model<CommentDocument>,
     @InjectModel(Blog.name) private blogModel: Model<BlogDocument>,
+    @Inject(forwardRef(() => 'BlogCacheService')) private blogCacheService: any,
   ) {}
 
   /**
@@ -199,6 +200,9 @@ export class CommentService {
       .populate('user', 'name')
       .populate('blog', 'title');
 
+    // Invalidate blog cache
+    await this.blogCacheService.invalidateBlog(blogId);
+
     return {
       status: 'success',
       data: populatedComment,
@@ -222,6 +226,9 @@ export class CommentService {
       updateCommentDto,
       { new: true, runValidators: true }
     ).populate('user', 'name email').populate('blog', 'title');
+
+    // Invalidate blog cache
+    await this.blogCacheService.invalidateBlog(comment.blog.toString());
 
     return {
       status: 'success',
@@ -253,6 +260,9 @@ export class CommentService {
 
     await this.commentModel.findByIdAndDelete(commentId);
 
+    // Invalidate blog cache
+    await this.blogCacheService.invalidateBlog(comment.blog.toString());
+
     return {
       status: 'success',
       message: 'Comment deleted successfully',
@@ -270,6 +280,9 @@ export class CommentService {
 
     comment.approved = approveCommentDto.approved;
     await comment.save();
+
+    // Invalidate blog cache
+    await this.blogCacheService.invalidateBlog(comment.blog.toString());
 
     return {
       status: 'success',
@@ -349,6 +362,14 @@ export class CommentService {
       { approved: true }
     );
 
+    // Invalidate blog cache
+    for (const commentId of commentIds) {
+      const comment = await this.commentModel.findById(commentId);
+      if (comment) {
+        await this.blogCacheService.invalidateBlog(comment.blog.toString());
+      }
+    }
+
     return {
       status: 'success',
       message: `${result.modifiedCount} comments approved successfully`,
@@ -379,6 +400,11 @@ export class CommentService {
     }
 
     const result = await this.commentModel.deleteMany({ _id: { $in: commentIds } });
+
+    // Invalidate blog cache
+    for (const comment of comments) {
+      await this.blogCacheService.invalidateBlog(comment.blog.toString());
+    }
 
     return {
       status: 'success',

@@ -63,7 +63,7 @@ export default function BlogContent() {
       setLoading(true)
       
       // Build query params
-      let endpoint = '/blogs'
+      let endpoint = '/blogs/public'
       const queryParams = new URLSearchParams()
       
       if (activeCategory) {
@@ -82,7 +82,7 @@ export default function BlogContent() {
       const finalEndpoint = queryString ? `${endpoint}?${queryString}` : endpoint
       
       try {
-        // First try to get the data without requiring auth
+        // Use the public endpoint for published blogs
         const response = await apiRequest<{
           status: string;
           data: BlogPost[];
@@ -102,98 +102,75 @@ export default function BlogContent() {
         // Reset to first page when filter changes
         setCurrentPage(1)
       } catch (error) {
-        console.error('Error fetching blogs, trying with auth:', error)
+        console.error('Error fetching public blogs:', error)
         
-        // If first try fails, attempt with auth token if available
-        const token = localStorage.getItem('token')
-        if (token) {
-          const response = await apiRequest<{
-            status: string;
-            data: BlogPost[];
-          }>(finalEndpoint, { requireAuth: true, noRedirect: true })
-          
-          setBlogPosts(response.data || [])
-          
-          // Extract categories and tags
-          const categories = Array.from(new Set(response.data.map(post => post.category)))
-          setAllCategories(categories)
-          
-          const tags = Array.from(
-            new Set(response.data.flatMap(post => post.tags))
-          ).sort()
-          setAllTags(tags)
-          
-          // Reset to first page when filter changes
-          setCurrentPage(1)
-        } else {
-          // If no token and first try failed, use fallback mock data for public view
-          const mockPosts: BlogPost[] = [
-            {
-              _id: '1',
-              title: 'How to Optimize Your Web Images for Speed',
-              excerpt: 'Learn the best practices for optimizing your web images to improve site performance and user experience.',
-              content: 'Full content would go here...',
-              date: new Date().toISOString(),
-              status: 'published',
-              author: { name: 'John Smith', email: 'john@example.com' },
-              category: 'Optimization',
-              tags: ['Performance', 'Images', 'Optimization', 'Web Development'],
-              featuredImage: '/placeholder-image-1.jpg',
-              views: 1452,
-              readingTime: '5 min read',
-              slug: 'how-to-optimize-web-images'
-            },
-            {
-              _id: '2',
-              title: '10 Essential Image Optimization Tips for Web Developers',
-              excerpt: 'A comprehensive guide to optimizing images for the web, including format selection, compression techniques, and more.',
-              content: 'Full content would go here...',
-              date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), 
-              status: 'published',
-              author: { name: 'Jane Doe', email: 'jane@example.com' },
-              category: 'Web Development',
-              tags: ['Images', 'Web Development', 'Optimization', 'Best Practices'],
-              featuredImage: '/placeholder-image-2.jpg',
-              views: 892,
-              readingTime: '8 min read',
-              slug: 'essential-image-optimization-tips'
-            },
-            {
-              _id: '3',
-              title: 'The Ultimate Guide to SVG: Why, When, and How',
-              excerpt: 'Everything you need to know about SVG images - when to use them, how to optimize them, and their benefits.',
-              content: 'Full content would go here...',
-              date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-              status: 'published',
-              author: { name: 'Mike Johnson', email: 'mike@example.com' },
-              category: 'SVG',
-              tags: ['SVG', 'Vector Graphics', 'Web Development', 'Design'],
-              featuredImage: '/placeholder-image-3.jpg',
-              views: 725,
-              readingTime: '10 min read',
-              slug: 'ultimate-guide-to-svg'
-            },
-          ]
-          
-          setBlogPosts(mockPosts)
-          
-          const categories = Array.from(new Set(mockPosts.map(post => post.category)))
-          setAllCategories(categories)
-          
-          const tags = Array.from(
-            new Set(mockPosts.flatMap(post => post.tags))
-          ).sort()
-          setAllTags(tags)
-          
-          // Reset to first page when filter changes
-          setCurrentPage(1)
-          
-          toast({
-            title: 'Using demo content',
-            description: 'The blog is currently displaying demo content while we resolve a server issue.',
-            variant: 'default',
-          })
-        }
+        // If public endpoint fails, use fallback mock data
+        const mockPosts: BlogPost[] = [
+          {
+            _id: '1',
+            title: 'How to Optimize Your Web Images for Speed',
+            excerpt: 'Learn the best practices for optimizing your web images to improve site performance and user experience.',
+            content: 'Full content would go here...',
+            date: new Date().toISOString(),
+            status: 'published',
+            author: { name: 'John Smith', email: 'john@example.com' },
+            category: 'Optimization',
+            tags: ['Performance', 'Images', 'Optimization', 'Web Development'],
+            featuredImage: '/placeholder-image-1.jpg',
+            views: 1452,
+            readingTime: '5 min read',
+            slug: 'how-to-optimize-web-images'
+          },
+          {
+            _id: '2',
+            title: '10 Essential Image Optimization Tips for Web Developers',
+            excerpt: 'A comprehensive guide to optimizing images for the web, including format selection, compression techniques, and more.',
+            content: 'Full content would go here...',
+            date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), 
+            status: 'published',
+            author: { name: 'Jane Doe', email: 'jane@example.com' },
+            category: 'Web Development',
+            tags: ['Images', 'Web Development', 'Optimization', 'Best Practices'],
+            featuredImage: '/placeholder-image-2.jpg',
+            views: 892,
+            readingTime: '8 min read',
+            slug: 'essential-image-optimization-tips'
+          },
+          {
+            _id: '3',
+            title: 'The Ultimate Guide to SVG: Why, When, and How',
+            excerpt: 'Everything you need to know about SVG images - when to use them, how to optimize them, and their benefits.',
+            content: 'Full content would go here...',
+            date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            status: 'published',
+            author: { name: 'Mike Johnson', email: 'mike@example.com' },
+            category: 'SVG',
+            tags: ['SVG', 'Vector Graphics', 'Web Development', 'Design'],
+            featuredImage: '/placeholder-image-3.jpg',
+            views: 725,
+            readingTime: '10 min read',
+            slug: 'ultimate-guide-to-svg'
+          },
+        ]
+        
+        setBlogPosts(mockPosts)
+        
+        const categories = Array.from(new Set(mockPosts.map(post => post.category)))
+        setAllCategories(categories)
+        
+        const tags = Array.from(
+          new Set(mockPosts.flatMap(post => post.tags))
+        ).sort()
+        setAllTags(tags)
+        
+        // Reset to first page when filter changes
+        setCurrentPage(1)
+        
+        toast({
+          title: 'Using demo content',
+          description: 'The blog is currently displaying demo content while we resolve a server issue.',
+          variant: 'default',
+        })
       }
     } catch (error) {
       console.error('Error in blog page:', error)

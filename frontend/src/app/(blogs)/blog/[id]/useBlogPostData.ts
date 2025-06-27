@@ -130,7 +130,7 @@ export function useBlogPostData(blogId: string) {
                 const allPostsResponse = await apiRequest<{
                   status: string;
                   data: BlogPost[];
-                }>('/blogs', { 
+                }>('/blogs/public', { 
                   noRedirect: true 
                 });
                 
@@ -195,7 +195,7 @@ export function useBlogPostData(blogId: string) {
         const allPostsResponse = await apiRequest<{
           status: string;
           data: BlogPost[];
-        }>('/blogs', { 
+        }>('/blogs/public', { 
           noRedirect: true 
         });
         
@@ -229,7 +229,7 @@ export function useBlogPostData(blogId: string) {
         const allPostsResponse = await apiRequest<{
           status: string;
           data: BlogPost[];
-        }>('/blogs?limit=20', { 
+        }>('/blogs/public?limit=20', { 
           noRedirect: true 
         });
         

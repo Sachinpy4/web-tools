@@ -4,6 +4,7 @@ import { AuthModule } from '../auth/auth.module';
 import { CommentModule } from '../comments/comment.module';
 import { BlogController } from './controllers/blog.controller';
 import { BlogService } from './services/blog.service';
+import { BlogCacheService } from './services/blog-cache.service';
 import { Blog, BlogSchema } from './schemas/blog.schema';
 
 @Module({
@@ -13,7 +14,7 @@ import { Blog, BlogSchema } from './schemas/blog.schema';
     forwardRef(() => CommentModule),
   ],
   controllers: [BlogController],
-  providers: [BlogService],
-  exports: [BlogService],
+  providers: [BlogService, BlogCacheService],
+  exports: [BlogService, BlogCacheService],
 })
 export class BlogModule {} 

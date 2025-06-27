@@ -55,8 +55,32 @@ export class BlogController {
     return this.blogService.createBlog(createBlogDto, user._id.toString());
   }
 
+  @Get('public')
+  @ApiOperation({ summary: 'Get published blog posts (Public access)' })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number', example: 1 })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page', example: 10 })
+  @ApiQuery({ name: 'category', required: false, description: 'Filter by category' })
+  @ApiQuery({ name: 'search', required: false, description: 'Search in title, content, and excerpt' })
+  @ApiQuery({ name: 'tag', required: false, description: 'Filter by tag' })
+  @ApiQuery({ name: 'startDate', required: false, description: 'Start date for date range filter' })
+  @ApiQuery({ name: 'endDate', required: false, description: 'End date for date range filter' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of published blog posts',
+    type: BlogsListResponseDto,
+  })
+  async getPublicBlogs(
+    @Query() query: BlogQueryDto,
+  ) {
+    // Force status to published for public endpoint
+    const publicQuery = { ...query, status: 'published' };
+    return this.blogService.getBlogs(publicQuery, 'public');
+  }
+
   @Get()
-  @ApiOperation({ summary: 'Get all blog posts with pagination and filters' })
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all blog posts with pagination and filters (Admin access)' })
   @ApiQuery({ name: 'page', required: false, description: 'Page number', example: 1 })
   @ApiQuery({ name: 'limit', required: false, description: 'Items per page', example: 10 })
   @ApiQuery({ name: 'status', required: false, description: 'Filter by status', enum: ['published', 'draft', 'scheduled'] })
@@ -68,15 +92,15 @@ export class BlogController {
   @ApiQuery({ name: 'endDate', required: false, description: 'End date for date range filter' })
   @ApiResponse({
     status: 200,
-    description: 'List of blog posts',
+    description: 'List of blog posts (Admin sees all, Users see published only)',
     type: BlogsListResponseDto,
   })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Authentication required' })
   async getBlogs(
     @Query() query: BlogQueryDto,
-    @Req() req: Request,
+    @GetUser() user: UserDocument,
   ) {
-    const userRole = (req.user as any)?.role;
-    return this.blogService.getBlogs(query, userRole);
+    return this.blogService.getBlogs(query, user.role);
   }
 
   @Get('categories')

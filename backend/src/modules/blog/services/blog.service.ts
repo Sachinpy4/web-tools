@@ -4,12 +4,14 @@ import { Model } from 'mongoose';
 import { Blog, BlogDocument } from '../schemas/blog.schema';
 import { CreateBlogDto, UpdateBlogDto, BlogQueryDto, LikeBlogDto } from '../dto/blog.dto';
 import { CreateCommentDto } from '../../comments/dto/comment.dto';
+import { BlogCacheService } from './blog-cache.service';
 
 @Injectable()
 export class BlogService {
   constructor(
     @InjectModel(Blog.name) private blogModel: Model<BlogDocument>,
     @Inject(forwardRef(() => 'CommentService')) private commentService: any,
+    private readonly blogCacheService: BlogCacheService,
   ) {}
 
   /**
@@ -22,6 +24,10 @@ export class BlogService {
     };
 
     const blog = await this.blogModel.create(blogData);
+    
+    // Invalidate list caches since a new blog was created
+    await this.blogCacheService.invalidateListCaches();
+
     return {
       status: 'success',
       data: blog,
@@ -32,6 +38,16 @@ export class BlogService {
    * Get all blog posts with pagination and filters
    */
   async getBlogs(query: BlogQueryDto, userRole?: string) {
+    // Create cache key based on query and user role
+    const cacheQuery = { ...query, userRole: userRole || 'public' };
+    const queryHash = this.blogCacheService.generateQueryHash(cacheQuery);
+    
+    // Try to get from cache first
+    const cachedResult = await this.blogCacheService.getBlogList(queryHash);
+    if (cachedResult) {
+      return cachedResult;
+    }
+
     // Parse pagination parameters
     const page = query.page || 1;
     const limit = Math.min(query.limit || 10, 50); // Max 50 items per page
@@ -107,7 +123,7 @@ export class BlogService {
       .skip(skip)
       .limit(limit);
 
-    return {
+    const result = {
       status: 'success',
       total,
       page,
@@ -115,12 +131,54 @@ export class BlogService {
       limit,
       data: blogs,
     };
+
+    // Cache the result
+    await this.blogCacheService.setBlogList(queryHash, result);
+
+    return result;
   }
 
   /**
    * Get a single blog post
    */
   async getBlog(blogId: string, userRole?: string, visitorIP?: string) {
+    // For admin users or view tracking, we need fresh data - skip cache
+    if (userRole === 'admin' || visitorIP) {
+      const blog = await this.blogModel
+        .findById(blogId)
+        .populate('author', 'name email');
+
+      if (!blog) {
+        throw new NotFoundException('Blog post not found');
+      }
+
+      // Check if blog is published or user is admin
+      if (blog.status !== 'published' && (!userRole || userRole !== 'admin')) {
+        throw new ForbiddenException('Not authorized to view this blog post');
+      }
+
+      // Increment view count and track analytics if not admin
+      if (!userRole || userRole !== 'admin') {
+        await this.trackBlogAnalytics(blog, visitorIP);
+      }
+
+      return {
+        status: 'success',
+        data: blog,
+      };
+    }
+
+    // For public users without view tracking, try cache first
+    const cachedBlog = await this.blogCacheService.getBlogById(blogId);
+    if (cachedBlog) {
+      // Still need to check if it's published for non-admin users
+      if (cachedBlog.data.status !== 'published' && (!userRole || userRole !== 'admin')) {
+        throw new ForbiddenException('Not authorized to view this blog post');
+      }
+      return cachedBlog;
+    }
+
+    // If not in cache, fetch from database
     const blog = await this.blogModel
       .findById(blogId)
       .populate('author', 'name email');
@@ -134,21 +192,60 @@ export class BlogService {
       throw new ForbiddenException('Not authorized to view this blog post');
     }
 
-    // Increment view count and track analytics if not admin
-    if (!userRole || userRole !== 'admin') {
-      await this.trackBlogAnalytics(blog, visitorIP);
-    }
-
-    return {
+    const result = {
       status: 'success',
       data: blog,
     };
+
+    // Cache only published blogs for public users
+    if (blog.status === 'published') {
+      await this.blogCacheService.setBlogById(blogId, result);
+    }
+
+    return result;
   }
 
   /**
    * Get blog by slug
    */
   async getBlogBySlug(slug: string, userRole?: string, visitorIP?: string) {
+    // For admin users or view tracking, we need fresh data - skip cache
+    if (userRole === 'admin' || visitorIP) {
+      const blog = await this.blogModel
+        .findOne({ slug })
+        .populate('author', 'name email');
+
+      if (!blog) {
+        throw new NotFoundException('Blog post not found');
+      }
+
+      // Check if blog is published or user is admin
+      if (blog.status !== 'published' && (!userRole || userRole !== 'admin')) {
+        throw new ForbiddenException('Not authorized to view this blog post');
+      }
+
+      // Increment view count and track analytics if not admin
+      if (!userRole || userRole !== 'admin') {
+        await this.trackBlogAnalytics(blog, visitorIP);
+      }
+
+      return {
+        status: 'success',
+        data: blog,
+      };
+    }
+
+    // For public users without view tracking, try cache first
+    const cachedBlog = await this.blogCacheService.getBlogBySlug(slug);
+    if (cachedBlog) {
+      // Still need to check if it's published for non-admin users
+      if (cachedBlog.data.status !== 'published' && (!userRole || userRole !== 'admin')) {
+        throw new ForbiddenException('Not authorized to view this blog post');
+      }
+      return cachedBlog;
+    }
+
+    // If not in cache, fetch from database
     const blog = await this.blogModel
       .findOne({ slug })
       .populate('author', 'name email');
@@ -162,15 +259,17 @@ export class BlogService {
       throw new ForbiddenException('Not authorized to view this blog post');
     }
 
-    // Increment view count and track analytics if not admin
-    if (!userRole || userRole !== 'admin') {
-      await this.trackBlogAnalytics(blog, visitorIP);
-    }
-
-    return {
+    const result = {
       status: 'success',
       data: blog,
     };
+
+    // Cache only published blogs for public users
+    if (blog.status === 'published') {
+      await this.blogCacheService.setBlogBySlug(slug, result);
+    }
+
+    return result;
   }
 
   /**
@@ -188,11 +287,25 @@ export class BlogService {
       throw new ForbiddenException('Not authorized to update this blog post');
     }
 
+    // Store old slug for cache invalidation
+    const oldSlug = blog.slug;
+
     // Update the blog using Object.assign to avoid validation issues with partial updates
     Object.assign(blog, updateBlogDto);
     await blog.save();
     
     const updatedBlog = await this.blogModel.findById(blogId).populate('author', 'name email');
+
+    // Invalidate caches for this blog
+    await this.blogCacheService.invalidateBlog(blogId, oldSlug);
+    
+    // If slug changed, also invalidate new slug cache
+    if (updatedBlog!.slug !== oldSlug) {
+      await this.blogCacheService.invalidateBlog(blogId, updatedBlog!.slug);
+    }
+    
+    // Invalidate list caches since blog data changed
+    await this.blogCacheService.invalidateListCaches();
 
     return {
       status: 'success',
@@ -215,7 +328,16 @@ export class BlogService {
       throw new ForbiddenException('Not authorized to delete this blog post');
     }
 
+    // Store slug for cache invalidation
+    const slug = blog.slug;
+
     await this.blogModel.findByIdAndDelete(blogId);
+
+    // Invalidate caches for this blog
+    await this.blogCacheService.invalidateBlog(blogId, slug);
+    
+    // Invalidate list caches since a blog was deleted
+    await this.blogCacheService.invalidateListCaches();
 
     return {
       status: 'success',
@@ -254,6 +376,13 @@ export class BlogService {
     }
 
     await blog.save();
+
+    // Invalidate caches for this blog since like count changed
+    await this.blogCacheService.invalidateBlog(blogId);
+    await this.blogCacheService.invalidateLikeCaches(blogId);
+    
+    // Invalidate popular blogs cache since view count affects popularity
+    await this.blogCacheService.delPattern('blog:popular:*');
 
     return {
       status: 'success',
@@ -303,24 +432,48 @@ export class BlogService {
    * Get blog categories
    */
   async getCategories() {
+    // Try to get from cache first
+    const cachedCategories = await this.blogCacheService.getCategories();
+    if (cachedCategories) {
+      return cachedCategories;
+    }
+
+    // If not in cache, fetch from database
     const categories = await this.blogModel.distinct('category', { status: 'published' });
     
-    return {
+    const result = {
       status: 'success',
       data: categories.sort(),
     };
+
+    // Cache the result
+    await this.blogCacheService.setCategories(result);
+
+    return result;
   }
 
   /**
    * Get blog tags
    */
   async getTags() {
+    // Try to get from cache first
+    const cachedTags = await this.blogCacheService.getTags();
+    if (cachedTags) {
+      return cachedTags;
+    }
+
+    // If not in cache, fetch from database
     const tags = await this.blogModel.distinct('tags', { status: 'published' });
     
-    return {
+    const result = {
       status: 'success',
       data: tags.sort(),
     };
+
+    // Cache the result
+    await this.blogCacheService.setTags(result);
+
+    return result;
   }
 
   /**
@@ -405,38 +558,69 @@ export class BlogService {
    * Get popular blogs
    */
   async getPopularBlogs(limit: number = 5) {
+    // Try to get from cache first
+    const cachedBlogs = await this.blogCacheService.getPopularBlogs(limit);
+    if (cachedBlogs) {
+      return cachedBlogs;
+    }
+
+    // If not in cache, fetch from database
     const blogs = await this.blogModel
       .find({ status: 'published' })
       .populate('author', 'name email')
       .sort({ views: -1 })
       .limit(limit);
 
-    return {
+    const result = {
       status: 'success',
       data: blogs,
     };
+
+    // Cache the result
+    await this.blogCacheService.setPopularBlogs(limit, result);
+
+    return result;
   }
 
   /**
    * Get recent blogs
    */
   async getRecentBlogs(limit: number = 5) {
+    // Try to get from cache first
+    const cachedBlogs = await this.blogCacheService.getRecentBlogs(limit);
+    if (cachedBlogs) {
+      return cachedBlogs;
+    }
+
+    // If not in cache, fetch from database
     const blogs = await this.blogModel
       .find({ status: 'published' })
       .populate('author', 'name email')
       .sort({ date: -1 })
       .limit(limit);
 
-    return {
+    const result = {
       status: 'success',
       data: blogs,
     };
+
+    // Cache the result
+    await this.blogCacheService.setRecentBlogs(limit, result);
+
+    return result;
   }
 
   /**
    * Search blogs using text search
    */
   async searchBlogs(searchTerm: string, limit: number = 10) {
+    // Try to get from cache first
+    const cachedResults = await this.blogCacheService.getSearchResults(searchTerm, limit);
+    if (cachedResults) {
+      return cachedResults;
+    }
+
+    // If not in cache, fetch from database
     const blogs = await this.blogModel
       .find(
         {
@@ -449,9 +633,14 @@ export class BlogService {
       .sort({ score: { $meta: 'textScore' } })
       .limit(limit);
 
-    return {
+    const result = {
       status: 'success',
       data: blogs,
     };
+
+    // Cache the result
+    await this.blogCacheService.setSearchResults(searchTerm, limit, result);
+
+    return result;
   }
 } 
