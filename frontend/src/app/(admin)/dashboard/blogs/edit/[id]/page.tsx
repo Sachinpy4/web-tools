@@ -146,7 +146,7 @@ function EditBlogPage() {
           return;
         }
         
-        const response = await apiRequest<BlogResponse>(`/blogs/${params.id}`, {
+        const response = await apiRequest<BlogResponse>(`/blogs/admin/${params.id}`, {
           requireAuth: true
         });
         const data = response.data;

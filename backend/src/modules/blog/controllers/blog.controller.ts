@@ -103,6 +103,48 @@ export class BlogController {
     return this.blogService.getBlogs(query, user.role);
   }
 
+  @Get('admin/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get a single blog post (Admin access - can view drafts)' })
+  @ApiParam({ name: 'id', description: 'Blog post ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Blog post data',
+    type: BlogResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @ApiResponse({ status: 404, description: 'Blog post not found' })
+  async getAdminBlog(
+    @Param('id') blogId: string,
+    @GetUser() user: UserDocument,
+  ) {
+    return this.blogService.getBlog(blogId, user.role);
+  }
+
+  @Get('admin/slug/:slug')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get a blog post by slug (Admin access - can view drafts)' })
+  @ApiParam({ name: 'slug', description: 'Blog post slug' })
+  @ApiResponse({
+    status: 200,
+    description: 'Blog post data',
+    type: BlogResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @ApiResponse({ status: 404, description: 'Blog post not found' })
+  async getAdminBlogBySlug(
+    @Param('slug') slug: string,
+    @GetUser() user: UserDocument,
+  ) {
+    return this.blogService.getBlogBySlug(slug, user.role);
+  }
+
   @Get('categories')
   @ApiOperation({ summary: 'Get all blog categories' })
   @ApiResponse({

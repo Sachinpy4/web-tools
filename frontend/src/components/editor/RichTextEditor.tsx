@@ -102,7 +102,8 @@ export function RichTextEditor({
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        // No need to disable the default image
+        // Disable the default codeBlock to avoid conflicts with CodeBlockLowlight
+        codeBlock: false,
       }),
       CustomImage.configure({
         HTMLAttributes: {

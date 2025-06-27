@@ -152,7 +152,7 @@ export default function HomeContent() {
         const response = await apiRequest<{
           status: string;
           data: BlogPost[];
-        }>('/blogs?limit=3', { noRedirect: true })
+        }>('/blogs/public?limit=3', { noRedirect: true })
         
         if (response.data) {
           setLatestPosts(response.data)

@@ -55,6 +55,7 @@ export class BlogService {
 
     // Build query
     let dbQuery: any = {};
+    let sortOptions: any = { date: -1 }; // Default sort by date
 
     // Filter by status (Admin can see all, public only published)
     if (query.status) {
@@ -73,16 +74,18 @@ export class BlogService {
       dbQuery = { ...dbQuery, category: query.category };
     }
 
-    // Search by title, content, or excerpt
+    // Search by title, content, excerpt, and tags using MongoDB text search
     if (query.search) {
-      const searchRegex = new RegExp(query.search, 'i');
+      // Use MongoDB text search for better performance with large datasets
       dbQuery = {
         ...dbQuery,
-        $or: [
-          { title: searchRegex },
-          { content: searchRegex },
-          { excerpt: searchRegex },
-        ],
+        $text: { $search: query.search },
+      };
+      
+      // Sort by text score when searching, then by date
+      sortOptions = { 
+        score: { $meta: 'textScore' }, 
+        date: -1 
       };
     }
 
@@ -115,13 +118,21 @@ export class BlogService {
     // Count total items for pagination
     const total = await this.blogModel.countDocuments(dbQuery);
 
-    // Execute query with pagination
-    const blogs = await this.blogModel
+    // Build the query
+    let queryBuilder = this.blogModel
       .find(dbQuery)
       .populate('author', 'name email')
-      .sort({ date: -1 })
+      .sort(sortOptions)
       .skip(skip)
       .limit(limit);
+
+    // Add text score projection if searching
+    if (query.search) {
+      queryBuilder = queryBuilder.select({ score: { $meta: 'textScore' } });
+    }
+
+    // Execute query with pagination
+    const blogs = await queryBuilder;
 
     const result = {
       status: 'success',
