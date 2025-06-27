@@ -61,7 +61,7 @@ export default function DisclaimerContent() {
             
             <div className="flex justify-center">
               <Badge variant="outline" className="text-sm px-4 py-2 bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300">
-                Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                Last updated: <span suppressHydrationWarning>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
               </Badge>
             </div>
           </motion.div>

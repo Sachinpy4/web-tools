@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { withAdminAuth } from '@/middleware/authCheck'
@@ -68,6 +68,8 @@ function NewBlogPage() {
   // State for interactive tag management
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
+  
+  const [minDateTime, setMinDateTime] = useState('')
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -318,6 +320,11 @@ function NewBlogPage() {
     }
   }
   
+  // Set minimum datetime to prevent hydration errors
+  useEffect(() => {
+    setMinDateTime(new Date().toISOString().slice(0, 16))
+  }, [])
+  
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
@@ -492,7 +499,7 @@ function NewBlogPage() {
                           value={formData.scheduledPublishDate}
                           onChange={handleChange}
                           className="mt-1"
-                          min={new Date().toISOString().slice(0, 16)}
+                          min={minDateTime}
                           required={formData.status === 'scheduled'}
                         />
                         <p className="text-xs text-muted-foreground mt-1">

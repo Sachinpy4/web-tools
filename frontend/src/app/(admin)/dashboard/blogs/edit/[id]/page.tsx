@@ -425,6 +425,13 @@ function EditBlogPage() {
     setCategories(newCategories);
   }
   
+  const [minDateTime, setMinDateTime] = useState('')
+
+  // Set minimum datetime to prevent hydration errors
+  useEffect(() => {
+    setMinDateTime(new Date().toISOString().slice(0, 16))
+  }, [])
+  
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -607,7 +614,7 @@ function EditBlogPage() {
                           value={formData.scheduledPublishDate}
                           onChange={handleChange}
                           className="mt-1"
-                          min={new Date().toISOString().slice(0, 16)}
+                          min={minDateTime}
                           required={formData.status === 'scheduled'}
                         />
                         <p className="text-xs text-muted-foreground mt-1">

@@ -61,7 +61,7 @@ export default function TermsContent() {
             
             <div className="flex justify-center">
               <Badge variant="outline" className="text-sm px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300">
-                Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                Last updated: <span suppressHydrationWarning>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
               </Badge>
             </div>
           </motion.div>

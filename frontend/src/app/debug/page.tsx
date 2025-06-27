@@ -150,8 +150,8 @@ export default async function DebugPage() {
       <section>
         <h2 className="text-xl font-bold mb-4">Server-Side Rendering Information</h2>
         <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded">
-          <p className="mb-2"><strong>Timestamp:</strong> {new Date().toISOString()}</p>
-          <p className="mb-2"><strong>This page was rendered on the server at:</strong> {new Date().toLocaleString()}</p>
+          <p className="mb-2"><strong>Timestamp:</strong> <span suppressHydrationWarning>{new Date().toISOString()}</span></p>
+          <p className="mb-2"><strong>This page was rendered on the server at:</strong> <span suppressHydrationWarning>{new Date().toLocaleString()}</span></p>
         </div>
       </section>
     </div>

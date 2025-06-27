@@ -472,7 +472,7 @@ function BlogAnalyticsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Calendar className="h-4 w-4" />
-          <span>Last updated: {new Date().toLocaleDateString()}</span>
+          <span>Last updated: <span suppressHydrationWarning>{new Date().toLocaleDateString()}</span></span>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline" size="sm">

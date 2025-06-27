@@ -59,7 +59,7 @@ export default function PrivacyContent() {
             
             <div className="flex justify-center">
               <Badge variant="outline" className="text-sm px-4 py-2 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300">
-                Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                Last updated: <span suppressHydrationWarning>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
               </Badge>
             </div>
           </motion.div>
