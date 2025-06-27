@@ -391,11 +391,13 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
             <div className="flex items-center">
               <CalendarIcon className="h-4 w-4 mr-1.5 text-muted-foreground/70" />
-              {new Date(currentPost.date).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
+              <span suppressHydrationWarning>
+                {new Date(currentPost.date).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </span>
             </div>
             <div className="flex items-center">
               <Clock className="h-4 w-4 mr-1.5 text-muted-foreground/70" />
@@ -456,11 +458,13 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
                           </div>
                           <div className="flex items-center text-xs text-muted-foreground">
                             <CalendarIcon className="h-3 w-3 mr-1" />
-                            {new Date(latest.date).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric'
-                            })}
+                            <span suppressHydrationWarning>
+                              {new Date(latest.date).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              })}
+                            </span>
                           </div>
                         </Link>
                         {latestPosts.indexOf(latest) < latestPosts.filter(p => p._id !== currentPost?._id).length - 1 && (
@@ -723,7 +727,9 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
                                 {comment.name}
                               </h4>
                               <p className="text-xs text-muted-foreground">
-                                {formatCommentDate(comment.createdAt)}
+                                <span suppressHydrationWarning>
+                                  {formatCommentDate(comment.createdAt)}
+                                </span>
                               </p>
                             </div>
                           </div>
@@ -906,11 +912,13 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
                             </div>
                             <div className="flex items-center text-xs text-muted-foreground">
                               <CalendarIcon className="h-3 w-3 mr-1" />
-                              {new Date(latest.date).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric'
-                              })}
+                              <span suppressHydrationWarning>
+                                {new Date(latest.date).toLocaleDateString('en-US', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}
+                              </span>
                               <Separator orientation="vertical" className="h-3 mx-2" />
                               <Clock className="h-3 w-3 mr-1" />
                               {latest.readingTime || '5 min read'}
