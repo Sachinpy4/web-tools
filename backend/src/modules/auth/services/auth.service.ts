@@ -6,6 +6,7 @@ import { Model } from 'mongoose';
 import { User, UserDocument } from '../schemas/user.schema';
 import { RegisterDto, LoginDto, UpdateUserDto, UpdatePasswordDto } from '../dto/auth.dto';
 import { JwtPayload } from '../strategies/jwt.strategy';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -55,9 +56,9 @@ export class AuthService {
   }
 
   /**
-   * Login a user with enhanced security
+   * Login a user with enhanced security and brute force protection
    */
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto, requestInfo?: { ip?: string; userAgent?: string }) {
     const { email, password } = loginDto;
 
     // Additional validation for email format
@@ -66,17 +67,88 @@ export class AuthService {
       throw new BadRequestException('Please provide a valid email address');
     }
 
-    // Find user in database (include password for comparison)
-    const user = await this.userModel.findOne({ email }).select('+password');
+    // Find user in database (include password and security fields for comparison)
+    const user = await this.userModel.findOne({ email }).select('+password +failedLoginAttempts +accountLockedUntil +lastFailedLogin');
+    
+    // Always perform password comparison to prevent timing attacks
+    const dummyPassword = '$2b$10$dummyHashToPreventTimingAttacks';
+    
     if (!user) {
+      // Perform dummy password comparison to prevent timing attacks
+      await bcrypt.compare(password, dummyPassword);
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Check if account is locked
+    if (user.accountLockedUntil && user.accountLockedUntil > new Date()) {
+      const lockoutEndTime = user.accountLockedUntil.getTime();
+      const currentTime = Date.now();
+      const retryAfter = Math.ceil((lockoutEndTime - currentTime) / 1000);
+      
+      // Throw error with code in the message field to match frontend expectations
+      throw new UnauthorizedException({
+        code: 'ACCOUNT_LOCKED',
+        retryAfter,
+        lockoutEndTime,
+        message: 'Account temporarily locked due to multiple failed login attempts',
+      });
     }
 
     // Check if password matches
     const isMatch = await user.comparePassword(password);
+    
     if (!isMatch) {
+      // Increment failed attempts manually
+      let failedAttempts = (user.failedLoginAttempts || 0) + 1;
+      
+      // If we have a previous failed attempt, check if it's within the lockout window
+      if (user.lastFailedLogin) {
+        const timeSinceLastAttempt = Date.now() - user.lastFailedLogin.getTime();
+        const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
+        
+        // Reset attempts if it's been more than 1 hour since last failed attempt
+        if (timeSinceLastAttempt > oneHour) {
+          failedAttempts = 1; // Reset to 1 (this current attempt)
+        }
+      }
+
+      // Update failed attempt fields
+      user.failedLoginAttempts = failedAttempts;
+      user.lastFailedLogin = new Date();
+      
+      // Lock account after 3 failed attempts (changed from 5)
+      if (failedAttempts >= 3) {
+        const lockoutTime = 30 * 60 * 1000; // 30 minutes (changed from 15)
+        user.accountLockedUntil = new Date(Date.now() + lockoutTime);
+        await user.save();
+        
+        const retryAfter = Math.ceil(lockoutTime / 1000);
+        
+        throw new UnauthorizedException({
+          code: 'ACCOUNT_LOCKED_AFTER_ATTEMPTS',
+          retryAfter,
+          lockoutEndTime: user.accountLockedUntil.getTime(),
+          message: 'Account locked due to multiple failed login attempts',
+        });
+      } else {
+        // Save failed attempt but don't lock yet
+        await user.save();
+      }
+      
       throw new UnauthorizedException('Invalid credentials');
     }
+
+    // Successful login - reset failed attempts and update login info
+    user.failedLoginAttempts = 0;
+    user.lastFailedLogin = null;
+    user.accountLockedUntil = null;
+    user.lastSuccessfulLogin = new Date();
+    
+    if (requestInfo?.ip) {
+      user.lastLoginIP = requestInfo.ip;
+    }
+    
+    await user.save();
 
     // Generate token
     const token = this.generateToken({
@@ -93,6 +165,7 @@ export class AuthService {
         email: user.email,
         role: user.role,
         token,
+        lastLoginTime: user.lastSuccessfulLogin,
       },
     };
   }
@@ -195,6 +268,92 @@ export class AuthService {
     return {
       status: 'success',
       message: 'User deleted successfully',
+    };
+  }
+
+  /**
+   * Unlock user account (admin only)
+   */
+  async unlockUser(userId: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Reset all lockout fields
+    user.failedLoginAttempts = 0;
+    user.lastFailedLogin = null;
+    user.accountLockedUntil = null;
+    await user.save();
+
+    console.log(`🔓 Account unlocked for user ${user.email} by admin`);
+
+    return {
+      status: 'success',
+      message: 'User account unlocked successfully',
+      data: {
+        id: user._id,
+        email: user.email,
+        unlockedAt: new Date(),
+      },
+    };
+  }
+
+  /**
+   * Get user security status (admin only)
+   */
+  async getUserSecurityStatus(userId: string) {
+    const user = await this.userModel.findById(userId).select('+failedLoginAttempts +lastFailedLogin +accountLockedUntil +lastSuccessfulLogin +lastLoginIP');
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const isCurrentlyLocked = user.accountLockedUntil && user.accountLockedUntil > new Date();
+    const lockoutEndsAt = isCurrentlyLocked ? user.accountLockedUntil : null;
+
+    return {
+      status: 'success',
+      data: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        securityStatus: {
+          failedLoginAttempts: user.failedLoginAttempts || 0,
+          lastFailedLogin: user.lastFailedLogin,
+          isAccountLocked: isCurrentlyLocked,
+          accountLockedUntil: lockoutEndsAt,
+          lastSuccessfulLogin: user.lastSuccessfulLogin,
+          lastLoginIP: user.lastLoginIP,
+        },
+      },
+    };
+  }
+
+  /**
+   * Unlock user account by email (development only)
+   */
+  async unlockUserByEmail(email: string) {
+    const user = await this.userModel.findOne({ email });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Reset all lockout fields
+    user.failedLoginAttempts = 0;
+    user.lastFailedLogin = null;
+    user.accountLockedUntil = null;
+    await user.save();
+
+    console.log(`🔓 [DEV] Account unlocked for ${user.email} via development endpoint`);
+
+    return {
+      status: 'success',
+      message: 'User account unlocked successfully',
+      data: {
+        id: user._id,
+        email: user.email,
+        unlockedAt: new Date(),
+      },
     };
   }
 

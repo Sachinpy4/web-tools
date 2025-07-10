@@ -93,6 +93,15 @@ export default function ImageDropzone({
       
       if (fittingFiles.length > 0) {
         onImageDrop(fittingFiles);
+        
+        // Show success message for accepted files
+        toast({
+          title: `${fittingFiles.length} file(s) added successfully`,
+          description: fittingFiles.length === 1 ? 
+            `Added: ${fittingFiles[0].name}` : 
+            `Added ${fittingFiles.length} files to your collection`,
+          variant: "default"
+        });
       }
       
       // Handle the rejections for excess files
@@ -100,7 +109,7 @@ export default function ImageDropzone({
         setFileRejections(excessRejections);
         toast({
           title: "File limit exceeded",
-          description: `You can only upload a maximum of ${maxFiles} files. ${excessRejections.length} file(s) were not added.`,
+          description: `You can only upload a maximum of ${maxFiles} files. ${excessRejections.length} file(s) were not added: ${excessFiles.map(f => f.name).join(', ')}`,
           variant: "destructive"
         });
       }

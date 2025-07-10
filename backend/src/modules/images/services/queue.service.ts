@@ -181,10 +181,10 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
         this.recreatingQueues = true;
         
         try {
-          // Start queue cleanup in background (non-blocking)
-          this.closeQueuesGracefully(); // Remove await - don't wait for Bull.js cleanup
+          // Properly await queue cleanup to prevent resource leaks
+          await this.closeQueuesGracefully();
           
-          // Immediately create local queues
+          // Immediately create local queues after cleanup
           this.switchToLocalQueues();
           
           this.logger.log('🔄 Processing mode changed: Direct (Local) - Automatic switch');

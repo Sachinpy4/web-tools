@@ -35,10 +35,45 @@ export class User {
   })
   role: string;
 
+  // Account lockout fields
+  @Prop({
+    type: Number,
+    default: 0,
+  })
+  failedLoginAttempts: number;
+
+  @Prop({
+    type: Date,
+    default: null,
+  })
+  lastFailedLogin: Date;
+
+  @Prop({
+    type: Date,
+    default: null,
+  })
+  accountLockedUntil: Date;
+
+  @Prop({
+    type: Date,
+    default: null,
+  })
+  lastSuccessfulLogin: Date;
+
+  @Prop({
+    type: String,
+    default: null,
+  })
+  lastLoginIP: string;
+
+
+
   // Method to compare password
   async comparePassword(candidatePassword: string): Promise<boolean> {
     return bcrypt.compare(candidatePassword, this.password);
   }
+
+
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
@@ -60,4 +95,6 @@ UserSchema.pre('save', async function (next) {
 // Add the comparePassword method to the schema
 UserSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
-}; 
+};
+
+ 

@@ -56,18 +56,24 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 5, ttl: 900000 } }) // Reduced to 5 attempts per 15 minutes for security
-  @ApiOperation({ summary: 'Login a user with enhanced security' })
+  @Throttle({ default: { limit: 5, ttl: 900000 } }) // 5 attempts per 15 minutes for IP-based protection
+  @ApiOperation({ summary: 'Login a user with enhanced security and brute force protection (Account locks after 3 failed attempts for 30 minutes)' })
   @ApiResponse({
     status: 200,
     description: 'User successfully logged in',
     type: AuthResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Bad request - validation failed' })
-  @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  @ApiResponse({ status: 429, description: 'Too many login attempts' })
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  @ApiResponse({ status: 401, description: 'Invalid credentials or account locked (3 failed attempts = 30min lockout)' })
+  @ApiResponse({ status: 429, description: 'Too many login attempts from this IP' })
+  async login(@Body() loginDto: LoginDto, @Request() req: any) {
+    // Extract request information for security tracking
+    const requestInfo = {
+      ip: req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for']?.split(',')[0] || 'unknown',
+      userAgent: req.headers['user-agent'] || 'unknown',
+    };
+
+    return this.authService.login(loginDto, requestInfo);
   }
 
   @Get('me')
@@ -162,12 +168,46 @@ export class AuthController {
     return this.authService.deleteUser(userId);
   }
 
+  @Post('users/:id/unlock')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Unlock user account (Admin only)' })
+  @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'User account successfully unlocked',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async unlockUser(@Param('id') userId: string) {
+    return this.authService.unlockUser(userId);
+  }
+
+  @Get('users/:id/security-status')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get user security status (Admin only)' })
+  @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'User security status retrieved',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async getUserSecurityStatus(@Param('id') userId: string) {
+    return this.authService.getUserSecurityStatus(userId);
+  }
+
   @Post('setup-admin')
   @HttpCode(HttpStatus.CREATED)
-  @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 attempts per hour
+  @Throttle({ default: { limit: 1, ttl: 86400000 } }) // 1 attempt per day per IP
   @ApiOperation({ 
     summary: 'Create initial admin user (Only works if no admin exists)',
-    description: 'This endpoint can only be used once to create the first admin user. It will fail if any admin user already exists in the system.'
+    description: 'This endpoint can only be used once to create the first admin user. It will fail if any admin user already exists in the system. Limited to development/staging environments.'
   })
   @ApiResponse({
     status: 201,
@@ -175,9 +215,21 @@ export class AuthController {
     type: AuthResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Bad request - validation failed' })
-  @ApiResponse({ status: 403, description: 'Admin user already exists' })
+  @ApiResponse({ status: 403, description: 'Admin user already exists or production environment' })
   @ApiResponse({ status: 429, description: 'Too many setup attempts' })
   async setupAdmin(@Body() registerDto: RegisterDto) {
+    // Block in production environment
+    if (process.env.NODE_ENV === 'production') {
+      throw new HttpException(
+        {
+          status: 'error',
+          message: 'Admin setup is not allowed in production environment',
+          code: 'PRODUCTION_BLOCKED'
+        },
+        HttpStatus.FORBIDDEN
+      );
+    }
+
     // Check if any admin user already exists
     const existingAdmin = await this.userModel.findOne({ role: 'admin' });
     if (existingAdmin) {
@@ -195,5 +247,33 @@ export class AuthController {
     const adminData = { ...registerDto, role: 'admin' };
     
     return this.authService.register(adminData);
+  }
+
+  @Post('dev/unlock-by-email')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'Unlock account by email (Development only)',
+    description: 'Development endpoint to unlock accounts by email for testing purposes.'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Account unlocked successfully',
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @ApiResponse({ status: 403, description: 'Not allowed in production' })
+  async unlockByEmail(@Body('email') email: string) {
+    // Block in production environment
+    if (process.env.NODE_ENV === 'production') {
+      throw new HttpException(
+        {
+          status: 'error',
+          message: 'Development endpoints not allowed in production',
+          code: 'PRODUCTION_BLOCKED'
+        },
+        HttpStatus.FORBIDDEN
+      );
+    }
+
+    return this.authService.unlockUserByEmail(email);
   }
 } 

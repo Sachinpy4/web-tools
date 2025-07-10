@@ -184,25 +184,44 @@ function LoginForm() {
       }, 500)
       
     } catch (error: any) {
-      // Handle specific security errors
+      // Handle specific security errors - check multiple possible error structures
+      // The backend exception filter now returns security errors in the main response body
+      const errorCode = error?.data?.code || error?.response?.data?.code;
+      const errorData = error?.data || error?.response?.data || {};
       
-      if (error?.data?.code === 'LOGIN_RATE_LIMIT_EXCEEDED') {
-        const retryAfter = error.data.retryAfter || 900
+      if (errorCode === 'ACCOUNT_LOCKED' || errorCode === 'ACCOUNT_LOCKED_AFTER_ATTEMPTS') {
+        const retryAfter = errorData.retryAfter || 900
+        const endTime = Date.now() + (retryAfter * 1000)
+        const minutes = Math.ceil(retryAfter / 60)
+        
+        setIsRateLimited(true)
+        setRateLimitEndTime(endTime)
+        setTimeRemaining(retryAfter * 1000)
+        setError(`Account temporarily locked due to multiple failed login attempts. Try again in ${minutes} minutes.`)
+        
+        toast({
+          title: '🔒 Account Locked',
+          description: `Your account has been temporarily locked after 3 failed attempts. Please try again in ${minutes} minutes.`,
+          variant: 'destructive',
+          duration: 10000,
+        })
+      } else if (errorCode === 'LOGIN_RATE_LIMIT_EXCEEDED') {
+        const retryAfter = errorData.retryAfter || 900
         const endTime = Date.now() + (retryAfter * 1000)
         
         setIsRateLimited(true)
         setRateLimitEndTime(endTime)
         setTimeRemaining(retryAfter * 1000)
-        setError('Too many login attempts. Please wait before trying again.')
+        setError('Too many login attempts from this IP. Please wait before trying again.')
         
         toast({
           title: '🚨 Rate Limit Exceeded',
-          description: 'Too many failed attempts. Please wait 15 minutes.',
+          description: 'Too many failed attempts from this IP. Please wait before trying again.',
           variant: 'destructive',
           duration: 10000,
         })
-      } else if (error?.data?.code === 'ACCOUNT_TEMPORARILY_LOCKED') {
-        const retryAfter = error.data.retryAfter || 900
+      } else if (errorCode === 'ACCOUNT_TEMPORARILY_LOCKED') {
+        const retryAfter = errorData.retryAfter || 900
         const endTime = Date.now() + (retryAfter * 1000)
         const minutes = Math.ceil(retryAfter / 60)
         
@@ -217,7 +236,7 @@ function LoginForm() {
           variant: 'destructive',
           duration: 10000,
         })
-      } else if (error?.data?.code === 'SUSPICIOUS_ACTIVITY_DETECTED') {
+      } else if (errorCode === 'SUSPICIOUS_ACTIVITY_DETECTED') {
         setError('Request blocked due to suspicious activity.')
         toast({
           title: '🛡️ Security Alert',
@@ -225,9 +244,9 @@ function LoginForm() {
           variant: 'destructive',
           duration: 10000,
         })
-      } else if (error?.data?.code === 'AUTHENTICATION_FAILED' || 
-                 error?.data?.code === 'MISSING_CREDENTIALS' ||
-                 error?.data?.code === 'INVALID_EMAIL_FORMAT') {
+      } else if (errorCode === 'AUTHENTICATION_FAILED' || 
+                 errorCode === 'MISSING_CREDENTIALS' ||
+                 errorCode === 'INVALID_EMAIL_FORMAT') {
         // Handle authentication failures
         setError('Invalid email or password. Please check your credentials and try again.')
         toast({
