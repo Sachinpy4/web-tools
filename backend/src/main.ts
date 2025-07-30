@@ -138,7 +138,34 @@ async function bootstrap() {
 
   // Security middleware (same as Express version)
   app.use(helmet({
-    crossOriginResourcePolicy: false, // Allow cross-origin resource sharing for images
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdnjs.cloudflare.com', 'https://cdn.jsdelivr.net'],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
+        imgSrc: ["'self'", '*', 'data:', 'blob:'],
+        connectSrc: ["'self'", configService.get<string>('frontendUrl') || 'http://localhost:3000'],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'", 'blob:', 'data:'],
+        frameSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        frameAncestors: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin resource sharing for images
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    crossOriginEmbedderPolicy: false, // Disable to prevent WASM issues
+    hsts: {
+      maxAge: 31536000, // 1 year
+      includeSubDomains: true,
+      preload: true
+    },
+    noSniff: true,
+    xssFilter: true,
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" }
   }));
 
   // Logging middleware (same as Express version)

@@ -114,21 +114,47 @@ const nextConfig = {
     return config;
   },
   
-  // Add headers for cross-origin isolation (enables WASM multi-threading)
+  // Add headers for cross-origin isolation (enables WASM multi-threading) and security
   async headers() {
+    const securityHeaders = [
+      {
+        key: "Strict-Transport-Security",
+        value: "max-age=63072000; includeSubDomains; preload",
+      },
+      {
+        key: "X-Frame-Options",
+        value: "SAMEORIGIN",
+      },
+      {
+        key: "X-Content-Type-Options", 
+        value: "nosniff",
+      },
+      {
+        key: "Referrer-Policy",
+        value: "strict-origin-when-cross-origin",
+      },
+      {
+        key: "Permissions-Policy",
+        value: "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), speaker=(), vibrate=(), fullscreen=(self)",
+      },
+      {
+        key: "Content-Security-Policy",
+        value: "default-src 'self'; img-src * data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' " + (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000') + "; object-src 'none'; media-src 'self' blob: data:; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;",
+      },
+      {
+        key: 'Cross-Origin-Embedder-Policy',
+        value: 'require-corp',
+      },
+      {
+        key: 'Cross-Origin-Opener-Policy',
+        value: 'same-origin',
+      },
+    ];
+
     return [
       {
         source: '/(.*)',
-        headers: [
-          {
-            key: 'Cross-Origin-Embedder-Policy',
-            value: 'require-corp',
-          },
-          {
-            key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin',
-          },
-        ],
+        headers: securityHeaders,
       },
     ];
   },
