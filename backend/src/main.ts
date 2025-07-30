@@ -145,7 +145,7 @@ async function bootstrap() {
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
         imgSrc: ["'self'", '*', 'data:', 'blob:'],
-        connectSrc: ["'self'", configService.get<string>('frontendUrl') || 'http://localhost:3000'],
+                 connectSrc: ["'self'", configService.get<string>('frontendUrl') || 'http://localhost:3000', 'https://toolscandy.com', 'https://*.toolscandy.com'],
         objectSrc: ["'none'"],
         mediaSrc: ["'self'", 'blob:', 'data:'],
         frameSrc: ["'none'"],
