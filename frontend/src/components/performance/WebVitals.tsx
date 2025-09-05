@@ -8,21 +8,23 @@ export function WebVitals() {
     // Only track in production
     if (process.env.NODE_ENV !== 'production') return
 
-    const vitalsUrl = 'https://vitals.vercel-analytics.com/v1/vitals'
-
     function sendToAnalytics(metric: any) {
-      const body = JSON.stringify(metric)
-      
-      // Use sendBeacon if available for better reliability
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon(vitalsUrl, body)
-      } else {
-        fetch(vitalsUrl, {
-          body,
-          method: 'POST',
-          keepalive: true,
-        }).catch(console.error)
+      // Log metrics to console in production for now (can be sent to your own analytics)
+      if (process.env.NODE_ENV === 'production') {
+        console.log('Web Vital:', {
+          name: metric.name,
+          value: metric.value,
+          id: metric.id,
+          delta: metric.delta,
+        })
       }
+      
+      // Optional: Send to your own analytics endpoint
+      // fetch('/api/analytics/vitals', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(metric),
+      // }).catch(() => {})
     }
 
     // Track all Core Web Vitals
