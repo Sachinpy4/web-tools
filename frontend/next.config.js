@@ -7,7 +7,6 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
-    optimizeCss: true,
   },
   poweredByHeader: false,
   output: 'standalone',
