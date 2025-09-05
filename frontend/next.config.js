@@ -120,7 +120,7 @@ const nextConfig = {
 
     // Production optimizations for better performance
     if (!dev) {
-      // Optimize CSS bundling
+      // Optimize CSS bundling and reduce render blocking
       config.optimization = {
         ...config.optimization,
         splitChunks: {
@@ -134,17 +134,28 @@ const nextConfig = {
               chunks: 'all',
               priority: 20,
             },
-            // Separate styles into their own chunk
+            // Create smaller CSS chunks to reduce blocking
+            critical: {
+              name: 'critical',
+              test: /\.(css|scss)$/,
+              chunks: 'initial',
+              enforce: true,
+              priority: 40,
+            },
             styles: {
               name: 'styles',
-              test: /\.css$/,
-              chunks: 'all',
+              test: /\.(css|scss)$/,
+              chunks: 'async',
               enforce: true,
               priority: 30,
             },
           },
         },
       };
+      
+      // Optimize module loading
+      config.resolve.modules = ['node_modules'];
+      config.resolve.symlinks = false;
     }
 
     return config;
