@@ -6,9 +6,15 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { AppProviders } from '@/components/providers/AppProviders'
 import { HeadScripts, BodyScripts, FooterScripts } from '@/components/analytics/DynamicScripts'
+import { WebVitals } from '@/components/performance/WebVitals'
 import Script from 'next/script'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  variable: '--font-inter'
+})
 
 // Only keep essential metadata that won't conflict with page-specific SEO
 export const metadata: Metadata = {
@@ -35,6 +41,10 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="shortcut icon" href="/favicon.svg" />
         <link rel="manifest" href="/manifest.webmanifest" />
+        {/* Critical resource preloads for performance */}
+        <link rel="preload" href="/favicon.svg" as="image" type="image/svg+xml" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
       </head>
       <body className={inter.className}>
         <BodyScripts />
@@ -49,6 +59,7 @@ export default function RootLayout({
               {children}
             </AppProviders>
             <Toaster />
+            <WebVitals />
           </ThemeProvider>
         </AuthProvider>
         <FooterScripts />

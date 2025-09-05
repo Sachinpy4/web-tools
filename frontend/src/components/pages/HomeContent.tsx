@@ -144,29 +144,34 @@ export default function HomeContent() {
   const [loading, setLoading] = useState(true)
   const [openFAQ, setOpenFAQ] = useState<number | null>(null)
   
-  // Fetch latest blog posts
+  // Lazy load blog posts for better LCP
   useEffect(() => {
-    const fetchLatestPosts = async () => {
-      try {
-        setLoading(true)
-        const response = await apiRequest<{
-          status: string;
-          data: BlogPost[];
-        }>('/blogs/public?limit=3', { noRedirect: true })
-        
-        if (response.data) {
-          setLatestPosts(response.data)
+    // Delay blog loading to prioritize hero content
+    const timer = setTimeout(() => {
+      const fetchLatestPosts = async () => {
+        try {
+          setLoading(true)
+          const response = await apiRequest<{
+            status: string;
+            data: BlogPost[];
+          }>('/blogs/public?limit=3', { noRedirect: true })
+          
+          if (response.data) {
+            setLatestPosts(response.data)
+          }
+        } catch (error) {
+          console.error('Error fetching latest posts:', error)
+          // Fallback data if API fails
+          setLatestPosts([])
+        } finally {
+          setLoading(false)
         }
-      } catch (error) {
-        console.error('Error fetching latest posts:', error)
-        // Fallback data if API fails
-        setLatestPosts([])
-      } finally {
-        setLoading(false)
       }
-    }
+      
+      fetchLatestPosts()
+    }, 500) // Delay 500ms for better LCP
     
-    fetchLatestPosts()
+    return () => clearTimeout(timer)
   }, [])
   
   // FAQ toggle function
@@ -223,16 +228,16 @@ export default function HomeContent() {
           
           <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 relative z-10">
             <motion.div 
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
+              transition={{ duration: 0.5 }}
               className="max-w-4xl mx-auto text-center"
             >
               {/* Brand Badge */}
               <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2, duration: 0.6 }}
+                transition={{ delay: 0.1, duration: 0.3 }}
                 className="inline-flex items-center gap-2 mb-4 sm:mb-6 px-4 py-2 rounded-full bg-gradient-to-r from-teal-500/10 via-blue-500/10 to-indigo-500/10 border border-teal-200/50 dark:border-teal-800/50 backdrop-blur-sm"
               >
                 <span className="text-xs font-semibold bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
