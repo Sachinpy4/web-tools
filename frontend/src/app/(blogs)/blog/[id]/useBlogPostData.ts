@@ -10,6 +10,7 @@ export function useBlogPostData(blogId: string) {
   
   // State for blog post data
   const [post, setPost] = useState<BlogPost | null>(null)
+  const [processedContent, setProcessedContent] = useState<string>('')
   const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -108,6 +109,7 @@ export function useBlogPostData(blogId: string) {
               // Process headings and update content
               const { headingsData, updatedContent } = extractHeadings(response.data.content);
               setHeadings(headingsData);
+              setProcessedContent(updatedContent);
               
               // Set the actual like count from the database
               setLikeCount(response.data.likes || 0);
@@ -140,10 +142,6 @@ export function useBlogPostData(blogId: string) {
                 }
               }
               
-              // Update the content with the heading IDs for the TOC to work
-              const contentWithIds = { ...response.data, content: updatedContent };
-              setPost(contentWithIds);
-              
               return; // Exit early if found by slug
             }
           }
@@ -164,6 +162,7 @@ export function useBlogPostData(blogId: string) {
         // Process headings and update content
         const { headingsData, updatedContent } = extractHeadings(response.data.content);
         setHeadings(headingsData);
+        setProcessedContent(updatedContent);
         
         // Set the actual like count from the database
         setLikeCount(response.data.likes || 0);
@@ -192,16 +191,18 @@ export function useBlogPostData(blogId: string) {
         }
         
         // Fetch related posts (posts with similar tags)
-        const allPostsResponse = await apiRequest<{
-          status: string;
-          data: BlogPost[];
-        }>('/blogs/public', { 
-          noRedirect: true 
-        });
-        
-        if (allPostsResponse.data && response.data) {
-          const related = getRelatedPosts(response.data, allPostsResponse.data);
-          setRelatedPosts(related);
+        if (response.data.tags && response.data.tags.length > 0) {
+          const allPostsResponse = await apiRequest<{
+            status: string;
+            data: BlogPost[];
+          }>('/blogs/public', { 
+            noRedirect: true 
+          });
+          
+          if (allPostsResponse.data) {
+            const related = getRelatedPosts(response.data, allPostsResponse.data);
+            setRelatedPosts(related);
+          }
         }
       } catch (error) {
         console.error('Error fetching blog post:', error);
@@ -257,6 +258,7 @@ export function useBlogPostData(blogId: string) {
   return {
     // Blog post data
     post,
+    processedContent,
     relatedPosts,
     loading,
     error,

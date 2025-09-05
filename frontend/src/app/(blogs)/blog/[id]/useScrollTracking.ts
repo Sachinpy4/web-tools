@@ -23,10 +23,13 @@ export function useScrollTracking(headings: HeadingInfo[]) {
         
         // How far scrolled in the page in percentage
         const scrolled = (scrollTop / (documentHeight - windowHeight)) * 100;
-        setReadingProgress(Math.min(Math.max(scrolled, 0), 100));
+        const finalProgress = Math.min(Math.max(scrolled, 0), 100);
         
-        // Show scroll to top button after 20% progress (more responsive)
-        setShowScrollTop(scrolled > 20);
+        setReadingProgress(finalProgress);
+        
+        // Show scroll to top button after 2% progress (much more responsive)
+        const shouldShow = scrolled > 2;
+        setShowScrollTop(shouldShow);
         
         // Track active heading - safer implementation
         if (headings.length > 0) {

@@ -51,15 +51,40 @@ export const copyToClipboard = () => {
 
 // Scroll to top function
 export const scrollToTop = () => {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  })
+  if (typeof window === 'undefined') {
+    return
+  }
+  
+  try {
+    // Method 1: Immediate scroll
+    window.scrollTo(0, 0)
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+    
+    // Method 2: Smooth scroll as backup
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'smooth'
+    })
+    
+  } catch (error) {
+    // Ultimate fallback
+    try {
+      window.scroll(0, 0)
+    } catch (fallbackError) {
+      // Silent fail
+    }
+  }
 }
 
 // Extract headings from HTML content
 export const extractHeadings = (htmlContent: string) => {
   try {
+    if (!htmlContent || typeof htmlContent !== 'string') {
+      return { headingsData: [], updatedContent: htmlContent };
+    }
+
     // Parse the HTML content
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlContent, 'text/html');
@@ -68,11 +93,18 @@ export const extractHeadings = (htmlContent: string) => {
     const headingElements = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
     
     const headingsData: HeadingInfo[] = Array.from(headingElements).map((el, index) => {
-      const text = el.textContent || '';
-      const id = text.toLowerCase()
-        .replace(/[^a-z0-9\s]/g, '') // Remove special characters
+      const text = el.textContent?.trim() || '';
+      
+      // Create a clean, URL-safe ID
+      const baseId = text.toLowerCase()
+        .replace(/[^\w\s-]/g, '') // Remove special characters except alphanumeric, spaces, and hyphens
         .replace(/\s+/g, '-') // Replace spaces with hyphens
-        .trim() + `-${index}`; // Add index to ensure uniqueness
+        .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+        .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+        .trim();
+      
+      // Ensure unique ID by adding index
+      const id = baseId ? `${baseId}-${index}` : `heading-${index}`;
       
       // Set the ID on the element so the TOC links work
       el.id = id;
@@ -84,9 +116,10 @@ export const extractHeadings = (htmlContent: string) => {
       };
     });
     
+    // Return the full document HTML (not just body) to preserve structure
     return { 
       headingsData, 
-      updatedContent: doc.body.innerHTML 
+      updatedContent: doc.documentElement.innerHTML.replace(/<\/?html[^>]*>|<\/?head[^>]*>|<\/?body[^>]*>/g, '').trim()
     };
   } catch (error) {
     console.error('Error extracting headings:', error);

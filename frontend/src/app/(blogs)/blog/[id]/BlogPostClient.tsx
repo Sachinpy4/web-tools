@@ -62,6 +62,7 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
   // Use the blog post data hook
   const {
     post,
+    processedContent,
     relatedPosts,
     loading,
     error,
@@ -72,6 +73,9 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
     categories,
     latestPosts
   } = useBlogPostData(initialPost._id)
+
+  // State for desktop TOC collapse
+  const [isTocExpanded, setIsTocExpanded] = useState(true)
   
   // Use the comments hook
   const {
@@ -297,6 +301,61 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
 
   return (
     <>
+      {/* Mobile responsiveness styles */}
+      <style jsx global>{`
+        /* Prevent horizontal scrolling on mobile */
+        body {
+          overflow-x: hidden;
+        }
+        
+        /* Ensure all content respects container bounds */
+        .prose * {
+          max-width: 100%;
+          overflow-wrap: break-word;
+          word-wrap: break-word;
+        }
+        
+        /* Handle specific elements that commonly cause overflow */
+        .prose pre {
+          overflow-x: auto;
+          max-width: 100%;
+        }
+        
+        .prose table {
+          display: block;
+          overflow-x: auto;
+          white-space: nowrap;
+        }
+        
+        .prose img {
+          max-width: 100%;
+          height: auto;
+        }
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+          .prose {
+            font-size: 16px;
+            line-height: 1.6;
+          }
+          
+          .prose h1 {
+            font-size: 1.875rem;
+            line-height: 1.2;
+          }
+          
+          .prose h2 {
+            font-size: 1.5rem;
+            line-height: 1.3;
+          }
+          
+          .prose h3 {
+            font-size: 1.25rem;
+            line-height: 1.4;
+          }
+        }
+      `}</style>
+      
       {/* Reading progress bar */}
       <div 
         className="fixed top-0 left-0 z-50 h-1 bg-primary transition-all duration-300 ease-out"
@@ -304,14 +363,15 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
       />
 
       {/* Back button and action buttons */}
-      <div className="mb-6 flex items-center justify-between">
-        <Button variant="ghost" size="sm" asChild className="group">
+      <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
+        <Button variant="ghost" size="sm" asChild className="group flex-shrink-0">
           <Link href="/blog">
             <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
-            Back to Articles
+            <span className="hidden sm:inline">Back to Articles</span>
+            <span className="sm:hidden">Back</span>
           </Link>
         </Button>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <Button 
             variant="ghost" 
             size="sm" 
@@ -343,9 +403,9 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
       </div>
 
       {/* Header */}
-      <div className="mb-10 max-w-4xl mx-auto">
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight tracking-tight">{currentPost.title}</h1>
-        <p className="text-xl text-muted-foreground mb-8 leading-relaxed font-medium">
+      <div className="mb-10 max-w-4xl mx-auto px-0">
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight tracking-tight break-words hyphens-auto">{currentPost.title}</h1>
+        <p className="text-xl text-muted-foreground mb-8 leading-relaxed font-medium break-words">
           {currentPost.excerpt}
         </p>
         
@@ -480,7 +540,7 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
       </div>
       
       {/* Main content */}
-      <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-12 mb-12">
+      <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-12 mb-12 min-w-0 overflow-hidden">
         {/* Table of contents - Mobile */}
         <div className="lg:hidden sticky top-16 z-30 mb-6">
           <Button 
@@ -503,7 +563,7 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
               <CardContent className="p-4">
                 <nav className="toc text-sm">
                   <ul className="space-y-2">
-                    {headings.map((heading) => (
+                    {headings.map((heading, index) => (
                       <li 
                         key={heading.id} 
                         style={{ paddingLeft: `${(heading.level - 1) * 0.75}rem` }}
@@ -511,11 +571,22 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
                         <a
                           href={`#${heading.id}`}
                           className={cn(
-                            "block hover:text-primary transition-colors py-1",
-                            activeHeading === heading.id ? "text-primary font-medium" : "text-muted-foreground"
+                            "block hover:text-primary transition-colors py-1 rounded-sm hover:bg-primary/5 px-2 -mx-2",
+                            activeHeading === heading.id ? "text-primary font-medium bg-primary/10" : "text-muted-foreground"
                           )}
-                          onClick={() => setIsTocOpen(false)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            const element = document.getElementById(heading.id);
+                            if (element) {
+                              element.scrollIntoView({ 
+                                behavior: 'smooth',
+                                block: 'start'
+                              });
+                            }
+                            setIsTocOpen(false);
+                          }}
                         >
+                          <span className="text-xs opacity-60 mr-2">{index + 1}.</span>
                           {heading.text}
                         </a>
                       </li>
@@ -528,10 +599,10 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
         </div>
         
         {/* Main article */}
-        <article ref={articleRef} className="lg:col-span-8 prose prose-lg dark:prose-invert max-w-none prose-table:mx-auto prose-table:border-collapse prose-pre:!bg-transparent prose-pre:!p-0 prose-pre:!border-0 prose-pre:!overflow-visible">
+        <article ref={articleRef} className="lg:col-span-8 prose prose-lg dark:prose-invert max-w-none prose-table:mx-auto prose-table:border-collapse prose-table:table-auto prose-table:w-full prose-table:block prose-table:overflow-x-auto prose-td:break-words prose-th:break-words prose-pre:overflow-x-auto prose-pre:max-w-full prose-code:break-words">
           <div 
-            dangerouslySetInnerHTML={{ __html: processContentImages(currentPost.content) }} 
-            className="prose-img:rounded-xl prose-img:shadow-md prose-img:mx-auto prose-headings:scroll-mt-20 prose-headings:font-bold prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-p:leading-relaxed prose-headings:leading-tight prose-blockquote:border-l-primary/50 prose-blockquote:bg-muted/30 prose-blockquote:px-6 prose-blockquote:py-1 prose-blockquote:italic prose-code:text-sm prose-code:bg-muted/80 prose-code:rounded prose-code:px-1 prose-code:py-0.5"
+            dangerouslySetInnerHTML={{ __html: processContentImages(processedContent || currentPost.content) }} 
+            className="break-words overflow-wrap-anywhere prose-img:rounded-xl prose-img:shadow-md prose-img:mx-auto prose-img:max-w-full prose-img:h-auto prose-headings:scroll-mt-20 prose-headings:font-bold prose-headings:break-words prose-a:text-primary prose-a:no-underline prose-a:break-words hover:prose-a:underline prose-p:leading-relaxed prose-p:break-words prose-headings:leading-tight prose-blockquote:border-l-primary/50 prose-blockquote:bg-muted/30 prose-blockquote:px-6 prose-blockquote:py-1 prose-blockquote:italic prose-blockquote:break-words prose-code:text-sm prose-code:bg-muted/80 prose-code:rounded prose-code:px-1 prose-code:py-0.5 prose-code:break-words prose-code:max-w-full prose-pre:bg-muted/50 prose-pre:p-4 prose-pre:rounded-lg prose-pre:border"
           />
           
           {/* Tags below article */}
@@ -771,40 +842,66 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
         </article>
         
         {/* Sidebar */}
-        <aside className="lg:col-span-4 hidden lg:block">
-          <div className="sticky top-20 space-y-8">
+        <aside className="lg:col-span-4 hidden lg:block min-w-0">
+          <div className="sticky top-20 space-y-8 min-w-0 overflow-hidden">
             {/* Table of contents - Desktop */}
             {headings.length > 0 && (
               <Card className="border shadow-sm hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
-                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                    <List className="h-4 w-4" />
-                    Table of Contents
-                  </h3>
-                  <nav className="toc text-sm">
-                    <ul className="space-y-2.5">
-                      {headings.map((heading) => (
-                        <li 
-                          key={heading.id}
-                          className="border-l-2 pl-3 transition-all"
-                          style={{
-                            paddingLeft: `${(heading.level - 1) * 0.75 + 0.75}rem`,
-                            borderLeftColor: activeHeading === heading.id ? 'var(--primary)' : 'transparent'
-                          }}
-                        >
-                          <a
-                            href={`#${heading.id}`}
-                            className={cn(
-                              "block hover:text-primary transition-colors py-1",
-                              activeHeading === heading.id ? "text-primary font-medium" : "text-muted-foreground"
-                            )}
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-lg flex items-center gap-2">
+                      <List className="h-4 w-4" />
+                      Table of Contents
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">
+                        {headings.length} section{headings.length !== 1 ? 's' : ''}
+                      </span>
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={() => setIsTocExpanded(!isTocExpanded)}
+                    >
+                      <ChevronUp className={`h-4 w-4 transition-transform duration-200 ${isTocExpanded ? 'rotate-180' : ''}`} />
+                    </Button>
+                  </div>
+                  <div className={`overflow-hidden transition-all duration-300 ${isTocExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <nav className="toc text-sm">
+                      <ul className="space-y-2.5">
+                        {headings.map((heading, index) => (
+                          <li 
+                            key={heading.id}
+                            className="border-l-2 pl-3 transition-all duration-200"
+                            style={{
+                              paddingLeft: `${(heading.level - 1) * 0.75 + 0.75}rem`,
+                              borderLeftColor: activeHeading === heading.id ? 'var(--primary)' : 'transparent'
+                            }}
                           >
-                            {heading.text}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </nav>
+                            <a
+                              href={`#${heading.id}`}
+                              className={cn(
+                                "block hover:text-primary transition-colors py-1 rounded-sm hover:bg-primary/5 px-2 -mx-2",
+                                activeHeading === heading.id ? "text-primary font-medium bg-primary/10" : "text-muted-foreground"
+                              )}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                const element = document.getElementById(heading.id);
+                                if (element) {
+                                  element.scrollIntoView({ 
+                                    behavior: 'smooth',
+                                    block: 'start'
+                                  });
+                                }
+                              }}
+                            >
+                              <span className="text-xs opacity-60 mr-2">{index + 1}.</span>
+                              {heading.text}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </nav>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -1007,52 +1104,52 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
       {/* Enhanced Scroll to top button */}
       {showScrollTop && (
         <div className="fixed bottom-6 right-6 z-50 group">
-          {/* Background glow effect */}
-          <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl scale-150 opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out" />
-          
           {/* Main button */}
-          <Button
-            onClick={handleScrollToTop}
-            className="relative h-14 w-14 rounded-full shadow-2xl border border-white/10 backdrop-blur-md bg-background/80 hover:bg-primary hover:text-primary-foreground text-primary transition-all duration-300 ease-out transform hover:scale-110 active:scale-95 group"
-            variant="ghost"
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+            className="relative h-11 w-11 rounded-full shadow-lg border border-border/50 backdrop-blur-sm bg-background/95 hover:bg-primary hover:text-primary-foreground text-foreground transition-all duration-200 ease-out hover:scale-105 active:scale-95 hover:shadow-xl"
             aria-label="Scroll to top"
           >
-            {/* Inner glow */}
-            <div className="absolute inset-1 rounded-full bg-gradient-to-tr from-primary/5 to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            
             {/* Icon */}
-            <ChevronUp className="h-6 w-6 relative z-10 transition-transform duration-300 group-hover:-translate-y-0.5" />
+            <ChevronUp className="h-4 w-4 mx-auto transition-transform duration-200 group-hover:-translate-y-0.5 pointer-events-none" />
             
-            {/* Ripple effect */}
-            <div className="absolute inset-0 rounded-full bg-primary/10 scale-0 group-active:scale-100 transition-transform duration-150" />
-          </Button>
+            {/* Hover background */}
+            <div className="absolute inset-0 rounded-full bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
+          </button>
           
-          {/* Progress ring around button */}
+          {/* Progress ring */}
           <svg 
-            className="absolute inset-0 h-14 w-14 -rotate-90 transition-all duration-300"
-            viewBox="0 0 56 56"
+            className="absolute inset-0 h-11 w-11 -rotate-90 pointer-events-none"
+            viewBox="0 0 44 44"
           >
+            {/* Background ring */}
             <circle
-              cx="28"
-              cy="28"
-              r="26"
+              cx="22"
+              cy="22"
+              r="20"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
               className="text-muted-foreground/20"
             />
+            {/* Progress ring */}
             <circle
-              cx="28"
-              cy="28"
-              r="26"
+              cx="22"
+              cy="22"
+              r="20"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
-              className="text-primary transition-all duration-300"
+              className="text-primary/60 transition-all duration-300"
               style={{
-                strokeDasharray: `${2 * Math.PI * 26}`,
-                strokeDashoffset: `${2 * Math.PI * 26 * (1 - readingProgress / 100)}`
+                strokeDasharray: `${2 * Math.PI * 20}`,
+                strokeDashoffset: `${2 * Math.PI * 20 * (1 - readingProgress / 100)}`
               }}
             />
           </svg>
