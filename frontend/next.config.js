@@ -13,7 +13,7 @@ const nextConfig = {
   },
   experimental: {
     // Minimal experimental features to avoid SSR issues
-    optimizeCss: true,
+    optimizeCss: true, // Re-enabled with critters package
     scrollRestoration: true,
   },
   poweredByHeader: false,
