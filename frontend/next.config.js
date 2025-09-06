@@ -1,4 +1,10 @@
 /** @type {import('next').NextConfig} */
+
+// Add global polyfills for SSR to prevent "self is not defined" errors
+if (typeof global !== 'undefined' && typeof global.self === 'undefined') {
+  global.self = global;
+}
+
 const nextConfig = {
   reactStrictMode: true,
   // Performance optimizations
@@ -6,20 +12,9 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
   experimental: {
-    optimizePackageImports: [
-      'lucide-react', 
-      'framer-motion',
-      '@radix-ui/react-dropdown-menu',
-      '@radix-ui/react-popover',
-      '@radix-ui/react-alert-dialog',
-      '@radix-ui/react-tooltip',
-      '@radix-ui/react-tabs',
-      '@radix-ui/react-select'
-    ],
-    cssChunking: 'strict',
+    // Minimal experimental features to avoid SSR issues
     optimizeCss: true,
     scrollRestoration: true,
-    // esmExternals: 'loose', // Removed - causes SSR issues
   },
   poweredByHeader: false,
   output: 'standalone',
@@ -141,52 +136,10 @@ const nextConfig = {
       sideEffects: false, // Enable tree shaking for these packages
     });
 
-    // Production optimizations for better performance
+    // Minimal production optimizations only
     if (!dev) {
-      // Optimize CSS bundling and reduce render blocking
-      // Simplified, safer code splitting
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            // Keep React separate for better caching
-            react: {
-              test: /[\\/]node_modules[\\/](react|react-dom)/,
-              name: 'react-vendor',
-              chunks: 'all',
-              priority: 20,
-            },
-            // Group large UI libraries (excluding AI packages)
-            vendor: {
-              test: /[\\/]node_modules[\\/](?!(@imgly\/background-removal|onnxruntime-web))/,
-              name: 'vendor',
-              chunks: 'all',
-              priority: 10,
-            },
-          },
-        },
-      };
-    }
-
-    // Note: Removed aggressive externals that caused SSR issues
-    // Server-only packages should be naturally excluded by Next.js
-
-    // Better tree shaking for large libraries
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      // Tree shake large libraries
-      'lodash': 'lodash-es',
-    };
-
-    // Additional optimizations
-    if (!dev) {
+      // Keep minimal safe optimizations
       config.optimization.usedExports = true;
-      config.optimization.sideEffects = false;
-      
-      // Optimize module loading
-      config.resolve.modules = ['node_modules'];
-      config.resolve.symlinks = false;
     }
 
     return config;
