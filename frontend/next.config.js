@@ -19,7 +19,7 @@ const nextConfig = {
     cssChunking: 'strict',
     optimizeCss: true,
     scrollRestoration: true,
-    esmExternals: 'loose', // Better handling of ES modules
+    // esmExternals: 'loose', // Removed - causes SSR issues
   },
   poweredByHeader: false,
   output: 'standalone',
@@ -88,6 +88,16 @@ const nextConfig = {
       assert: false,
     };
 
+    // Prevent server-side execution of client-only packages
+    if (isServer) {
+      const originalFallback = config.resolve.fallback || {};
+      config.resolve.fallback = {
+        ...originalFallback,
+        '@imgly/background-removal': false,
+        'onnxruntime-web': false,
+      };
+    }
+
     // Disable strict exports field enforcement for onnxruntime-web
     config.resolve.exportsFields = [];
     
@@ -120,90 +130,49 @@ const nextConfig = {
       'onnxruntime-web$': 'onnxruntime-web/dist/ort.min.js',
     };
 
-    // Handle dynamic imports more gracefully
+    // Ensure AI/ML packages are client-side only
     config.module.rules.push({
-      test: /node_modules\/@imgly\/background-removal/,
+      test: /node_modules[\\/](@imgly[\\/]background-removal|onnxruntime-web)/,
       parser: {
         javascript: {
-          // Allow dynamic imports in background removal library
           dynamicImportMode: 'lazy',
         },
       },
+      sideEffects: false, // Enable tree shaking for these packages
     });
 
     // Production optimizations for better performance
     if (!dev) {
       // Optimize CSS bundling and reduce render blocking
+      // Simplified, safer code splitting
       config.optimization = {
         ...config.optimization,
         splitChunks: {
           chunks: 'all',
-          maxInitialRequests: 25,
-          maxAsyncRequests: 25,
           cacheGroups: {
-            // AI/ML libraries - separate chunk (lazy load)
-            aiLibs: {
-              test: /[\\/]node_modules[\\/](@imgly\/background-removal|onnxruntime-web)/,
-              name: 'ai-libs',
-              chunks: 'async', // Only load when needed
-              priority: 40,
-              enforce: true,
-            },
-            // Rich text editor - separate chunk
-            editor: {
-              test: /[\\/]node_modules[\\/]@tiptap/,
-              name: 'editor',
-              chunks: 'async',
-              priority: 35,
-            },
-            // UI components
-            radixUI: {
-              test: /[\\/]node_modules[\\/]@radix-ui/,
-              name: 'radix-ui',
-              chunks: 'all',
-              priority: 30,
-            },
-            // Animation library
-            motion: {
-              test: /[\\/]node_modules[\\/]framer-motion/,
-              name: 'framer-motion',
-              chunks: 'async',
-              priority: 25,
-            },
-            // Core React libraries
+            // Keep React separate for better caching
             react: {
               test: /[\\/]node_modules[\\/](react|react-dom)/,
-              name: 'react',
+              name: 'react-vendor',
               chunks: 'all',
               priority: 20,
             },
-            // Other vendor libraries
+            // Group large UI libraries
             vendor: {
               test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
+              name: 'vendor',
               chunks: 'all',
               priority: 10,
-            },
-            // Default and common chunks
-            default: {
-              minChunks: 2,
-              priority: -20,
-              reuseExistingChunk: true,
+              // Exclude problematic packages that need client-only loading
+              exclude: /[\\/]node_modules[\\/](@imgly\/background-removal|onnxruntime-web)/,
             },
           },
         },
       };
     }
 
-    // Exclude server-only packages from client bundle
-    if (!isServer) {
-      config.externals = {
-        ...config.externals,
-        mongodb: 'mongodb',
-        mongoose: 'mongoose',
-        bcrypt: 'bcrypt',
-      };
-    }
+    // Note: Removed aggressive externals that caused SSR issues
+    // Server-only packages should be naturally excluded by Next.js
 
     // Better tree shaking for large libraries
     config.resolve.alias = {

@@ -12,6 +12,9 @@ export function OptimizedAnalytics({ gtmId, gtagId }: OptimizedAnalyticsProps) {
   const [shouldLoadAnalytics, setShouldLoadAnalytics] = useState(false)
 
   useEffect(() => {
+    // Ensure we're in browser environment only
+    if (typeof window === 'undefined') return
+
     // Delay analytics loading until user interacts or after 3 seconds
     const timer = setTimeout(() => {
       setShouldLoadAnalytics(true)
@@ -47,8 +50,11 @@ export function OptimizedAnalytics({ gtmId, gtagId }: OptimizedAnalyticsProps) {
         <>
           <Script
             src={`https://www.googletagmanager.com/gtag/js?id=${gtagId}`}
-            strategy="worker"
+            strategy="afterInteractive"
             onLoad={() => {
+              // Ensure we're in browser environment
+              if (typeof window === 'undefined') return
+              
               // Minimal gtag setup
               window.dataLayer = window.dataLayer || []
               function gtag(...args: any[]) {
@@ -74,7 +80,7 @@ export function OptimizedAnalytics({ gtmId, gtagId }: OptimizedAnalyticsProps) {
         <>
           <Script
             id="gtm-script"
-            strategy="worker"
+            strategy="afterInteractive"
             dangerouslySetInnerHTML={{
               __html: `
                 (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
