@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -53,6 +54,9 @@ interface BlogResponse {
 }
 
 export default function BlogContent() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [activeTag, setActiveTag] = useState<string | null>(null)
   
@@ -69,6 +73,48 @@ export default function BlogContent() {
   const [totalPosts, setTotalPosts] = useState(0)
   const [postsPerPage] = useState(12) // Reasonable page size
   const [showAllTags, setShowAllTags] = useState(false)
+  
+  // Read URL parameters on component mount and update state
+  useEffect(() => {
+    const categoryParam = searchParams.get('category')
+    const tagParam = searchParams.get('tag')
+    const pageParam = searchParams.get('page')
+    
+    if (categoryParam) {
+      setActiveCategory(decodeURIComponent(categoryParam))
+    }
+    if (tagParam) {
+      setActiveTag(decodeURIComponent(tagParam))
+    }
+    if (pageParam) {
+      setCurrentPage(parseInt(pageParam) || 1)
+    }
+  }, [searchParams])
+  
+  // Set canonical URL based on current filters
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    
+    let canonicalUrl = 'https://toolscandy.com/blog'
+    
+    // If there are filters, set canonical to main blog page
+    // This tells Google that filtered views are variations of the main page
+    if (activeCategory || activeTag || searchQuery || currentPage > 1) {
+      // For filtered/paginated views, canonical points to main blog page
+      canonicalUrl = 'https://toolscandy.com/blog'
+    }
+    
+    // Update canonical link
+    let canonical = document.querySelector('link[rel="canonical"]')
+    if (canonical) {
+      canonical.setAttribute('href', canonicalUrl)
+    } else {
+      canonical = document.createElement('link')
+      canonical.setAttribute('rel', 'canonical')
+      canonical.setAttribute('href', canonicalUrl)
+      document.head.appendChild(canonical)
+    }
+  }, [activeCategory, activeTag, searchQuery, currentPage])
   
   // Debounce search
   useEffect(() => {
@@ -242,16 +288,37 @@ export default function BlogContent() {
   const handleCategoryChange = (category: string | null) => {
     setActiveCategory(category)
     setCurrentPage(1) // Reset to first page
+    
+    // Update URL to reflect the filter
+    const params = new URLSearchParams(searchParams.toString())
+    if (category) {
+      params.set('category', category)
+    } else {
+      params.delete('category')
+    }
+    params.delete('page') // Reset page when changing category
+    
+    const newUrl = params.toString() ? `/blog?${params.toString()}` : '/blog'
+    router.replace(newUrl, { scroll: false })
   }
   
   // Toggle tag filter
   const handleTagClick = (tag: string) => {
-    if (activeTag === tag) {
-      setActiveTag(null)
-    } else {
-      setActiveTag(tag)
-    }
+    const newTag = activeTag === tag ? null : tag
+    setActiveTag(newTag)
     setCurrentPage(1) // Reset to first page
+    
+    // Update URL to reflect the filter
+    const params = new URLSearchParams(searchParams.toString())
+    if (newTag) {
+      params.set('tag', newTag)
+    } else {
+      params.delete('tag')
+    }
+    params.delete('page') // Reset page when changing tag
+    
+    const newUrl = params.toString() ? `/blog?${params.toString()}` : '/blog'
+    router.replace(newUrl, { scroll: false })
   }
   
   // Handle page change
@@ -415,6 +482,9 @@ export default function BlogContent() {
                 setSearchInput('')
                 setSearchQuery('')
                 setCurrentPage(1)
+                
+                // Clear URL parameters
+                router.replace('/blog', { scroll: false })
               }}
             >
               Clear All
@@ -622,6 +692,9 @@ export default function BlogContent() {
               setSearchInput('')
               setSearchQuery('')
               setCurrentPage(1)
+              
+              // Clear URL parameters
+              router.replace('/blog', { scroll: false })
             }}
           >
             Reset Filters

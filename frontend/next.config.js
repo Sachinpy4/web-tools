@@ -8,6 +8,8 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
     cssChunking: 'strict',
+    optimizeCss: true,
+    scrollRestoration: true,
   },
   poweredByHeader: false,
   output: 'standalone',

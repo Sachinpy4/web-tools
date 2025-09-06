@@ -4,27 +4,18 @@
 # Allow all search engines to crawl public content
 User-agent: *
 
-# ALLOW: Public pages that should be indexed
-Allow: /
-Allow: /about
-Allow: /contact
-Allow: /privacy
-Allow: /terms
-Allow: /disclaimer
+# DISALLOW: Admin, backend, and private areas
+Disallow: /dashboard/
+Disallow: /settings/
+Disallow: /login
+Disallow: /debug
+Disallow: /api/
 
-# ALLOW: Blog content for SEO
-Allow: /blog
-Allow: /blog/*
-
-# ALLOW: Image processing tools (main functionality)
-Allow: /image/compress
-Allow: /image/resize  
-Allow: /image/convert
-Allow: /image/crop
-Allow: /image/metadata
+# DISALLOW: Old URLs that cause 404 errors
+Disallow: /download/
+Disallow: /Web
 
 # DISALLOW: Common system directories and file types
-Disallow: /api/
 Disallow: /_next/
 Disallow: /_vercel/
 Disallow: /*.json$
@@ -37,35 +28,38 @@ Disallow: /*.bak$
 Disallow: /*.config$
 Disallow: /*.ini$
 
+# DISALLOW: Static assets that don't need indexing
+Disallow: /*.woff$
+Disallow: /*.woff2$
+Disallow: /*.ttf$
+Disallow: /*.eot$
+Disallow: /*.ico$
+Disallow: /*.css$
+Disallow: /*.js$
+Disallow: /*.map$
+
 # DISALLOW: Search and filter parameters to avoid duplicate content
 Disallow: /*?search=*
 Disallow: /*?filter=*
 Disallow: /*?sort=*
 Disallow: /*?page=*
+Disallow: /*?category=*
+Disallow: /*?tag=*
 
 # CRAWL DELAY: Be respectful to server resources
 Crawl-delay: 1
 
 # SITEMAP: Point to sitemap location
 Sitemap: https://toolscandy.com/sitemap.xml
-
 # SPECIFIC RULES FOR MAJOR SEARCH ENGINES
 
-# Google Bot - Allow faster crawling for main content
+# Google Bot - Allow faster crawling
 User-agent: Googlebot
 Crawl-delay: 0.5
-Allow: /
-Allow: /blog
-Allow: /blog/*
-Allow: /image/*
 
 # Bing Bot
 User-agent: Bingbot
 Crawl-delay: 1
-Allow: /
-Allow: /blog
-Allow: /blog/*
-Allow: /image/*
 
 # Block aggressive crawlers that might overload your server
 User-agent: AhrefsBot
@@ -92,4 +86,3 @@ Disallow: /
 
 # User-agent: Claude-Web
 # Disallow: /
-

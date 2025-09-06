@@ -220,7 +220,7 @@ export default function DynamicScripts({ placement }: DynamicScriptsProps) {
             <Script
               key={scriptId}
               id={`dynamic-script-${script._id}`}
-              strategy="afterInteractive"
+              strategy="lazyOnload"
               dangerouslySetInnerHTML={{
                 __html: processedContent
               }}

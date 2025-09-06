@@ -9,6 +9,9 @@ interface BlogPost {
   updatedAt: string
 }
 
+// Revalidate sitemap every hour (3600 seconds)
+export const revalidate = 3600
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://toolscandy.com'
   
@@ -102,7 +105,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       data: BlogPost[]
     }>('/blogs?status=published&limit=1000', { 
       noRedirect: true,
-      requireAuth: false 
+      requireAuth: false
     })
     
     if (response.data && Array.isArray(response.data)) {

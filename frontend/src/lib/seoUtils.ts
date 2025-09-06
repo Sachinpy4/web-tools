@@ -332,7 +332,7 @@ function getFallbackSeoData(pagePath: string): SeoData {
         metaKeywords: ['ToolsCandy', 'image tools', 'image optimization', 'image compression', 'image resize', 'browser tools', 'privacy'],
         ogType: 'website',
         twitterCard: 'summary_large_image',
-        canonicalUrl: '',
+        canonicalUrl: 'https://toolscandy.com',
         ogImage: ''
       }
     
@@ -343,7 +343,7 @@ function getFallbackSeoData(pagePath: string): SeoData {
         metaKeywords: ['ToolsCandy', 'about us', 'image processing', 'privacy first', 'free tools', 'company story', 'mission', 'values'],
         ogType: 'website',
         twitterCard: 'summary_large_image',
-        canonicalUrl: '',
+        canonicalUrl: 'https://toolscandy.com/about',
         ogImage: ''
       }
     
@@ -354,7 +354,7 @@ function getFallbackSeoData(pagePath: string): SeoData {
         metaKeywords: ['ToolsCandy', 'contact', 'support', 'help', 'feedback', 'business inquiries', 'partnerships', 'customer service'],
         ogType: 'website',
         twitterCard: 'summary_large_image',
-        canonicalUrl: '',
+        canonicalUrl: 'https://toolscandy.com/contact',
         ogImage: ''
       }
     
@@ -365,7 +365,7 @@ function getFallbackSeoData(pagePath: string): SeoData {
         metaKeywords: ['ToolsCandy', 'privacy policy', 'data protection', 'privacy first', 'local processing', 'no data collection', 'browser-based', 'GDPR'],
         ogType: 'website',
         twitterCard: 'summary_large_image',
-        canonicalUrl: '',
+        canonicalUrl: 'https://toolscandy.com/privacy',
         ogImage: ''
       }
     
@@ -376,7 +376,7 @@ function getFallbackSeoData(pagePath: string): SeoData {
         metaKeywords: ['ToolsCandy', 'terms of service', 'usage guidelines', 'terms and conditions', 'legal terms', 'service agreement', 'user rights'],
         ogType: 'website',
         twitterCard: 'summary_large_image',
-        canonicalUrl: '',
+        canonicalUrl: 'https://toolscandy.com/terms',
         ogImage: ''
       }
     
@@ -387,7 +387,7 @@ function getFallbackSeoData(pagePath: string): SeoData {
         metaKeywords: ['ToolsCandy', 'disclaimer', 'service limitations', 'user responsibility', 'legal disclaimer', 'terms of use', 'liability'],
         ogType: 'website',
         twitterCard: 'summary_large_image',
-        canonicalUrl: '',
+        canonicalUrl: 'https://toolscandy.com',
         ogImage: ''
       }
     
@@ -398,7 +398,7 @@ function getFallbackSeoData(pagePath: string): SeoData {
         metaKeywords: ['ToolsCandy blog', 'web performance', 'image optimization', 'web development', 'tutorials', 'tips', 'best practices', 'performance optimization', 'web tools'],
         ogType: 'website',
         twitterCard: 'summary_large_image',
-        canonicalUrl: '',
+        canonicalUrl: 'https://toolscandy.com/blog',
         ogImage: ''
       }
     
@@ -409,7 +409,7 @@ function getFallbackSeoData(pagePath: string): SeoData {
         metaKeywords: ['image compression', 'reduce file size', 'compress images', 'optimize images', 'JPG compression', 'PNG compression', 'online image compressor', 'ToolsCandy'],
         ogType: 'website',
         twitterCard: 'summary_large_image',
-        canonicalUrl: '',
+        canonicalUrl: 'https://toolscandy.com/image/compress',
         ogImage: ''
       }
     
@@ -420,7 +420,7 @@ function getFallbackSeoData(pagePath: string): SeoData {
         metaKeywords: ['image resize', 'resize images', 'change image size', 'image dimensions', 'scale images', 'image resizer', 'online resize tool', 'ToolsCandy'],
         ogType: 'website',
         twitterCard: 'summary_large_image',
-        canonicalUrl: '',
+        canonicalUrl: 'https://toolscandy.com',
         ogImage: ''
       }
     
@@ -431,7 +431,7 @@ function getFallbackSeoData(pagePath: string): SeoData {
         metaKeywords: ['image crop', 'crop images', 'image cropping', 'trim images', 'cut images', 'image editor', 'online crop tool', 'ToolsCandy'],
         ogType: 'website',
         twitterCard: 'summary_large_image',
-        canonicalUrl: '',
+        canonicalUrl: 'https://toolscandy.com',
         ogImage: ''
       }
     
@@ -442,7 +442,7 @@ function getFallbackSeoData(pagePath: string): SeoData {
         metaKeywords: ['image converter', 'convert images', 'image format conversion', 'JPG to PNG', 'PNG to WebP', 'image format changer', 'online converter', 'ToolsCandy'],
         ogType: 'website',
         twitterCard: 'summary_large_image',
-        canonicalUrl: '',
+        canonicalUrl: 'https://toolscandy.com/image/convert',
         ogImage: ''
       }
     
@@ -453,7 +453,7 @@ function getFallbackSeoData(pagePath: string): SeoData {
         metaKeywords: ['image metadata', 'EXIF data', 'image analyzer', 'image properties', 'metadata extractor', 'image information', 'technical specifications', 'ToolsCandy'],
         ogType: 'website',
         twitterCard: 'summary_large_image',
-        canonicalUrl: '',
+        canonicalUrl: 'https://toolscandy.com',
         ogImage: ''
       }
     
@@ -465,7 +465,7 @@ function getFallbackSeoData(pagePath: string): SeoData {
         metaKeywords: ['ToolsCandy', 'image tools', 'image processing', 'free tools'],
         ogType: 'website',
         twitterCard: 'summary_large_image',
-        canonicalUrl: '',
+        canonicalUrl: 'https://toolscandy.com',
         ogImage: ''
       }
   }

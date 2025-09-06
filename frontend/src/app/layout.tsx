@@ -7,6 +7,7 @@ import { AuthProvider } from '@/components/providers/AuthProvider'
 import { AppProviders } from '@/components/providers/AppProviders'
 import { HeadScripts, BodyScripts, FooterScripts } from '@/components/analytics/DynamicScripts'
 import { WebVitals } from '@/components/performance/WebVitals'
+import { AsyncCSS } from '@/components/performance/AsyncCSS'
 import Script from 'next/script'
 
 // Using system font stack for optimal performance
@@ -39,23 +40,30 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.webmanifest" />
         {/* Critical resource preloads for performance */}
         <link rel="preload" href="/favicon.svg" as="image" type="image/svg+xml" />
+        {/* DNS prefetch for external resources */}
+        <link rel="dns-prefetch" href="https://tools-backend.z4bapj.easypanel.host" />
         {/* Inline critical CSS for faster rendering */}
         <style dangerouslySetInnerHTML={{
           __html: `
-            html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.6}
-            body{margin:0;padding:0;color:hsl(0 0% 3.9%);background:hsl(0 0% 100%);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden}
-            *{box-sizing:border-box}
+            html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.6;scroll-behavior:smooth}
+            body{margin:0;padding:0;color:hsl(0 0% 3.9%);background:hsl(0 0% 100%);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden;text-rendering:optimizeLegibility}
+            *,*::before,*::after{box-sizing:border-box}
             header{position:fixed;top:0;left:0;right:0;z-index:50;height:4rem;background:rgba(255,255,255,0.95);backdrop-filter:blur(8px);border-bottom:1px solid hsl(0 0% 89.8%);will-change:transform}
-            main{padding-top:4rem;min-height:100vh;flex:1}
+            main{padding-top:4rem;min-height:100vh;flex:1;display:flex;flex-direction:column}
             .hero-section{padding:3rem 1rem;text-align:center;background:linear-gradient(135deg,hsl(180 25% 95%) 0%,hsl(210 25% 95%) 50%,hsl(240 25% 95%) 100%);contain:layout paint}
             .container{max-width:1200px;margin:0 auto;padding:0 1rem}
-            img{max-width:100%;height:auto;loading:lazy}
+            img{max-width:100%;height:auto;loading:lazy;display:block}
+            button{cursor:pointer;font-family:inherit}
+            a{color:inherit;text-decoration:none}
+            .loading{opacity:0;animation:fadeIn 0.3s ease forwards}
+            @keyframes fadeIn{to{opacity:1}}
             @media (prefers-color-scheme:dark){
               body{color:hsl(0 0% 98%);background:hsl(0 0% 3.9%)}
               header{background:rgba(15,15,15,0.95);border-bottom:1px solid hsl(0 0% 14.9%)}
               .hero-section{background:linear-gradient(135deg,hsl(180 25% 5%) 0%,hsl(210 25% 5%) 50%,hsl(240 25% 5%) 100%)}
             }
             @media(max-width:768px){.hero-section{padding:2rem 1rem}}
+            @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important}}
           `
         }} />
         {/* Resource hints for performance */}
@@ -77,6 +85,7 @@ export default function RootLayout({
             </AppProviders>
             <Toaster />
             <WebVitals />
+            <AsyncCSS />
           </ThemeProvider>
         </AuthProvider>
         <FooterScripts />
