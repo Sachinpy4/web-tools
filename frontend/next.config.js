@@ -6,10 +6,20 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
   experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion'],
+    optimizePackageImports: [
+      'lucide-react', 
+      'framer-motion',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-popover',
+      '@radix-ui/react-alert-dialog',
+      '@radix-ui/react-tooltip',
+      '@radix-ui/react-tabs',
+      '@radix-ui/react-select'
+    ],
     cssChunking: 'strict',
     optimizeCss: true,
     scrollRestoration: true,
+    esmExternals: 'loose', // Better handling of ES modules
   },
   poweredByHeader: false,
   output: 'standalone',
@@ -127,34 +137,85 @@ const nextConfig = {
       config.optimization = {
         ...config.optimization,
         splitChunks: {
-          ...config.optimization.splitChunks,
+          chunks: 'all',
+          maxInitialRequests: 25,
+          maxAsyncRequests: 25,
           cacheGroups: {
-            ...config.optimization.splitChunks?.cacheGroups,
-            // Separate vendor chunks for better caching
+            // AI/ML libraries - separate chunk (lazy load)
+            aiLibs: {
+              test: /[\\/]node_modules[\\/](@imgly\/background-removal|onnxruntime-web)/,
+              name: 'ai-libs',
+              chunks: 'async', // Only load when needed
+              priority: 40,
+              enforce: true,
+            },
+            // Rich text editor - separate chunk
+            editor: {
+              test: /[\\/]node_modules[\\/]@tiptap/,
+              name: 'editor',
+              chunks: 'async',
+              priority: 35,
+            },
+            // UI components
+            radixUI: {
+              test: /[\\/]node_modules[\\/]@radix-ui/,
+              name: 'radix-ui',
+              chunks: 'all',
+              priority: 30,
+            },
+            // Animation library
+            motion: {
+              test: /[\\/]node_modules[\\/]framer-motion/,
+              name: 'framer-motion',
+              chunks: 'async',
+              priority: 25,
+            },
+            // Core React libraries
+            react: {
+              test: /[\\/]node_modules[\\/](react|react-dom)/,
+              name: 'react',
+              chunks: 'all',
+              priority: 20,
+            },
+            // Other vendor libraries
             vendor: {
               test: /[\\/]node_modules[\\/]/,
               name: 'vendors',
               chunks: 'all',
-              priority: 20,
+              priority: 10,
             },
-            // Create smaller CSS chunks to reduce blocking
-            critical: {
-              name: 'critical',
-              test: /\.(css|scss)$/,
-              chunks: 'initial',
-              enforce: true,
-              priority: 40,
-            },
-            styles: {
-              name: 'styles',
-              test: /\.(css|scss)$/,
-              chunks: 'async',
-              enforce: true,
-              priority: 30,
+            // Default and common chunks
+            default: {
+              minChunks: 2,
+              priority: -20,
+              reuseExistingChunk: true,
             },
           },
         },
       };
+    }
+
+    // Exclude server-only packages from client bundle
+    if (!isServer) {
+      config.externals = {
+        ...config.externals,
+        mongodb: 'mongodb',
+        mongoose: 'mongoose',
+        bcrypt: 'bcrypt',
+      };
+    }
+
+    // Better tree shaking for large libraries
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      // Tree shake large libraries
+      'lodash': 'lodash-es',
+    };
+
+    // Additional optimizations
+    if (!dev) {
+      config.optimization.usedExports = true;
+      config.optimization.sideEffects = false;
       
       // Optimize module loading
       config.resolve.modules = ['node_modules'];
