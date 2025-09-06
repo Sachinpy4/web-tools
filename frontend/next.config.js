@@ -157,14 +157,12 @@ const nextConfig = {
               chunks: 'all',
               priority: 20,
             },
-            // Group large UI libraries
+            // Group large UI libraries (excluding AI packages)
             vendor: {
-              test: /[\\/]node_modules[\\/]/,
+              test: /[\\/]node_modules[\\/](?!(@imgly\/background-removal|onnxruntime-web))/,
               name: 'vendor',
               chunks: 'all',
               priority: 10,
-              // Exclude problematic packages that need client-only loading
-              exclude: /[\\/]node_modules[\\/](@imgly\/background-removal|onnxruntime-web)/,
             },
           },
         },
