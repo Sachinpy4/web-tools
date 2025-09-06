@@ -52,6 +52,16 @@ export default function RootLayout({
             main{padding-top:4rem;min-height:100vh;flex:1;display:flex;flex-direction:column}
             .hero-section{padding:3rem 1rem;text-align:center;background:linear-gradient(135deg,hsl(180 25% 95%) 0%,hsl(210 25% 95%) 50%,hsl(240 25% 95%) 100%);contain:layout paint}
             .container{max-width:1200px;margin:0 auto;padding:0 1rem}
+            /* Critical LCP text optimization */
+            .text-base{font-size:1rem;line-height:1.5}
+            .sm\\:text-lg{font-size:1.125rem}
+            .md\\:text-xl{font-size:1.25rem}
+            .text-muted-foreground{color:hsl(0 0% 45%)}
+            .mb-8{margin-bottom:2rem}
+            .sm\\:mb-10{margin-bottom:2.5rem}
+            .leadin{font-weight:400;max-width:42rem;margin:0 auto}
+            @media(min-width:640px){.sm\\:text-lg{font-size:1.125rem}.sm\\:mb-10{margin-bottom:2.5rem}}
+            @media(min-width:768px){.md\\:text-xl{font-size:1.25rem}}
             img{max-width:100%;height:auto;loading:lazy;display:block}
             button{cursor:pointer;font-family:inherit}
             a{color:inherit;text-decoration:none}
@@ -68,6 +78,7 @@ export default function RootLayout({
         }} />
         {/* Resource hints for performance */}
         <link rel="preconnect" href="https://tools-backend.z4bapj.easypanel.host" />
+        {/* System fonts are already optimal - no preloading needed */}
         <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
       </head>
