@@ -88,8 +88,8 @@ const nextConfig = {
       const originalFallback = config.resolve.fallback || {};
       config.resolve.fallback = {
         ...originalFallback,
-        '@imgly/background-removal': false,
-        'onnxruntime-web': false,
+        '@imgly/background-removal': require.resolve('./lib/empty-module.js'),
+        'onnxruntime-web': require.resolve('./lib/empty-module.js'),
       };
     }
 
@@ -174,7 +174,7 @@ const nextConfig = {
            const isDev = process.env.NODE_ENV === 'development';
            const backendUrl = process.env.NEXT_PUBLIC_API_URL || (isDev ? 'http://localhost:5000' : 'https://tools-backend.z4bapj.easypanel.host');
            const devUrls = isDev ? ' http://localhost:5000 http://localhost:3000' : '';
-           return `default-src 'self'; img-src * data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://www.google-analytics.com https://ssl.google-analytics.com https://tagmanager.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://tagmanager.google.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' blob: ${backendUrl}${devUrls} https://tools-backend.z4bapj.easypanel.host https://staticimgly.com https://cdn.img.ly https://www.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net; object-src 'none'; media-src 'self' blob: data:; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;`;
+           return `default-src 'self'; img-src * data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://www.google-analytics.com https://ssl.google-analytics.com https://tagmanager.google.com https://huggingface.co https://cdn.huggingface.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://tagmanager.google.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' blob: ${backendUrl}${devUrls} https://tools-backend.z4bapj.easypanel.host https://staticimgly.com https://cdn.img.ly https://huggingface.co https://cdn.huggingface.co https://www.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net; object-src 'none'; media-src 'self' blob: data:; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; worker-src 'self' blob:; child-src 'self' blob:; upgrade-insecure-requests;`;
          })(),
        },
       {

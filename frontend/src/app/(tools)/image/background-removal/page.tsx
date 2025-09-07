@@ -270,29 +270,20 @@ export default function BackgroundRemovalTool() {
       throw new Error('Background removal can only run in browser environment');
     }
     
-    // Configure background removal with CPU-only settings for maximum compatibility
+    // Use optimized configuration for fast performance
     const config: BackgroundRemovalConfig = {
       model: selectedModel,
-      debug: process.env.NODE_ENV === 'development',
-      device: 'cpu', // Force CPU mode to avoid WebGPU issues
-      proxyToWorker: false, // Disable worker for better compatibility
-      output: {
-        format: 'image/png',
-        quality: 0.9,
-      },
       progress: (key: string, current: number, total: number) => {
         const progressPercent = Math.round((current / total) * 100);
-        setDownloadProgress(prev => ({
-          ...prev,
-          [key]: progressPercent
-        }));
+        console.log(`📊 Progress: ${key} - ${progressPercent}%`);
         
-        // Update visual progress for model download
-        if (key.includes('model') && progressPercent < 100) {
-          setVisualProgress(prev => ({
-            ...prev,
-            [fileIndex]: Math.min(progressPercent * 0.3, 30) // Model download is 30% of total
-          }));
+        // Update visual progress
+        if (progressPercent === 100) {
+          setVisualProgress(prev => ({ ...prev, [fileIndex]: 90 }));
+        } else if (progressPercent >= 50) {
+          setVisualProgress(prev => ({ ...prev, [fileIndex]: 50 + (progressPercent * 0.4) }));
+        } else {
+          setVisualProgress(prev => ({ ...prev, [fileIndex]: 30 + (progressPercent * 0.4) }));
         }
       }
     };
@@ -302,47 +293,20 @@ export default function BackgroundRemovalTool() {
       setVisualProgress(prev => ({ ...prev, [fileIndex]: 5 }));
       setProcessingFiles(prev => new Set(prev).add(fileIndex));
 
-            // Dynamically import background removal to avoid SSR issues
+            // Dynamically import background removal - simple approach
+      console.log('🔄 Loading background removal module...');
+      setVisualProgress(prev => ({ ...prev, [fileIndex]: 10 }));
+      
       const { removeBackground } = await import('@imgly/background-removal');
+      console.log('✅ Module loaded successfully');
+      setVisualProgress(prev => ({ ...prev, [fileIndex]: 20 }));
       
-      // Remove background with multiple fallback strategies
-      let blob: Blob;
-      let lastError: Error;
+      // Simple background removal - let library use optimal defaults
+      console.log('🔄 Starting background removal...');
+      setVisualProgress(prev => ({ ...prev, [fileIndex]: 25 }));
       
-      // Strategy 1: Full configuration
-      try {
-        blob = await removeBackground(file, config);
-      } catch (error: any) {
-        lastError = error;
-        // Strategy 1 failed, trying simplified config
-        
-        // Strategy 2: Minimal configuration
-        try {
-          const minimalConfig = {
-            model: selectedModel,
-          };
-          blob = await removeBackground(file, minimalConfig);
-        } catch (error2: any) {
-          // Strategy 2 failed, trying default model
-          
-          // Strategy 3: Default model with minimal config
-          try {
-            const defaultConfig = {
-              model: 'isnet_fp16' as const,
-            };
-            blob = await removeBackground(file, defaultConfig);
-            
-            toast({
-              title: "Using fallback model",
-              description: `Processed with default model due to compatibility issues`,
-              variant: "default"
-            });
-          } catch (error3: any) {
-            // All strategies failed
-            throw new Error(`Background removal failed: ${lastError.message || 'Unknown error'}`);
-          }
-        }
-      }
+      let blob = await removeBackground(file, config);
+      console.log('✅ Background removal successful');
       
       // Apply post-processing to improve edge quality
       if (postProcessing || edgeRefinement) {
