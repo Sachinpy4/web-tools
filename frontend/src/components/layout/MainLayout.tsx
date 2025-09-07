@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { Header } from './Header'
 import { MobileMenu } from './MobileMenu'
@@ -22,9 +22,32 @@ export function MainLayout({ children }: MainLayoutProps) {
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen)
   const closeMenu = () => setIsMenuOpen(false)
   const toggleToolsDropdown = () => setIsToolsDropdownOpen(!isToolsDropdownOpen)
+  const closeToolsDropdown = () => setIsToolsDropdownOpen(false)
+
+  // Close tools dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element
+      if (isToolsDropdownOpen && target) {
+        // Check if click is outside the dropdown container
+        const dropdownContainer = target.closest('.tools-dropdown-container')
+        if (!dropdownContainer) {
+          closeToolsDropdown()
+        }
+      }
+    }
+
+    if (isToolsDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isToolsDropdownOpen])
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col max-w-full overflow-x-hidden">
       <Header 
         isMenuOpen={isMenuOpen}
         isToolsDropdownOpen={isToolsDropdownOpen}
@@ -43,7 +66,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         {pathname === '/' ? (
           <>{children}</>
         ) : (
-          <div className="container py-6 md:py-10">
+          <div className="container px-4 sm:px-6 lg:px-8 py-6 md:py-10">
             {children}
           </div>
         )}

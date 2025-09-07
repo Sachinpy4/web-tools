@@ -91,9 +91,12 @@ export function Header({
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1 lg:space-x-3">
-            <div className="relative group">
+            <div className="relative group tools-dropdown-container">
               <button 
-                onClick={toggleToolsDropdown}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  toggleToolsDropdown()
+                }}
                 className="flex items-center px-4 py-2.5 text-sm font-medium rounded-xl bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-950/30 dark:to-cyan-950/30 border border-teal-100 dark:border-teal-800/50 hover:from-teal-100 hover:to-cyan-100 dark:hover:from-teal-900/50 dark:hover:to-cyan-900/50 transition-all duration-300 shadow-sm hover:shadow-md tools-dropdown-btn"
               >
                 <ImageIcon className="w-4 h-4 mr-2 text-teal-600 dark:text-teal-400" />
@@ -103,7 +106,8 @@ export function Header({
               
               {/* Optimized Dropdown - Simplified animation */}
               <div 
-                className={`absolute left-0 mt-3 w-64 rounded-2xl shadow-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 overflow-hidden backdrop-blur-xl tools-dropdown ${isToolsDropdownOpen ? 'tools-dropdown-open' : 'tools-dropdown-closed'}`}
+                className={`absolute left-0 right-0 sm:left-0 sm:right-auto sm:w-64 mt-3 mx-4 sm:mx-0 sm:max-w-[calc(100vw-2rem)] rounded-2xl shadow-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 overflow-hidden backdrop-blur-xl tools-dropdown ${isToolsDropdownOpen ? 'tools-dropdown-open' : 'tools-dropdown-closed'}`}
+                onClick={(e) => e.stopPropagation()}
               >
                 <div className="p-2">
                   <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-3 py-2 mb-1">

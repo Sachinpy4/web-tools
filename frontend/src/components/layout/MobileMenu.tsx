@@ -72,7 +72,7 @@ export function MobileMenu({ isMenuOpen, closeMenu }: MobileMenuProps) {
       />
       
       {/* Mobile Menu */}
-      <div className="md:hidden fixed top-16 left-0 right-0 z-40 max-h-[calc(100vh-4rem)] overflow-hidden">
+      <div className="md:hidden fixed top-16 left-0 right-0 z-40 max-h-[calc(100vh-4rem)] max-w-[100vw] overflow-hidden">
         <div className={`h-full overflow-y-auto overflow-x-hidden transition-all duration-300 ease-out ${isAnimating ? 'transform translate-y-0 opacity-100' : 'transform -translate-y-4 opacity-0'}`}>
           <div className="px-3 pt-2 pb-3 space-y-1 bg-background/98 backdrop-blur-xl supports-[backdrop-filter]:bg-background/95 border-t shadow-xl min-w-0 max-w-full">
         {/* Image Tools Section */}
@@ -186,9 +186,11 @@ export function MobileMenu({ isMenuOpen, closeMenu }: MobileMenuProps) {
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             className="w-full justify-start px-3 py-3 mx-1 rounded-xl text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 min-w-0 max-w-full"
           >
-            <Sun className="h-4 w-4 mr-3 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 flex-shrink-0" />
-            <Moon className="absolute h-4 w-4 ml-3 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 flex-shrink-0" />
-            <span className="ml-6 truncate">Toggle Theme</span>
+            <div className="relative flex items-center mr-3">
+              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            </div>
+            <span className="truncate">Toggle Theme</span>
           </Button>
           </div>
           </div>
