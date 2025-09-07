@@ -46,8 +46,9 @@ const nextConfig = {
   },
   // Optimize webpack for more stable builds
   webpack: (config, { dev, isServer }) => {
-    if (dev && !isServer) {
-      // Improve caching behavior in development
+    // Skip aggressive chunk splitting in development to avoid module resolution issues
+    if (!dev && !isServer) {
+      // Only apply optimizations in production
       config.optimization.runtimeChunk = 'single';
       config.optimization.splitChunks = {
         chunks: 'all',
@@ -118,23 +119,27 @@ const nextConfig = {
       /node_modules\/onnxruntime-web/,
     ];
 
-    // Additional webpack optimization for ONNX runtime
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      // Provide proper aliases for ONNX runtime to prevent resolution issues
-      'onnxruntime-web$': 'onnxruntime-web/dist/ort.min.js',
-    };
+    // Minimal aliases - avoid overriding library defaults in development
+    if (!dev) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        // Only apply ONNX runtime aliases in production
+        'onnxruntime-web$': 'onnxruntime-web/dist/ort.min.js',
+      };
+    }
 
-    // Ensure AI/ML packages are client-side only
-    config.module.rules.push({
-      test: /node_modules[\\/](@imgly[\\/]background-removal|onnxruntime-web)/,
-      parser: {
-        javascript: {
-          dynamicImportMode: 'lazy',
+    // Minimal interference with AI/ML packages in development
+    if (!dev) {
+      config.module.rules.push({
+        test: /node_modules[\\/](@imgly[\\/]background-removal|onnxruntime-web)/,
+        parser: {
+          javascript: {
+            dynamicImportMode: 'lazy',
+          },
         },
-      },
-      sideEffects: false, // Enable tree shaking for these packages
-    });
+        sideEffects: false, // Enable tree shaking for these packages
+      });
+    }
 
     // Minimal production optimizations only
     if (!dev) {
@@ -174,12 +179,12 @@ const nextConfig = {
            const isDev = process.env.NODE_ENV === 'development';
            const backendUrl = process.env.NEXT_PUBLIC_API_URL || (isDev ? 'http://localhost:5000' : 'https://tools-backend.z4bapj.easypanel.host');
            const devUrls = isDev ? ' http://localhost:5000 http://localhost:3000' : '';
-           return `default-src 'self'; img-src * data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://www.google-analytics.com https://ssl.google-analytics.com https://tagmanager.google.com https://huggingface.co https://cdn.huggingface.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://tagmanager.google.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' blob: ${backendUrl}${devUrls} https://tools-backend.z4bapj.easypanel.host https://staticimgly.com https://cdn.img.ly https://huggingface.co https://cdn.huggingface.co https://www.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net; object-src 'none'; media-src 'self' blob: data:; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; worker-src 'self' blob:; child-src 'self' blob:; upgrade-insecure-requests;`;
+           return `default-src 'self'; img-src * data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://www.google-analytics.com https://ssl.google-analytics.com https://tagmanager.google.com https://huggingface.co https://cdn.huggingface.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://tagmanager.google.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' blob: ${backendUrl}${devUrls} https://tools-backend.z4bapj.easypanel.host https://staticimgly.com https://cdn.img.ly https://huggingface.co https://cdn.huggingface.co https://models.blob.core.windows.net https://cdn.jsdelivr.net https://unpkg.com https://www.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net; object-src 'none'; media-src 'self' blob: data:; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; worker-src 'self' blob:; child-src 'self' blob:; upgrade-insecure-requests;`;
          })(),
        },
       {
         key: 'Cross-Origin-Embedder-Policy',
-        value: 'unsafe-none',
+        value: 'require-corp',
       },
       {
         key: 'Cross-Origin-Opener-Policy',

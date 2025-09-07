@@ -63,14 +63,14 @@ const MODEL_OPTIONS = {
 type ModelType = keyof typeof MODEL_OPTIONS;
 
 export default function BackgroundRemovalTool() {
-  const [selectedModel, setSelectedModel] = useState<ModelType>('isnet_fp16') // Default to balanced
+  const [selectedModel, setSelectedModel] = useState<ModelType>('isnet_quint8') // Default to fastest model
   const [isProcessing, setIsProcessing] = useState(false)
   const [results, setResults] = useState<BackgroundRemovalResult[]>([])
   const [downloadProgress, setDownloadProgress] = useState<{ [key: string]: number }>({})
   const [modelLoaded, setModelLoaded] = useState(false)
   const [deviceWarnings, setDeviceWarnings] = useState<string[]>([])
-  const [edgeRefinement, setEdgeRefinement] = useState(true)
-  const [postProcessing, setPostProcessing] = useState(true)
+  const [edgeRefinement, setEdgeRefinement] = useState(false) // Disabled for speed
+  const [postProcessing, setPostProcessing] = useState(false) // Disabled for speed
   
   const { toast } = useToast()
   const { rateLimitUsage, setRateLimitUsage } = useRateLimitTracking();
@@ -262,6 +262,88 @@ export default function BackgroundRemovalTool() {
     });
   };
 
+  // Optimize image size if it's larger than expected
+  const optimizeImageSize = async (blob: Blob, originalSize: number): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+      
+      img.onload = () => {
+        // Calculate optimal dimensions to reduce file size
+        const maxWidth = 2048; // Reasonable max width
+        const maxHeight = 2048; // Reasonable max height
+        
+        let { width, height } = img;
+        
+        // Scale down if image is too large
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width *= ratio;
+          height *= ratio;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw image with optimized settings
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert to blob with optimized quality
+        canvas.toBlob((optimizedBlob) => {
+          if (optimizedBlob && optimizedBlob.size < blob.size) {
+            console.log(`✅ Optimized: ${(blob.size / 1024 / 1024).toFixed(2)}MB -> ${(optimizedBlob.size / 1024 / 1024).toFixed(2)}MB`);
+            resolve(optimizedBlob);
+          } else {
+            console.log(`ℹ️ No optimization needed`);
+            resolve(blob);
+          }
+        }, 'image/png', 0.8);
+      };
+      
+      img.src = URL.createObjectURL(blob);
+    });
+  };
+
+  // Quick resize for extremely large images only
+  const quickResize = async (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        // Quick resize to max 2048px for very large images
+        const maxDim = 2048;
+        let { width, height } = img;
+        
+        if (width > maxDim || height > maxDim) {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d')!;
+          
+          const ratio = Math.min(maxDim / width, maxDim / height);
+          width *= ratio;
+          height *= ratio;
+          
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          canvas.toBlob((resizedBlob) => {
+            if (resizedBlob) {
+              const resizedFile = new File([resizedBlob], file.name, { type: file.type });
+              resolve(resizedFile);
+            } else {
+              resolve(file);
+            }
+          }, file.type, 0.9);
+        } else {
+          resolve(file);
+        }
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const processBackgroundRemoval = async (file: File, fileIndex: number): Promise<BackgroundRemovalResult> => {
     const startTime = Date.now();
     
@@ -270,48 +352,109 @@ export default function BackgroundRemovalTool() {
       throw new Error('Background removal can only run in browser environment');
     }
     
-    // Use optimized configuration for fast performance
+    // Minimal pre-processing only for very large images (>20MB)
+    let processedFile = file;
+    if (file.size > 20 * 1024 * 1024) { // Only for extremely large files
+      console.log(`📏 Very large file detected (${(file.size / 1024 / 1024).toFixed(2)}MB), quick resize...`);
+      processedFile = await quickResize(file);
+    }
+    
+    // Optimized configuration with Cross-Origin-Isolation enabled
     const config: BackgroundRemovalConfig = {
       model: selectedModel,
+      device: 'cpu', // Use CPU for compatibility
+      proxyToWorker: false, // Keep disabled to avoid worker issues
+      output: {
+        format: 'image/png',
+        quality: 0.8,
+      },
+      debug: false, // Disable debug for performance
       progress: (key: string, current: number, total: number) => {
         const progressPercent = Math.round((current / total) * 100);
-        console.log(`📊 Progress: ${key} - ${progressPercent}%`);
-        
-        // Update visual progress
-        if (progressPercent === 100) {
-          setVisualProgress(prev => ({ ...prev, [fileIndex]: 90 }));
-        } else if (progressPercent >= 50) {
+        // Simplified progress tracking
+        if (progressPercent >= 50) {
           setVisualProgress(prev => ({ ...prev, [fileIndex]: 50 + (progressPercent * 0.4) }));
         } else {
           setVisualProgress(prev => ({ ...prev, [fileIndex]: 30 + (progressPercent * 0.4) }));
         }
       }
-    };
+    } as any; // Use 'as any' to allow additional ONNX config if needed
 
     try {
       // Start visual progress
       setVisualProgress(prev => ({ ...prev, [fileIndex]: 5 }));
       setProcessingFiles(prev => new Set(prev).add(fileIndex));
 
-            // Dynamically import background removal - simple approach
-      console.log('🔄 Loading background removal module...');
+      // Dynamically import background removal with error handling
       setVisualProgress(prev => ({ ...prev, [fileIndex]: 10 }));
       
-      const { removeBackground } = await import('@imgly/background-removal');
-      console.log('✅ Module loaded successfully');
+      let removeBackground: any;
+      try {
+        const module = await import('@imgly/background-removal');
+        removeBackground = module.removeBackground;
+        
+        if (!removeBackground || typeof removeBackground !== 'function') {
+          throw new Error('Background removal function not available');
+        }
+        
+        console.log('✅ Background removal module loaded successfully');
+      } catch (importError: any) {
+        console.error('❌ Module import failed:', importError);
+        throw new Error('Failed to load background removal module. Please refresh the page and try again.');
+      }
+      
       setVisualProgress(prev => ({ ...prev, [fileIndex]: 20 }));
       
-      // Simple background removal - let library use optimal defaults
-      console.log('🔄 Starting background removal...');
+      // Fast single-attempt background removal
       setVisualProgress(prev => ({ ...prev, [fileIndex]: 25 }));
       
-      let blob = await removeBackground(file, config);
-      console.log('✅ Background removal successful');
+      // Optimized background removal with faster timeouts
+      let blob: Blob;
+      try {
+        // Primary attempt with cross-origin isolation enabled (allows multi-threading)
+        const removePromise = removeBackground(processedFile, config);
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('Processing timeout after 25 seconds')), 25000);
+        });
+        
+        blob = await Promise.race([removePromise, timeoutPromise]);
+        console.log('✅ Primary attempt successful');
+      } catch (error: any) {
+        console.log('Primary attempt failed, trying minimal config fallback:', error.message);
+        
+        // Fallback: minimal configuration for maximum compatibility
+        try {
+          const fallbackConfig = { 
+            model: 'isnet_quint8', // Fastest model
+            device: 'cpu',
+            proxyToWorker: false,
+            debug: false
+          };
+          const fallbackPromise = removeBackground(processedFile, fallbackConfig);
+          const fallbackTimeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error('Fallback timeout after 20 seconds')), 20000);
+          });
+          
+          blob = await Promise.race([fallbackPromise, fallbackTimeoutPromise]);
+          console.log('✅ Fallback successful');
+        } catch (fallbackError: any) {
+          console.log('Fallback failed, trying no config:', fallbackError.message);
+          
+          // Final fallback: absolutely minimal configuration
+          const noConfigPromise = removeBackground(processedFile);
+          const noConfigTimeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error('Final fallback timeout after 15 seconds')), 15000);
+          });
+          
+          blob = await Promise.race([noConfigPromise, noConfigTimeoutPromise]);
+          console.log('✅ No-config fallback successful');
+        }
+      }
       
-      // Apply post-processing to improve edge quality
-      if (postProcessing || edgeRefinement) {
+      // Minimal post-processing only if result is significantly larger
+      if (blob.size > file.size * 3) { // Only if 3x larger
         setVisualProgress(prev => ({ ...prev, [fileIndex]: 85 }));
-        blob = await postProcessImage(blob);
+        blob = await optimizeImageSize(blob, file.size);
       }
       
       // Processing complete
@@ -340,13 +483,29 @@ export default function BackgroundRemovalTool() {
       });
 
       return result;
-    } catch (error) {
+    } catch (error: any) {
       setProcessingFiles(prev => {
         const newSet = new Set(prev);
         newSet.delete(fileIndex);
         return newSet;
       });
-      throw error;
+      
+      // Reset progress on error
+      setVisualProgress(prev => {
+        const newProgress = { ...prev };
+        delete newProgress[fileIndex];
+        return newProgress;
+      });
+      
+      // Handle specific WASM-related errors
+      const errorMessage = error.message || 'Unknown error';
+      if (errorMessage.includes('wasm') || errorMessage.includes('WebAssembly')) {
+        throw new Error('WebAssembly loading failed. Please try refreshing the page or use a different browser.');
+      } else if (errorMessage.includes('Cannot read properties of undefined')) {
+        throw new Error('Background removal initialization failed. Please try again or refresh the page.');
+      } else {
+        throw new Error(`Background removal failed: ${errorMessage}`);
+      }
     }
   };
 
