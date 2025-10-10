@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { getProxiedImageUrl } from '@/lib/imageProxy'
 import { BlogPostClient } from './BlogPostClient'
 import { getServerSideMetadata } from '@/lib/seoUtils'
+import { generateArticleSchema, renderJsonLd } from '@/lib/structuredData'
 
 // Server-side blog data fetching
 async function getBlogPost(id: string) {
@@ -106,8 +107,17 @@ export default async function BlogPostPage({ params }: { params: Promise<{ id: s
     notFound()
   }
 
+  // Generate JSON-LD for blog post
+  const articleSchema = generateArticleSchema(post)
+
   return (
     <>
+      {/* JSON-LD Structured Data for Article */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={renderJsonLd(articleSchema)}
+      />
+      
       {/* Client component handles all UI - server component just provides SEO */}
       <BlogPostClient post={post} />
     </>

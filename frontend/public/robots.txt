@@ -15,11 +15,11 @@ Disallow: /api/
 Disallow: /download/
 Disallow: /Web
 
-# DISALLOW: Common system directories and file types
-Disallow: /_next/
+# DISALLOW: Common system directories
+Disallow: /_next/static/chunks/
 Disallow: /_vercel/
-Disallow: /*.json$
-Disallow: /*.xml$
+
+# DISALLOW: Sensitive files only (not CSS/JS - Google needs them!)
 Disallow: /*.log$
 Disallow: /*.env$
 Disallow: /*.sql$
@@ -28,61 +28,37 @@ Disallow: /*.bak$
 Disallow: /*.config$
 Disallow: /*.ini$
 
-# DISALLOW: Static assets that don't need indexing
+# Allow CSS and JS for proper rendering
+# Allow: /*.css$
+# Allow: /*.js$
+
+# DISALLOW: Font files and source maps (not needed for indexing)
 Disallow: /*.woff$
 Disallow: /*.woff2$
 Disallow: /*.ttf$
 Disallow: /*.eot$
-Disallow: /*.ico$
-Disallow: /*.css$
-Disallow: /*.js$
 Disallow: /*.map$
 
 # DISALLOW: Search and filter parameters to avoid duplicate content
-Disallow: /*?search=*
-Disallow: /*?filter=*
-Disallow: /*?sort=*
-Disallow: /*?page=*
-Disallow: /*?category=*
-Disallow: /*?tag=*
+# (Use rel="canonical" on these pages instead)
+Disallow: /*?*search=*
+Disallow: /*?*filter=*
+Disallow: /*?*sort=*
+Disallow: /*?*category=*
+Disallow: /*?*tag=*
 
-# CRAWL DELAY: Be respectful to server resources
-Crawl-delay: 1
+# Allow pagination for proper indexing
+# Allow: /*?page=*
+
+
 
 # SITEMAP: Point to sitemap location
 Sitemap: https://toolscandy.com/sitemap.xml
 # SPECIFIC RULES FOR MAJOR SEARCH ENGINES
 
-# Google Bot - Allow faster crawling
-User-agent: Googlebot
-Crawl-delay: 0.5
 
-# Bing Bot
-User-agent: Bingbot
-Crawl-delay: 1
 
-# Block aggressive crawlers that might overload your server
-User-agent: AhrefsBot
-Disallow: /
 
-User-agent: MJ12bot
-Disallow: /
 
-User-agent: DotBot
-Disallow: /
 
-# Block AI training bots (optional - uncomment if you want to block them)
-# User-agent: GPTBot
-# Disallow: /
 
-# User-agent: ChatGPT-User
-# Disallow: /
-
-# User-agent: CCBot
-# Disallow: /
-
-# User-agent: anthropic-ai
-# Disallow: /
-
-# User-agent: Claude-Web
-# Disallow: /

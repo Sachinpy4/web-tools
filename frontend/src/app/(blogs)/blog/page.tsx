@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import { Suspense } from 'react'
 import { getServerSideMetadata } from '@/lib/seoUtils'
+import { renderJsonLd } from '@/lib/structuredData'
 import BlogContent from '@/components/pages/BlogContent'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -40,9 +41,37 @@ function BlogLoadingFallback() {
 
 // Server component with Suspense boundary
 export default function BlogPage() {
+  // CollectionPage schema for blog listing
+  const collectionPageSchema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "ToolsCandy Blog - Image Processing Tips & Tutorials",
+    "description": "Learn about image optimization, compression techniques, format conversions, and web performance tips from ToolsCandy experts.",
+    "url": "https://toolscandy.com/blog",
+    "publisher": {
+      "@type": "Organization",
+      "name": "ToolsCandy",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://toolscandy.com/logo.svg"
+      }
+    },
+    "mainEntity": {
+      "@type": "Blog",
+      "name": "ToolsCandy Blog",
+      "description": "Articles about image processing, optimization, and web performance"
+    }
+  }
+
   return (
-    <Suspense fallback={<BlogLoadingFallback />}>
-      <BlogContent />
-    </Suspense>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={renderJsonLd(collectionPageSchema)}
+      />
+      <Suspense fallback={<BlogLoadingFallback />}>
+        <BlogContent />
+      </Suspense>
+    </>
   )
 } 

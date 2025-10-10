@@ -9,6 +9,7 @@ import { HeadScripts, BodyScripts, FooterScripts } from '@/components/analytics/
 import { WebVitals } from '@/components/performance/WebVitals'
 import { AsyncCSS } from '@/components/performance/AsyncCSS'
 import Script from 'next/script'
+import { generateOrganizationSchema, generateWebSiteSchema, renderJsonLd } from '@/lib/structuredData'
 
 // Using system font stack for optimal performance
 const fontStack = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
@@ -31,6 +32,10 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  // Generate structured data for Organization and WebSite
+  const organizationSchema = generateOrganizationSchema()
+  const websiteSchema = generateWebSiteSchema()
+  
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -38,8 +43,20 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="shortcut icon" href="/favicon.svg" />
         <link rel="manifest" href="/manifest.webmanifest" />
+        
+        {/* JSON-LD Structured Data for Organization */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={renderJsonLd(organizationSchema)}
+        />
+        
+        {/* JSON-LD Structured Data for WebSite */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={renderJsonLd(websiteSchema)}
+        />
+        
         {/* Critical resource preloads for performance */}
-        <link rel="preload" href="/favicon.svg" as="image" type="image/svg+xml" />
         {/* DNS prefetch for external resources */}
         <link rel="dns-prefetch" href="https://tools-backend.z4bapj.easypanel.host" />
         {/* Inline critical CSS for faster rendering */}
