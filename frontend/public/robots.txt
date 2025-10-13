@@ -15,10 +15,6 @@ Disallow: /api/
 Disallow: /download/
 Disallow: /Web
 
-# DISALLOW: Common system directories
-Disallow: /_next/static/chunks/
-Disallow: /_vercel/
-
 # DISALLOW: Sensitive files only (not CSS/JS - Google needs them!)
 Disallow: /*.log$
 Disallow: /*.env$
