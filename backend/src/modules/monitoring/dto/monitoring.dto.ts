@@ -83,12 +83,7 @@ export class ToolUsageResponseDto {
   @ApiProperty({
     description: 'Tool usage statistics by tool type',
     type: 'object',
-    properties: {
-      compress: { $ref: '#/components/schemas/ToolUsageStatsDto' },
-      resize: { $ref: '#/components/schemas/ToolUsageStatsDto' },
-      convert: { $ref: '#/components/schemas/ToolUsageStatsDto' },
-      crop: { $ref: '#/components/schemas/ToolUsageStatsDto' },
-    },
+    additionalProperties: true,
   })
   data: {
     compress: ToolUsageStatsDto;

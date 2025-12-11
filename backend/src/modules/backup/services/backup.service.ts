@@ -177,7 +177,7 @@ export class BackupService {
 
       // Decompress if needed
       if (backup.filename.endsWith('.gz')) {
-        backupData = await this.decompressData(backupData);
+        backupData = Buffer.from(await this.decompressData(backupData));
       }
 
       // Parse backup data
@@ -495,7 +495,7 @@ export class BackupService {
       // Decompress if needed
       if (backup.filename.endsWith('.gz')) {
         this.logger.log('Decompressing backup file');
-        backupData = await this.decompressData(backupData);
+        backupData = Buffer.from(await this.decompressData(backupData));
       }
 
       // Parse backup data

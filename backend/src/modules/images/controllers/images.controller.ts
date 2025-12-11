@@ -718,7 +718,7 @@ export class ImagesController {
   }
 
   // DOWNLOAD FILE - Support both filename and full path patterns
-  @Get('download/:filename(*)')
+  @Get('download/*filename')
   @ApiOperation({ summary: 'Download processed image' })
   async downloadFile(
     @Param('filename') filename: string,
