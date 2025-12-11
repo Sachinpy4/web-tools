@@ -99,23 +99,17 @@ export class ImagesController {
         throw new BadRequestException('No image file uploaded');
       }
 
-      console.log('🔍 COMPRESS REQUEST:', {
-        filename: file.originalname,
-        size: file.size,
-        quality: dto.quality,
-        path: file.path
-      });
+      this.logger.debug(`Compress request: ${file.originalname} (${file.size} bytes, quality: ${dto.quality})`);
 
       // Validate file (same as original)
       await this.imageService.validateImageFile(file);
 
       // Quick Redis availability check without full stats (optimization)
       const isRedisAvailable = this.queueService.isRedisQuickAvailable();
-      console.log('🔍 REDIS AVAILABLE:', isRedisAvailable);
 
       // If Redis is not available, process image directly (same as original backend)
       if (!isRedisAvailable) {
-        console.log('⚡ DIRECT PROCESSING - Redis unavailable, processing image directly:', file.originalname);
+        this.logger.log(`Processing directly (Redis unavailable): ${file.originalname}`);
         
         try {
           const result = await this.imageService.compressImage(
@@ -124,16 +118,7 @@ export class ImagesController {
             file.originalname
           );
 
-          console.log('✅ DIRECT PROCESSING RESULT:', {
-            outputPath: result.outputPath,
-            originalSize: result.originalSize,
-            processedSize: result.processedSize,
-            compressionRatio: result.compressionRatio,
-            metadata: result.metadata
-          });
-
           const filename = result.outputPath.split('/').pop() || result.outputPath.split('\\').pop();
-          console.log('📁 EXTRACTED FILENAME:', filename);
 
           // Return immediate response with same structure as original backend
           const response = {
@@ -149,20 +134,15 @@ export class ImagesController {
             }
           };
           
-          console.log('📤 DIRECT PROCESSING RESPONSE:', response);
           return response as any;
         } catch (error) {
-          console.error('❌ DIRECT COMPRESSION FAILED:', {
-            filename: file.originalname,
-            error: error.message,
-            stack: error.stack
-          });
+          this.logger.error(`Direct compression failed for ${file.originalname}:`, error.message);
           throw new BadRequestException(`Image compression failed: ${error.message}`);
         }
       }
 
       // Redis is available, use queue processing
-      console.log('🚀 QUEUE PROCESSING - Redis available, using queue');
+      this.logger.log(`Queuing compression job: ${file.originalname}`);
       
       const jobData: CompressJobData = {
         filePath: file.path,
@@ -172,11 +152,8 @@ export class ImagesController {
         webhookUrl: dto.webhookUrl,
       };
 
-      console.log('📝 JOB DATA:', jobData);
-
       // Add to queue (same logic as original - Redis processing)
       const jobId = await this.queueService.addCompressJob(jobData);
-      console.log('✅ JOB CREATED:', jobId);
 
       // CRITICAL FIX: Track job creation immediately for monitoring
       try {
@@ -192,10 +169,8 @@ export class ImagesController {
           ipAddress,
           originalFilename: file.originalname
         });
-        
-        console.log('📊 JOB TRACKED in monitoring:', jobId);
       } catch (trackingError) {
-        console.warn('⚠️ Failed to track job in monitoring (non-critical):', trackingError.message);
+        this.logger.warn(`Failed to track job in monitoring: ${trackingError.message}`);
       }
 
       const queueResponse = {
@@ -207,14 +182,9 @@ export class ImagesController {
         }
       };
       
-      console.log('📤 QUEUE PROCESSING RESPONSE:', queueResponse);
       return queueResponse as any;
     } catch (error) {
-      console.error('❌ COMPRESS IMAGE FAILED:', {
-        error: error.message,
-        stack: error.stack,
-        filename: file?.originalname
-      });
+      this.logger.error(`Compress image failed for ${file?.originalname}:`, error.message);
       throw error;
     }
   }
@@ -564,20 +534,13 @@ export class ImagesController {
     @Query('type') queueType: string = 'compress',
   ): Promise<JobStatusDto> {
     try {
-      console.log('🔍 BACKEND - Getting job status:', { jobId, queueType });
-      
       const status = await this.queueService.getJobStatus(jobId, queueType);
       
-      console.log('📊 BACKEND - Job status from queue service:', status);
-      
       if (!status) {
-        console.log('❌ BACKEND - Job not found in Redis queue:', jobId);
-        
         // CRITICAL FIX: Check monitoring system for job existence
         try {
           const jobExists = await this.monitoringService.checkJobExists(jobId, queueType as any);
           if (jobExists) {
-            console.log('📋 BACKEND - Job found in monitoring system, but missing from Redis:', jobId);
             
             // Return a synthetic status for jobs that were cleaned up from Redis
             const response = {
@@ -594,15 +557,13 @@ export class ImagesController {
               estimatedWaitTime: null,
             };
             
-            console.log('📤 BACKEND - Synthetic job status response for cleaned job:', response);
             return response;
           }
         } catch (monitoringError) {
-          console.warn('⚠️ BACKEND - Could not check monitoring system:', monitoringError.message);
+          this.logger.warn(`Could not check monitoring system: ${monitoringError.message}`);
         }
         
         // Job truly not found anywhere
-        console.log('❌ BACKEND - Job not found anywhere:', jobId);
         throw new NotFoundException(`Job ${jobId} not found. This job may have been cleaned up due to age or system restart.`);
       }
 
@@ -616,10 +577,8 @@ export class ImagesController {
         estimatedWaitTime: status.estimatedWaitTime,
       };
       
-      console.log('📤 BACKEND - Job status response:', response);
       return response;
     } catch (error) {
-      console.error('❌ BACKEND - Get job status failed:', { jobId, error: error.message });
       this.logger.error(`Get job status failed for ${jobId}:`, error);
       throw error;
     }

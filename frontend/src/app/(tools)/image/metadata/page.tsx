@@ -32,7 +32,6 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ file, preview, metadata, on
             className="max-h-full max-w-full object-contain transition-transform group-hover:scale-105"
             onError={() => {
               // Fallback for formats that might fail to load
-              console.log(`Failed to load preview for ${file.name}`);
             }}
           />
         ) : (

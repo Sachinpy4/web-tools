@@ -98,21 +98,9 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     private readonly settingsCacheService: SettingsCacheService,
   ) {}
 
-  async onModuleInit() {
-    this.logger.log('🔍 DEBUG - QueueService onModuleInit called');
-    try {
-      await this.initializeQueues();
-      this.logger.log('🔍 DEBUG - QueueService initialization completed');
-      this.setupRedisStatusListener();
-      this.logger.log('🔍 DEBUG - Redis status listener setup completed');
-    } catch (error) {
-      this.logger.error('❌ Error during QueueService initialization:', error);
-      this.logger.error('🔍 DEBUG - QueueService init error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-      throw error;
+  async onModuleInit() {    try {
+      await this.initializeQueues();      this.setupRedisStatusListener();    } catch (error) {
+      this.logger.error('❌ Error during QueueService initialization:', error);      throw error;
     }
   }
 
@@ -127,19 +115,10 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Initialize queues based on Redis status (using global Redis status service)
-  private async initializeQueues(): Promise<void> {
-    this.logger.log('🔍 DEBUG - initializeQueues called');
-    this.logger.log('🔍 DEBUG - Redis available:', this.redisStatusService.isRedisAvailable);
-    
-    if (this.redisStatusService.isRedisAvailable) {
-      this.logger.log('🔍 DEBUG - Redis is available, switching to Bull queues...');
-      await this.switchToBullQueues();
-    } else {
-      this.logger.log('🔍 DEBUG - Redis is not available, switching to local queues...');
-      this.switchToLocalQueues();
-    }
-    this.logger.log('🔍 DEBUG - Queue initialization completed');
-  }
+  private async initializeQueues(): Promise<void> {    
+    if (this.redisStatusService.isRedisAvailable) {      await this.switchToBullQueues();
+    } else {      this.switchToLocalQueues();
+    }  }
 
   // Setup Redis status listener (same pattern as original)
   private setupRedisStatusListener(): void {
@@ -293,41 +272,8 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
 
   // Switch to Bull queues (using Redis status service configuration)
   private async switchToBullQueues(): Promise<void> {
-    try {
-      this.logger.log('🔍 DEBUG - switchToBullQueues called');
-      
-      this.logger.log('🔍 DEBUG - Getting Redis config...');
-      const redisConfig = this.redisStatusService.getRedisConfig();
-      this.logger.log('🔍 DEBUG - Redis config:', {
-        host: redisConfig.host,
-        port: redisConfig.port,
-        db: redisConfig.db,
-        hasPassword: !!redisConfig.password
-      });
-
-      // Create BullMQ queues with error event handlers to prevent unhandled rejections
-      this.logger.log('🔍 DEBUG - Creating BullMQ queues...');
-      
-      this.logger.log('🔍 DEBUG - Creating compress queue...');
-      this.compressQueue = new Queue<CompressJobData>('image-compression', { connection: redisConfig });
-      this.logger.log('🔍 DEBUG - Compress queue created');
-      
-      this.logger.log('🔍 DEBUG - Creating resize queue...');
-      this.resizeQueue = new Queue('image-resize', { connection: redisConfig });
-      this.logger.log('🔍 DEBUG - Resize queue created');
-      
-      this.logger.log('🔍 DEBUG - Creating convert queue...');
-      this.convertQueue = new Queue('image-convert', { connection: redisConfig });
-      this.logger.log('🔍 DEBUG - Convert queue created');
-      
-      this.logger.log('🔍 DEBUG - Creating crop queue...');
-      this.cropQueue = new Queue('image-crop', { connection: redisConfig });
-      this.logger.log('🔍 DEBUG - Crop queue created');
-      
-      this.logger.log('🔍 DEBUG - Creating batch queue...');
-      this.batchQueue = new Queue('image-batch', { connection: redisConfig });
-      this.logger.log('🔍 DEBUG - Batch queue created');
-
+    try {      const redisConfig = this.redisStatusService.getRedisConfig();
+      // Create BullMQ queues with error event handlers to prevent unhandled rejections      this.compressQueue = new Queue<CompressJobData>('image-compression', { connection: redisConfig });      this.resizeQueue = new Queue('image-resize', { connection: redisConfig });      this.convertQueue = new Queue('image-convert', { connection: redisConfig });      this.cropQueue = new Queue('image-crop', { connection: redisConfig });      this.batchQueue = new Queue('image-batch', { connection: redisConfig });
       // Add error handlers to all queues to prevent unhandled rejections
       const queues = [
         { queue: this.compressQueue, name: 'compress' },
@@ -335,10 +281,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
         { queue: this.convertQueue, name: 'convert' },
         { queue: this.cropQueue, name: 'crop' },
         { queue: this.batchQueue, name: 'batch' }
-      ];
-
-      this.logger.log('🔍 DEBUG - Setting up error handlers for queues...');
-      queues.forEach(async ({ queue, name }) => {
+      ];      queues.forEach(async ({ queue, name }) => {
         if (queue && 'on' in queue) {
           queue.on('error', (error) => {
             this.logger.warn(`⚠️ ${name} queue error (handled):`, error.message);
@@ -361,13 +304,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
 
       this.logger.log('✅ Switched to Bull queues with Redis');
     } catch (error) {
-      this.logger.error('❌ Failed to switch to Bull queues:', error);
-      this.logger.error('🔍 DEBUG - switchToBullQueues error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-      this.switchToLocalQueues();
+      this.logger.error('❌ Failed to switch to Bull queues:', error);      this.switchToLocalQueues();
     }
   }
 
@@ -685,15 +622,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Process queues (for worker setup)
-  getCompressQueue(): Queue<CompressJobData> | LocalQueue<CompressJobData> {
-    this.logger.log('🔍 DEBUG - getCompressQueue called');
-    this.logger.log('🔍 DEBUG - Compress queue details:', {
-      exists: !!this.compressQueue,
-      type: this.compressQueue ? this.compressQueue.constructor.name : 'null',
-      hasProcess: this.compressQueue ? 'process' in this.compressQueue : false,
-      isUsingRedis: this.isUsingRedisQueues()
-    });
-    return this.compressQueue;
+  getCompressQueue(): Queue<CompressJobData> | LocalQueue<CompressJobData> {    return this.compressQueue;
   }
 
   getResizeQueue(): Queue<any> | LocalQueue<any> {

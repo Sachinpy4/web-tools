@@ -291,7 +291,7 @@ export const useJobManagement = ({
         // Handle job not found (cleaned up) scenario differently
         if (isJobNotFound && isJobCleanedUp) {
           // Job was cleaned up but likely completed - treat as success
-          console.log('🔄 Job cleaned up from queue, assuming completion:', jobId);
+          // Job cleaned up from queue, assuming completion
           clearInterval(pollInterval);
           
           // Try to find any completed result for this file

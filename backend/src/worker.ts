@@ -35,43 +35,21 @@ class ImageWorker {
 
   async start() {
     this.logger.log('🚀 Starting Image Processing Worker...');
-    this.logger.log('🔍 DEBUG - Worker start method called');
 
     try {
       // Setup processors for each queue (migrated to BullMQ)
-      this.logger.log('🔍 DEBUG - Setting up compress processor...');
       await this.setupCompressProcessor();
-      this.logger.log('🔍 DEBUG - Compress processor setup completed');
-      
-      this.logger.log('🔍 DEBUG - Setting up resize processor...');
       await this.setupResizeProcessor();
-      this.logger.log('🔍 DEBUG - Resize processor setup completed');
-      
-      this.logger.log('🔍 DEBUG - Setting up convert processor...');
       await this.setupConvertProcessor();
-      this.logger.log('🔍 DEBUG - Convert processor setup completed');
-      
-      this.logger.log('🔍 DEBUG - Setting up crop processor...');
       await this.setupCropProcessor();
-      this.logger.log('🔍 DEBUG - Crop processor setup completed');
-      
-      this.logger.log('🔍 DEBUG - Setting up batch processor...');
       await this.setupBatchProcessor();
-      this.logger.log('🔍 DEBUG - Batch processor setup completed');
 
       // Setup Redis status listener
-      this.logger.log('🔍 DEBUG - Setting up Redis status listener...');
       this.setupRedisStatusListener();
-      this.logger.log('🔍 DEBUG - Redis status listener setup completed');
 
       this.logger.log('✅ All queue processors initialized');
     } catch (error) {
       this.logger.error('❌ Error during worker start:', error);
-      this.logger.error('🔍 DEBUG - Worker start error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
       throw error;
     }
   }
@@ -92,29 +70,16 @@ class ImageWorker {
   // COMPRESS PROCESSOR - Fixed BullMQ Worker pattern
   private async setupCompressProcessor() {
     try {
-      this.logger.log('🔍 DEBUG - setupCompressProcessor called');
-      
       if (this.processHandlersRegistered.compress) {
-        this.logger.log('🔍 DEBUG - Compress processor already registered, skipping');
         return;
       }
 
-      this.logger.log('🔍 DEBUG - Getting compress queue from service...');
       const compressQueue = this.queueService.getCompressQueue();
-      this.logger.log('🔍 DEBUG - Compress queue retrieved:', {
-        exists: !!compressQueue,
-        type: compressQueue ? compressQueue.constructor.name : 'null',
-        hasProcess: compressQueue ? 'process' in compressQueue : false
-      });
-      
       this.processHandlersRegistered.compress = true;
       this.logger.log('✅ Registering compress processor');
       
       // For BullMQ queues, create Worker
       if (compressQueue.constructor.name === 'Queue') {
-        this.logger.log('🔍 DEBUG - Queue is BullMQ type, creating worker...');
-        
-        this.logger.log('🔍 DEBUG - Getting Redis config...');
         const redisConfig = this.redisStatusService.getRedisConfig();
         this.logger.log(`🔍 Creating BullMQ compress worker with Redis config:`, { 
           host: redisConfig.host, 
@@ -123,7 +88,6 @@ class ImageWorker {
         });
         
         try {
-          this.logger.log('🔍 DEBUG - Creating Worker instance...');
           const concurrency = await this.getWorkerConcurrency();
           this.compressWorker = new Worker('image-compression', async (job) => {
             const { filePath, quality, originalFilename, originalSize, webhookUrl } = job.data;
@@ -178,8 +142,6 @@ class ImageWorker {
             concurrency: concurrency
           });
           
-          this.logger.log('🔍 DEBUG - Worker instance created, setting up event listeners...');
-          
           // Add event listeners for debugging
           this.compressWorker.on('ready', () => {
             this.logger.log('✅ BullMQ compress worker is ready and connected');
@@ -200,16 +162,10 @@ class ImageWorker {
           this.logger.log('✅ BullMQ compress worker created successfully');
         } catch (workerError) {
           this.logger.error('❌ Failed to create BullMQ compress worker:', workerError);
-          this.logger.error('🔍 DEBUG - Worker creation error details:', {
-            message: workerError.message,
-            stack: workerError.stack,
-            name: workerError.name
-          });
           throw workerError;
         }
       } else {
         // For LocalQueue, use original .process() method
-        this.logger.log('🔍 DEBUG - Queue is LocalQueue type, setting up local processor...');
         if ('process' in compressQueue) {
           compressQueue.process(async (jobOrData: any) => {
             // Handle LocalQueue data (direct data)
@@ -263,38 +219,23 @@ class ImageWorker {
       }
     } catch (error) {
       this.logger.error('❌ Error in setupCompressProcessor:', error);
-      this.logger.error('🔍 DEBUG - setupCompressProcessor error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
       throw error;
     }
   }
 
   private async setupResizeProcessor() {
     try {
-      this.logger.log('🔍 DEBUG - setupResizeProcessor called');
       
       if (this.processHandlersRegistered.resize) {
-        this.logger.log('🔍 DEBUG - Resize processor already registered, skipping');
         return;
       }
-
-      this.logger.log('🔍 DEBUG - Getting resize queue from service...');
       const resizeQueue = this.queueService.getResizeQueue();
-      this.logger.log('🔍 DEBUG - Resize queue retrieved:', {
-        exists: !!resizeQueue,
-        type: resizeQueue ? resizeQueue.constructor.name : 'null',
-        hasProcess: resizeQueue ? 'process' in resizeQueue : false
-      });
       
       this.processHandlersRegistered.resize = true;
       this.logger.log('✅ Registering resize processor');
       
       // For BullMQ queues, create Worker
       if (resizeQueue.constructor.name === 'Queue') {
-        this.logger.log('🔍 DEBUG - Queue is BullMQ type, creating resize worker...');
         
         const redisConfig = this.redisStatusService.getRedisConfig();
         this.logger.log(`🔍 Creating BullMQ resize worker with Redis config:`, { 
@@ -377,7 +318,6 @@ class ImageWorker {
         }
       } else {
         // For LocalQueue, use original .process() method
-        this.logger.log('🔍 DEBUG - Queue is LocalQueue type, setting up local resize processor...');
         if ('process' in resizeQueue) {
           resizeQueue.process(async (jobOrData: any) => {
             const jobData = jobOrData.data || jobOrData;
@@ -431,27 +371,17 @@ class ImageWorker {
 
   private async setupConvertProcessor() {
     try {
-      this.logger.log('🔍 DEBUG - setupConvertProcessor called');
       
       if (this.processHandlersRegistered.convert) {
-        this.logger.log('🔍 DEBUG - Convert processor already registered, skipping');
         return;
       }
-
-      this.logger.log('🔍 DEBUG - Getting convert queue from service...');
       const convertQueue = this.queueService.getConvertQueue();
-      this.logger.log('🔍 DEBUG - Convert queue retrieved:', {
-        exists: !!convertQueue,
-        type: convertQueue ? convertQueue.constructor.name : 'null',
-        hasProcess: convertQueue ? 'process' in convertQueue : false
-      });
       
       this.processHandlersRegistered.convert = true;
       this.logger.log('✅ Registering convert processor');
       
       // For BullMQ queues, create Worker
       if (convertQueue.constructor.name === 'Queue') {
-        this.logger.log('🔍 DEBUG - Queue is BullMQ type, creating convert worker...');
         
         const redisConfig = this.redisStatusService.getRedisConfig();
         this.logger.log(`🔍 Creating BullMQ convert worker with Redis config:`, { 
@@ -536,7 +466,6 @@ class ImageWorker {
         }
       } else {
         // For LocalQueue, use original .process() method
-        this.logger.log('🔍 DEBUG - Queue is LocalQueue type, setting up local convert processor...');
         if ('process' in convertQueue) {
           convertQueue.process(async (jobOrData: any) => {
             const jobData = jobOrData.data || jobOrData;
@@ -592,27 +521,17 @@ class ImageWorker {
 
   private async setupCropProcessor() {
     try {
-      this.logger.log('🔍 DEBUG - setupCropProcessor called');
       
       if (this.processHandlersRegistered.crop) {
-        this.logger.log('🔍 DEBUG - Crop processor already registered, skipping');
         return;
       }
-
-      this.logger.log('🔍 DEBUG - Getting crop queue from service...');
       const cropQueue = this.queueService.getCropQueue();
-      this.logger.log('🔍 DEBUG - Crop queue retrieved:', {
-        exists: !!cropQueue,
-        type: cropQueue ? cropQueue.constructor.name : 'null',
-        hasProcess: cropQueue ? 'process' in cropQueue : false
-      });
       
       this.processHandlersRegistered.crop = true;
       this.logger.log('✅ Registering crop processor');
       
       // For BullMQ queues, create Worker
       if (cropQueue.constructor.name === 'Queue') {
-        this.logger.log('🔍 DEBUG - Queue is BullMQ type, creating crop worker...');
         
         const redisConfig = this.redisStatusService.getRedisConfig();
         this.logger.log(`🔍 Creating BullMQ crop worker with Redis config:`, { 
@@ -695,7 +614,6 @@ class ImageWorker {
         }
       } else {
         // For LocalQueue, use original .process() method
-        this.logger.log('🔍 DEBUG - Queue is LocalQueue type, setting up local crop processor...');
         if ('process' in cropQueue) {
           cropQueue.process(async (jobOrData: any) => {
             const jobData = jobOrData.data || jobOrData;
@@ -749,27 +667,17 @@ class ImageWorker {
 
   private async setupBatchProcessor() {
     try {
-      this.logger.log('🔍 DEBUG - setupBatchProcessor called');
       
       if (this.processHandlersRegistered.batch) {
-        this.logger.log('🔍 DEBUG - Batch processor already registered, skipping');
         return;
       }
-
-      this.logger.log('🔍 DEBUG - Getting batch queue from service...');
       const batchQueue = this.queueService.getBatchQueue();
-      this.logger.log('🔍 DEBUG - Batch queue retrieved:', {
-        exists: !!batchQueue,
-        type: batchQueue ? batchQueue.constructor.name : 'null',
-        hasProcess: batchQueue ? 'process' in batchQueue : false
-      });
       
       this.processHandlersRegistered.batch = true;
       this.logger.log('✅ Registering batch processor');
       
       // For BullMQ queues, create Worker
       if (batchQueue.constructor.name === 'Queue') {
-        this.logger.log('🔍 DEBUG - Queue is BullMQ type, creating batch worker...');
         
         const redisConfig = this.redisStatusService.getRedisConfig();
         this.logger.log(`🔍 Creating BullMQ batch worker with Redis config:`, { 
@@ -855,7 +763,6 @@ class ImageWorker {
         }
       } else {
         // For LocalQueue, use original .process() method
-        this.logger.log('🔍 DEBUG - Queue is LocalQueue type, setting up local batch processor...');
         if ('process' in batchQueue) {
           batchQueue.process(async (jobOrData: any) => {
             const jobData = jobOrData.data || jobOrData;
@@ -1000,43 +907,19 @@ class ImageWorker {
 }
 
 export async function startImageWorkers(app: any) {
-  console.log('🔍 DEBUG - startImageWorkers called');
-  console.log('🔍 DEBUG - App instance:', app ? 'Available' : 'Not available');
 
   try {
-    console.log('🔍 DEBUG - Getting QueueService from DI...');
     const queueService = app.get(QueueService);
-    console.log('🔍 DEBUG - QueueService:', queueService ? 'Available' : 'Not available');
-
-    console.log('🔍 DEBUG - Getting ImageService from DI...');
     const imageService = app.get(ImageService);
-    console.log('🔍 DEBUG - ImageService:', imageService ? 'Available' : 'Not available');
-
-    console.log('🔍 DEBUG - Getting RedisStatusService from DI...');
     const redisStatusService = app.get(RedisStatusService);
-    console.log('🔍 DEBUG - RedisStatusService:', redisStatusService ? 'Available' : 'Not available');
-
-    console.log('🔍 DEBUG - Getting SettingsCacheService from DI...');
     const settingsCacheService = app.get(SettingsCacheService);
-    console.log('🔍 DEBUG - SettingsCacheService:', settingsCacheService ? 'Available' : 'Not available');
-
-    console.log('🔍 DEBUG - Creating ImageWorker instance...');
     const worker = new ImageWorker(queueService, imageService, redisStatusService, settingsCacheService);
-    console.log('🔍 DEBUG - ImageWorker created successfully');
-
-    console.log('🔍 DEBUG - Starting worker...');
     await worker.start();
-    console.log('🔍 DEBUG - Worker started successfully');
 
     console.log('🚀 Image workers started automatically with main server');
     return 'Worker instance created';
   } catch (error) {
     console.error('❌ Failed to start image workers:', error);
-    console.error('🔍 DEBUG - startImageWorkers error details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    });
     throw error;
   }
 }

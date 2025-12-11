@@ -315,8 +315,6 @@ export default function CropTool() {
     formData.append('width', width.toString());
     formData.append('height', height.toString());
     
-    console.log(`Crop attempt ${retryCount + 1}:`, cropParams);
-    
     try {
       // Use makeApiRequestWithRateLimitTracking instead of makeRequest
       const result = await makeApiRequestWithRateLimitTracking<CropResponse>('images/crop', {
@@ -465,15 +463,6 @@ export default function CropTool() {
       if (scaledCrop.y + scaledCrop.height > imageHeight) {
         scaledCrop.height = imageHeight - scaledCrop.y;
       }
-      
-      console.log('Image element size:', imageElement.width, 'x', imageElement.height);
-      console.log('Original dimensions:', imageWidth, 'x', imageHeight);
-      console.log('Actual displayed size:', actualDisplayedWidth, 'x', actualDisplayedHeight);
-      console.log('Offsets:', { offsetX, offsetY });
-      console.log('Scale factors:', { scaleX, scaleY });
-      console.log('Original crop:', completedCrop);
-      console.log('Pixel crop:', pixelCrop);
-      console.log('Scaled crop:', scaledCrop);
       
       // Process the crop with retry mechanism
       try {

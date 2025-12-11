@@ -212,13 +212,10 @@ async function bootstrap() {
 
   // Start image workers automatically (same as original backend)
   try {
-    logger.log('🔍 DEBUG - About to start image workers...');
     const workerResult = await startImageWorkers(app);
     logger.log('✅ Image workers started successfully');
-    logger.log('🔍 DEBUG - Worker result:', workerResult ? 'Worker instance created' : 'No worker instance');
   } catch (error) {
     logger.error('❌ Failed to start image workers:', error);
-    logger.error('🔍 DEBUG - Worker startup error stack:', error.stack);
     // Don't exit - server can run without workers for direct processing
   }
 }
