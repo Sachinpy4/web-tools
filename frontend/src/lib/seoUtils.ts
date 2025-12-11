@@ -44,19 +44,8 @@ function getValidOgType(ogType: string): OpenGraphType {
 
 // New function for server-side metadata generation
 export async function getServerSideMetadata(pagePath: string): Promise<Metadata> {
-  // Get API URL with improved environment variable handling
+  // Get API URL from environment variable
   let apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  
-  // Attempt to get from server runtime config if available
-  try {
-    const getConfig = require('next/config').default;
-    const { serverRuntimeConfig } = getConfig();
-    if (serverRuntimeConfig && serverRuntimeConfig.apiUrl) {
-      apiUrl = serverRuntimeConfig.apiUrl;
-    }
-  } catch (e) {
-    // If next/config is not available, continue with process.env
-  }
   
   if (!apiUrl) {
     return generateMetadataFromFallback(pagePath);

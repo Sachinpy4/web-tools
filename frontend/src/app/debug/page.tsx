@@ -46,18 +46,9 @@ export default async function DebugPage() {
     }
   };
 
-  // Get config if available
-  let serverRuntimeConfig = null;
-  let publicRuntimeConfig = null;
-  
-  try {
-    const getConfig = require('next/config').default;
-    const config = getConfig();
-    serverRuntimeConfig = config.serverRuntimeConfig || {};
-    publicRuntimeConfig = config.publicRuntimeConfig || {};
-  } catch (e) {
-    // Config not available
-  }
+  // Runtime config removed (deprecated in Next.js 15+)
+  const serverRuntimeConfig = null;
+  const publicRuntimeConfig = null;
   
   // Capture environment information
   const envInfo = {
