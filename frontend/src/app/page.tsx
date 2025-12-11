@@ -80,22 +80,6 @@ export default function Home() {
             "priceCurrency": "USD"
           }
         }
-      },
-      {
-        "@type": "ListItem",
-        "position": 5,
-        "item": {
-          "@type": "SoftwareApplication",
-          "name": "Background Remover",
-          "url": "https://toolscandy.com/image/background-removal",
-          "description": "Remove image backgrounds automatically",
-          "applicationCategory": "MultimediaApplication",
-          "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "USD"
-          }
-        }
       }
     ]
   }

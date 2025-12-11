@@ -147,15 +147,6 @@ export function Footer() {
                   Metadata Analysis
                 </Link>
               </li>
-              <li>
-                <Link 
-                  href="/image/background-removal" 
-                  className="text-gray-600 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400 text-sm transition-colors duration-200 flex items-center group"
-                >
-                  <Scissors className="w-4 h-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                  Background Removal
-                </Link>
-              </li>
             </ul>
           </div>
 
