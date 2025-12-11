@@ -180,7 +180,7 @@ export function AdminSidebar({ onToggle, isMobile = false, isOpen = true }: Admi
                   "p-1.5 rounded-md flex-shrink-0",
                   pathname === item.href ? item.color : "bg-background"
                 )}>
-                  {React.cloneElement(item.icon as React.ReactElement, {
+                  {React.cloneElement(item.icon as React.ReactElement<any>, {
                     className: cn(
                       "h-4 w-4 sm:h-5 sm:w-5",
                       pathname === item.href 
