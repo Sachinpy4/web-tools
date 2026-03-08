@@ -11,7 +11,7 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
-RUN mkdir -p backups uploads logs && chown -R appuser:appgroup backups uploads logs
+RUN mkdir -p backups uploads/processed uploads/archives logs && chown -R appuser:appgroup backups uploads logs
 ENV NODE_ENV=production
 USER appuser
 EXPOSE 5000

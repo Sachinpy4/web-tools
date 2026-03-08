@@ -191,7 +191,6 @@ class ImageWorker {
           await this.imageService.cleanup(filePath);
           return response;
         } catch (error) {
-          await this.imageService.cleanup(filePath);
           throw error;
         }
       },
@@ -224,7 +223,6 @@ class ImageWorker {
           await this.imageService.cleanup(filePath);
           return response;
         } catch (error) {
-          await this.imageService.cleanup(filePath);
           throw error;
         }
       },
@@ -259,7 +257,6 @@ class ImageWorker {
           await this.imageService.cleanup(filePath);
           return response;
         } catch (error) {
-          await this.imageService.cleanup(filePath);
           throw error;
         }
       },
@@ -292,7 +289,6 @@ class ImageWorker {
           await this.imageService.cleanup(filePath);
           return response;
         } catch (error) {
-          await this.imageService.cleanup(filePath);
           throw error;
         }
       },
@@ -327,9 +323,6 @@ class ImageWorker {
           }
           return response;
         } catch (error) {
-          for (const fp of filePaths) {
-            await this.imageService.cleanup(fp);
-          }
           throw error;
         }
       },
