@@ -36,8 +36,7 @@ export class BackupService {
         this.logger.log(`Created backup directory: ${this.backupDir}`);
       }
     } catch (error) {
-      this.logger.error('Error creating backup directory:', error);
-      throw new Error('Failed to create backup directory', { cause: error });
+      this.logger.warn(`Backup directory not available: ${error.message}. Backups will fail until the directory is writable.`);
     }
   }
 

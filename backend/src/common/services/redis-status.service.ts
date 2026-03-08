@@ -23,7 +23,9 @@ export class RedisStatusService extends EventEmitter implements OnModuleInit, On
   
   // Health check interval
   private healthCheckInterval: NodeJS.Timeout;
-  private readonly REDIS_CHECK_INTERVAL = 3000; // Check every 3 seconds (optimized for faster detection)
+  private readonly REDIS_CHECK_INTERVAL_FAST = 5000;
+  private readonly REDIS_CHECK_INTERVAL_STABLE = 30000;
+  private currentCheckInterval = 5000;
 
   constructor(private readonly configService: ConfigService) {
     super();
@@ -69,7 +71,7 @@ export class RedisStatusService extends EventEmitter implements OnModuleInit, On
         const redisUsername = this.configService.get<string>('redis.username');
         const redisDb = this.configService.get<number>('redis.db') || 0;
         
-        this.logDebug(`Attempting to connect to Redis at ${redisHost}:${redisPort}`);
+        
         
         // Create connection URL with authentication if provided
         const redisUrl = redisPassword
@@ -98,7 +100,6 @@ export class RedisStatusService extends EventEmitter implements OnModuleInit, On
           }
           
           if (success) {
-            this.logger.log('Redis connection test succeeded');
             this.redisConnectionErrorLogged = false;
             this.handleSuccess();
           } else {
@@ -152,11 +153,9 @@ export class RedisStatusService extends EventEmitter implements OnModuleInit, On
     this.consecutiveSuccesses++;
     this.consecutiveFailures = 0;
     
-    this.logDebug(`Success counter: ${this.consecutiveSuccesses}/${this.STABILITY_THRESHOLD}, Failure counter: ${this.consecutiveFailures}/${this.STABILITY_THRESHOLD}`);
-    
-    // Only update status after multiple consecutive successes
     if (this.consecutiveSuccesses >= this.STABILITY_THRESHOLD && !this._isRedisAvailable) {
       this.updateRedisStatus(true);
+      this.adjustCheckInterval(this.REDIS_CHECK_INTERVAL_STABLE);
     }
   }
 
@@ -165,11 +164,9 @@ export class RedisStatusService extends EventEmitter implements OnModuleInit, On
     this.consecutiveFailures++;
     this.consecutiveSuccesses = 0;
     
-    this.logDebug(`Success counter: ${this.consecutiveSuccesses}/${this.STABILITY_THRESHOLD}, Failure counter: ${this.consecutiveFailures}/${this.STABILITY_THRESHOLD}`);
-    
-    // Only update status after multiple consecutive failures
     if (this.consecutiveFailures >= this.STABILITY_THRESHOLD && this._isRedisAvailable) {
       this.updateRedisStatus(false);
+      this.adjustCheckInterval(this.REDIS_CHECK_INTERVAL_FAST);
     }
   }
 
@@ -187,15 +184,34 @@ export class RedisStatusService extends EventEmitter implements OnModuleInit, On
 
   // Start periodic Redis connectivity checks (same as original)
   private startPeriodicHealthChecks(): void {
+    this.currentCheckInterval = this._isRedisAvailable
+      ? this.REDIS_CHECK_INTERVAL_STABLE
+      : this.REDIS_CHECK_INTERVAL_FAST;
+
     this.healthCheckInterval = setInterval(async () => {
       try {
         await this.testRedisConnection();
       } catch {
         this.handleFailure();
       }
-    }, this.REDIS_CHECK_INTERVAL);
+    }, this.currentCheckInterval);
     
-    this.logger.log(`🔍 Started Redis health checks every ${this.REDIS_CHECK_INTERVAL / 1000} seconds`);
+    this.logger.log(`Started Redis health checks every ${this.currentCheckInterval / 1000}s`);
+  }
+
+  private adjustCheckInterval(newInterval: number): void {
+    if (this.currentCheckInterval === newInterval) return;
+    this.currentCheckInterval = newInterval;
+    if (this.healthCheckInterval) {
+      clearInterval(this.healthCheckInterval);
+    }
+    this.healthCheckInterval = setInterval(async () => {
+      try {
+        await this.testRedisConnection();
+      } catch {
+        this.handleFailure();
+      }
+    }, this.currentCheckInterval);
   }
 
   // Get Redis configuration for Bull queues (same as original)
