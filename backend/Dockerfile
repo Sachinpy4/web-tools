@@ -15,5 +15,5 @@ RUN mkdir -p backups uploads logs && chown -R appuser:appgroup backups uploads l
 ENV NODE_ENV=production
 USER appuser
 EXPOSE 5000
-HEALTHCHECK --interval=30s --timeout=5s CMD wget -q --spider http://localhost:5000/api || exit 1
+HEALTHCHECK --interval=30s --timeout=5s CMD wget -q --spider http://localhost:5000/api/health || exit 1
 CMD ["npm", "run", "start:prod"]

@@ -54,11 +54,6 @@ export class RedisStatusService extends EventEmitter implements OnModuleInit, On
     return this._isRedisAvailable;
   }
 
-  // Add debug logging
-  private logDebug(message: string): void {
-    this.logger.debug(`[Redis Debug] ${message}`);
-  }
-
   // Function to test Redis connection (fixed to prevent double event handling)
   async testRedisConnection(): Promise<boolean> {
     return new Promise((resolve) => {

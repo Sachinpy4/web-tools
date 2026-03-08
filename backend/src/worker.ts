@@ -378,6 +378,12 @@ class ImageWorker {
 
 const moduleLogger = new Logger('ImageWorker');
 
+let activeWorker: ImageWorker | null = null;
+
+export function getImageWorker(): ImageWorker | null {
+  return activeWorker;
+}
+
 export async function startImageWorkers(app: INestApplication): Promise<ImageWorker> {
   try {
     const queueService = app.get(QueueService);
@@ -387,8 +393,7 @@ export async function startImageWorkers(app: INestApplication): Promise<ImageWor
     const worker = new ImageWorker(queueService, imageService, redisStatusService, settingsCacheService);
     await worker.start();
 
-    // Store worker instance on app for proper cleanup on shutdown
-    (app as INestApplication & { __imageWorker?: ImageWorker }).__imageWorker = worker;
+    activeWorker = worker;
 
     moduleLogger.log('Image workers started automatically with main server');
     return worker;
