@@ -59,12 +59,17 @@ export class ImageService {
 
   private ensureDirectoriesExist(): void {
     const dirs = [this.uploadDir, this.processedDir, this.archiveDir];
-    dirs.forEach(dir => {
+    for (const dir of dirs) {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
         this.logger.log(`Created directory: ${dir}`);
       }
-    });
+      try {
+        fs.accessSync(dir, fs.constants.W_OK);
+      } catch {
+        this.logger.error(`Directory "${dir}" exists but is NOT writable. Image processing will fail. Fix permissions: chown -R appuser:appgroup ${dir}`);
+      }
+    }
   }
 
   // COMPRESS IMAGE - Exact same logic as original but with performance optimizations
