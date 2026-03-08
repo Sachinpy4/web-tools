@@ -6,7 +6,6 @@ import { Comment, CommentSchema } from './schemas/comment.schema';
 import { Blog, BlogSchema } from '../blog/schemas/blog.schema';
 import { AuthModule } from '../auth/auth.module';
 import { BlogCacheService } from '../blog/services/blog-cache.service';
-import { RedisStatusService } from '../../common/services/redis-status.service';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
@@ -22,7 +21,6 @@ import { ConfigModule } from '@nestjs/config';
   providers: [
     CommentService,
     BlogCacheService,
-    RedisStatusService,
     {
       provide: 'CommentService',
       useExisting: CommentService,

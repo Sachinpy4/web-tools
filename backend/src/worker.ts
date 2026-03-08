@@ -8,6 +8,7 @@ import { SettingsCacheService } from './common/services/settings-cache.service';
 import { Worker, Job, Queue } from 'bullmq';
 import axios from 'axios';
 import path from 'path';
+import os from 'os';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -371,13 +372,19 @@ class ImageWorker {
 
     try {
       const settings = await this.settingsCacheService.getSettings();
-      this.cachedWorkerConcurrency = settings.workerConcurrency || 25;
+      const requested = settings.workerConcurrency || 25;
+      const cpuCores = os.cpus().length || 2;
+      const maxSafe = Math.max(2, cpuCores * 2);
+      this.cachedWorkerConcurrency = Math.min(requested, maxSafe);
       this.concurrencyCacheExpiry = now + this.CONCURRENCY_CACHE_TTL;
-      this.logger.log(`Using worker concurrency: ${this.cachedWorkerConcurrency}`);
+      if (requested > maxSafe) {
+        this.logger.warn(`Worker concurrency ${requested} exceeds safe limit for ${cpuCores} cores, capped to ${maxSafe}`);
+      }
+      this.logger.log(`Using worker concurrency: ${this.cachedWorkerConcurrency} (${cpuCores} cores available)`);
       return this.cachedWorkerConcurrency;
     } catch (error) {
       this.logger.warn('Failed to get worker concurrency from settings, using default:', error);
-      this.cachedWorkerConcurrency = 25;
+      this.cachedWorkerConcurrency = 4;
       this.concurrencyCacheExpiry = now + this.CONCURRENCY_CACHE_TTL;
       return this.cachedWorkerConcurrency;
     }

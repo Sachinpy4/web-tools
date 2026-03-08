@@ -154,7 +154,7 @@ export class LoadBalancerService {
       recommendations.push('High memory usage - consider scaling');
     }
 
-    const avgCpuUsage = this.serverHealth.cpuUsage.reduce((sum, usage) => sum + usage, 0) / this.serverHealth.cpuUsage.length;
+    const avgCpuUsage = this.getNormalizedCpuUsage();
     if (avgCpuUsage > 0.9) {
       status = 'unhealthy';
       recommendations.push('Critical CPU usage - immediate scaling required');
@@ -178,7 +178,7 @@ export class LoadBalancerService {
       },
       serverHealth: {
         ...this.serverHealth,
-        cpuUsageFormatted: this.serverHealth.cpuUsage.map(usage => `${(usage * 100).toFixed(1)}%`).join(', '),
+        cpuUsageFormatted: `${(this.getNormalizedCpuUsage() * 100).toFixed(1)}%`,
         memoryUsageFormatted: `${this.serverHealth.memoryUsage.toFixed(1)}%`,
         healthStatus: this.serverHealth.isHealthy ? 'healthy' : 'unhealthy',
       },
@@ -190,7 +190,7 @@ export class LoadBalancerService {
    * Check if system is under high load
    */
   isSystemUnderHighLoad(): boolean {
-    const avgCpuUsage = this.serverHealth.cpuUsage.reduce((sum, usage) => sum + usage, 0) / this.serverHealth.cpuUsage.length;
+    const avgCpuUsage = this.getNormalizedCpuUsage();
     
     return (
       avgCpuUsage > 0.8 || // CPU usage > 80%
@@ -229,7 +229,7 @@ export class LoadBalancerService {
     }
 
     // Determine system load
-    const avgCpuUsage = this.serverHealth.cpuUsage.reduce((sum, usage) => sum + usage, 0) / this.serverHealth.cpuUsage.length;
+    const avgCpuUsage = this.getNormalizedCpuUsage();
     
     if (avgCpuUsage > 0.9 || this.serverHealth.memoryUsage > 90) {
       systemLoad = 'critical';
@@ -279,15 +279,23 @@ export class LoadBalancerService {
     this.serverHealth.memoryUsage = this.getMemoryUsagePercentage();
     this.serverHealth.lastHealthCheck = Date.now();
 
-    // Determine if server is healthy
-    const avgCpuUsage = this.serverHealth.cpuUsage.reduce((sum, usage) => sum + usage, 0) / this.serverHealth.cpuUsage.length;
+    const normalizedCpuUsage = this.getNormalizedCpuUsage();
     this.serverHealth.isHealthy = (
-      avgCpuUsage < 0.9 &&
+      normalizedCpuUsage < 0.9 &&
       this.serverHealth.memoryUsage < 90 &&
       this.metrics.errorRate < 10
     );
 
-    this.logger.debug(`Server health updated: CPU=${avgCpuUsage.toFixed(2)}, Memory=${this.serverHealth.memoryUsage.toFixed(1)}%, Healthy=${this.serverHealth.isHealthy}`);
+    this.logger.debug(`Server health updated: CPU=${(normalizedCpuUsage * 100).toFixed(1)}%, Memory=${this.serverHealth.memoryUsage.toFixed(1)}%, Healthy=${this.serverHealth.isHealthy}`);
+  }
+
+  /**
+   * Get normalized CPU usage (0.0–1.0) by dividing load average by core count
+   */
+  private getNormalizedCpuUsage(): number {
+    const cpuCount = os.cpus().length || 1;
+    const avgLoad = this.serverHealth.cpuUsage.reduce((sum, usage) => sum + usage, 0) / this.serverHealth.cpuUsage.length;
+    return avgLoad / cpuCount;
   }
 
   /**
