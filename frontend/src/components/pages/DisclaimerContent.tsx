@@ -36,22 +36,22 @@ export default function DisclaimerContent() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-red-500/5 to-purple-500/5"></div>
-        <div className="container mx-auto px-4 relative">
+      <section className="relative py-12 sm:py-16 md:py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-linear-to-br from-orange-500/5 via-red-500/5 to-purple-500/5"></div>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             className="max-w-4xl mx-auto text-center"
           >
-            <div className="inline-block mb-6 px-6 py-2 rounded-full bg-gradient-to-r from-orange-500/10 to-red-500/10 text-orange-600 dark:text-orange-400 font-medium text-sm">
+            <div className="inline-block mb-6 px-6 py-2 rounded-full bg-linear-to-r from-orange-500/10 to-red-500/10 text-orange-600 dark:text-orange-400 font-medium text-sm">
               Disclaimer
             </div>
             
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
               Important 
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-red-600"> Information</span>
+              <span className="bg-clip-text text-transparent bg-linear-to-r from-orange-600 to-red-600"> Information</span>
             </h1>
             
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
@@ -70,7 +70,7 @@ export default function DisclaimerContent() {
 
       {/* Important Notice */}
       <section className="py-16">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
             <Alert className="mb-12 border-orange-200 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-900/20">
               <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
@@ -87,7 +87,7 @@ export default function DisclaimerContent() {
                 transition={{ delay: 0.1 }}
               >
                 <Card className="text-center h-full border-2 border-red-100 dark:border-red-900/30">
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 sm:p-6">
                     <div className="bg-red-500/10 text-red-600 dark:text-red-400 p-4 rounded-xl mb-4 inline-block">
                       <AlertTriangle className="h-8 w-8" />
                     </div>
@@ -108,7 +108,7 @@ export default function DisclaimerContent() {
 
       {/* Detailed Disclaimer */}
       <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}

@@ -193,7 +193,7 @@ function BlogAnalyticsPage() {
       </div>
       
       {/* Analytics Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {/* Views */}
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
@@ -353,7 +353,7 @@ function BlogAnalyticsPage() {
       <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
         <CardContent className="pt-4">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
+            <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5 shrink-0" />
             <div className="space-y-2">
               <h4 className="font-medium text-orange-800 dark:text-orange-200">Analytics Data Information</h4>
               <div className="text-sm text-orange-700 dark:text-orange-300 space-y-1">
@@ -387,8 +387,8 @@ function BlogAnalyticsPage() {
           ) : (
             <div className="space-y-4">
               {/* Chart Summary */}
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                   <span className="text-muted-foreground">
                     Total Days: {analytics.dailyViewsArray.length}
                   </span>
@@ -402,8 +402,8 @@ function BlogAnalyticsPage() {
               </div>
               
               {/* Enhanced Chart */}
-              <div className="h-64 relative">
-                <div className="flex h-full items-end gap-1">
+              <div className="h-64 relative overflow-x-auto">
+                <div className="flex h-full items-end gap-1 min-w-0">
                   {analytics.dailyViewsArray.map((day, index) => {
                     // Get max value for scaling
                     const maxViews = Math.max(...analytics.dailyViewsArray.map(d => d.views))

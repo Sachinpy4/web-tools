@@ -125,12 +125,12 @@ export function useProgressDisplay(toolName?: string) {
     return (
       <div className="mt-3 pt-3 border-t">
         <div className={`font-medium ${toolTheme.progressText} mb-2 flex items-center gap-2`}>
-          <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${toolTheme.progressGradient} animate-pulse`}></div>
+          <div className={`w-2 h-2 rounded-full bg-linear-to-r ${toolTheme.progressGradient} animate-pulse`}></div>
           Processing Image...
         </div>
         <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-2 shadow-inner">
           <div
-            className={`h-full bg-gradient-to-r ${toolTheme.progressGradient} transition-all duration-500 ease-out relative`}
+            className={`h-full bg-linear-to-r ${toolTheme.progressGradient} transition-all duration-500 ease-out relative`}
             style={{ width: `${progress}%` }}
           >
             <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
@@ -180,7 +180,7 @@ export function useProgressDisplay(toolName?: string) {
       <div className={`space-y-3 p-4 rounded-lg ${toolTheme.progressBackground} border border-${toolTheme.accent}/20`}>
         <div className="flex justify-between items-center text-sm">
           <span className={`${toolTheme.progressText} font-medium flex items-center gap-2`}>
-            <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${toolTheme.progressGradient} animate-pulse`}></div>
+            <div className={`w-2 h-2 rounded-full bg-linear-to-r ${toolTheme.progressGradient} animate-pulse`}></div>
             {actionText}...
           </span>
           <span className={`font-bold ${toolTheme.progressText} text-lg`}>
@@ -189,10 +189,10 @@ export function useProgressDisplay(toolName?: string) {
         </div>
         <div className="h-3 bg-white/50 dark:bg-gray-800/50 rounded-full overflow-hidden shadow-inner">
           <div
-            className={`h-full bg-gradient-to-r ${toolTheme.progressGradient} transition-all duration-300 ease-out relative shadow-sm`}
+            className={`h-full bg-linear-to-r ${toolTheme.progressGradient} transition-all duration-300 ease-out relative shadow-sm`}
             style={{ width: `${progress}%` }}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
+            <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
             {progress > 15 && (
               <div className="absolute right-2 top-0 h-full flex items-center">
                 <span className="text-xs font-bold text-white/90 drop-shadow">
@@ -225,7 +225,7 @@ export function useProgressDisplay(toolName?: string) {
       <div className={`space-y-4 p-4 rounded-lg ${toolTheme.progressBackground} border border-${toolTheme.accent}/20`}>
         <div className="flex justify-between items-center text-sm">
           <span className={`${toolTheme.progressText} font-medium flex items-center gap-2`}>
-            <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${toolTheme.progressGradient} animate-pulse`}></div>
+            <div className={`w-2 h-2 rounded-full bg-linear-to-r ${toolTheme.progressGradient} animate-pulse`}></div>
             {actionText} {processingFiles.size} images...
           </span>
           <span className={`font-bold ${toolTheme.progressText} text-lg`}>
@@ -236,10 +236,10 @@ export function useProgressDisplay(toolName?: string) {
         {/* Overall progress bar */}
         <div className="h-3 bg-white/50 dark:bg-gray-800/50 rounded-full overflow-hidden shadow-inner">
           <div
-            className={`h-full bg-gradient-to-r ${toolTheme.progressGradient} transition-all duration-300 ease-out relative shadow-sm`}
+            className={`h-full bg-linear-to-r ${toolTheme.progressGradient} transition-all duration-300 ease-out relative shadow-sm`}
             style={{ width: `${averageProgress}%` }}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
+            <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
           </div>
         </div>
         
@@ -253,16 +253,16 @@ export function useProgressDisplay(toolName?: string) {
                   <span className="truncate text-muted-foreground flex-1 mr-2 font-medium" title={files[fileIndex]?.name}>
                     {files[fileIndex]?.name || `File ${fileIndex + 1}`}
                   </span>
-                  <span className={`font-bold flex-shrink-0 ${toolTheme.progressText}`}>
+                  <span className={`font-bold shrink-0 ${toolTheme.progressText}`}>
                     {fileProgress}%
                   </span>
                 </div>
                 <div className="h-2 bg-white/40 dark:bg-gray-700/40 rounded-full overflow-hidden shadow-inner">
                   <div
-                    className={`h-full bg-gradient-to-r ${toolTheme.progressGradient} transition-all duration-300 ease-out relative`}
+                    className={`h-full bg-linear-to-r ${toolTheme.progressGradient} transition-all duration-300 ease-out relative`}
                     style={{ width: `${fileProgress}%` }}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                    <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
                   </div>
                 </div>
               </div>

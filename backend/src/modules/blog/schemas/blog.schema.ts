@@ -1,5 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import * as crypto from 'crypto';
+
+export function hashIP(ip: string): string {
+  return crypto.createHash('sha256').update(ip).digest('hex').substring(0, 16);
+}
 
 export type BlogDocument = Blog & Document;
 
@@ -154,7 +159,7 @@ export class Blog {
 export const BlogSchema = SchemaFactory.createForClass(Blog);
 
 // Create slug from title
-BlogSchema.pre('validate', function (next) {
+BlogSchema.pre('validate', function () {
   if (this.title && !this.slug) {
     const baseSlug = this.title
       .toLowerCase()
@@ -183,12 +188,10 @@ BlogSchema.pre('validate', function (next) {
   if (this.excerpt && !this.metaDescription) {
     this.metaDescription = this.excerpt;
   }
-  
-  next();
 });
 
 // Handle slug collisions
-BlogSchema.pre('save', async function (next) {
+BlogSchema.pre('save', async function () {
   if (this.isModified('slug')) {
     const baseSlug = this.slug;
     let slugToCheck = baseSlug;
@@ -216,8 +219,6 @@ BlogSchema.pre('save', async function (next) {
     
     this.slug = slugToCheck;
   }
-  
-  next();
 });
 
 // Database indexes

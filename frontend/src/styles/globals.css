@@ -1,9 +1,70 @@
 @import './scrollbar.css';
+@import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Dark mode using class selector (shadcn/ui pattern) */
+@variant dark (&:where(.dark, .dark *));
 
+/* Theme configuration - maps CSS variables to Tailwind classes */
+@theme {
+  /* Color mappings */
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+  
+  /* Border radius */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+  
+  /* Container settings */
+  --container-2xl: 1400px;
+  
+  /* Animations (migrated from tailwindcss-animate) */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+}
+
+/* Keyframes for animations */
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}
+
+/* Base styles - CSS variables for light/dark themes */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -37,13 +98,9 @@
     --radius: 0.5rem;
 
     --chart-1: 12 76% 61%;
-
     --chart-2: 173 58% 39%;
-
     --chart-3: 197 37% 24%;
-
     --chart-4: 43 74% 66%;
-
     --chart-5: 27 87% 67%;
   }
 
@@ -116,7 +173,7 @@
 
 /* Add a subtle focus style for images in the editor */
 .ProseMirror img.ProseMirror-selectednode {
-  outline: 2px solid theme('colors.primary.DEFAULT');
+  outline: 2px solid var(--color-primary);
   border-radius: 0.5rem;
 }
 
@@ -128,7 +185,7 @@
 
 /* Add styling for blockquotes */
 .ProseMirror blockquote {
-  border-left: 3px solid theme('colors.primary.DEFAULT');
+  border-left: 3px solid var(--color-primary);
   padding-left: 1em;
   margin-left: 0;
-} 
+}

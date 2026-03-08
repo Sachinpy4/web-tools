@@ -1,10 +1,10 @@
-import { PipeTransform, Injectable, ArgumentMetadata, ExecutionContext } from '@nestjs/common';
+import { PipeTransform, Injectable, ArgumentMetadata } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import * as DOMPurify from 'isomorphic-dompurify';
 import * as validator from 'validator';
 
 // Decorator to skip sanitization for specific endpoints
-export const SkipSanitization = () => Reflector.createDecorator<boolean>();
+export const SkipSanitization = Reflector.createDecorator<boolean>();
 
 @Injectable()
 export class SanitizationPipe implements PipeTransform {
@@ -51,11 +51,12 @@ export class SanitizationPipe implements PipeTransform {
   private isImageProcessingData(value: any): boolean {
     if (!value || typeof value !== 'object') return false;
 
-    // Skip objects that contain image processing parameters
-    const imageProcessingKeys = ['quality', 'width', 'height', 'format', 'crop', 'x', 'y'];
-    const hasImageKeys = imageProcessingKeys.some(key => key in value);
+    // Only skip if the object ONLY contains image processing parameters (no other fields)
+    const imageProcessingKeys = new Set(['quality', 'width', 'height', 'format', 'crop', 'x', 'y']);
+    const objectKeys = Object.keys(value);
     
-    return hasImageKeys;
+    // Skip only if all keys are image processing keys (pure image processing payload)
+    return objectKeys.length > 0 && objectKeys.every(key => imageProcessingKeys.has(key));
   }
 
   private shouldSanitize(value: any, metadata: ArgumentMetadata): boolean {
@@ -120,57 +121,44 @@ export class SanitizationPipe implements PipeTransform {
       'isActive', 'priority', 'sort', 'limit', 'skip',
       'createdAt', 'updatedAt', 'timestamp',
       'ogType', 'twitterCard', 'canonicalUrl',
-      // Script-related fields that need to contain HTML/JS
-      'content', 'placement', 'platform', 'targetPages', 'excludePages'
+      // Script-related fields that need to contain HTML/JS (admin-only endpoints)
+      'scriptContent', 'placement', 'platform', 'targetPages', 'excludePages'
     ];
     
     return technicalFields.includes(key) || key.endsWith('Id') || key.endsWith('_id');
   }
 
-  private sanitizeString(str: string): string {
+  private sanitizeString(str: string, _fieldContext?: string): string {
     if (typeof str !== 'string' || str.length === 0) return str;
 
-    // Skip URLs and email addresses
-    if (this.isUrl(str) || this.isEmail(str)) {
+    // Skip safe URLs (http/https only) and email addresses
+    if (this.isSafeUrl(str) || this.isEmail(str)) {
       return str;
     }
 
-    // Light sanitization for user content
     let sanitized = str;
 
-    // Remove null bytes and control characters
+    // Remove null bytes and control characters (C0 control chars except tab, newline, carriage return)
+    // eslint-disable-next-line no-control-regex
     sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 
-    // Remove potentially dangerous SQL patterns (but preserve normal text)
-    const dangerousPatterns = [
-      /(\bunion\s+select\b)/gi,
-      /(\bselect\s+.*\bfrom\b)/gi,
-      /(\bdrop\s+table\b)/gi,
-      /(\binsert\s+into\b)/gi,
-      /(\bdelete\s+from\b)/gi,
-      /(\bupdate\s+.*\bset\b)/gi,
-    ];
-    
-    dangerousPatterns.forEach(pattern => {
-      sanitized = sanitized.replace(pattern, '');
-    });
-
-    // Remove script tags and dangerous HTML
+    // Run DOMPurify first to normalize and strip dangerous HTML
     sanitized = DOMPurify.sanitize(sanitized, {
-      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br'], // Allow basic formatting
+      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br'],
       ALLOWED_ATTR: [],
     });
 
-    // Remove NoSQL injection patterns
-    sanitized = sanitized.replace(/[\$\{\}]/g, '');
+    // Remove NoSQL injection patterns — only target operator-like patterns, not bare $ in text
+    sanitized = sanitized.replace(/\$\{[^}]*\}/g, '');
+    sanitized = sanitized.replace(/\$(?:where|ne|gt|gte|lt|lte|regex|or|and|not|nor|in|nin|exists|type|mod|text|search|expr|jsonSchema)\b/gi, '');
 
     return sanitized.trim();
   }
 
-  private isUrl(str: string): boolean {
+  private isSafeUrl(str: string): boolean {
     try {
-      new URL(str);
-      return true;
+      const url = new URL(str);
+      return url.protocol === 'http:' || url.protocol === 'https:';
     } catch {
       return false;
     }

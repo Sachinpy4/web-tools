@@ -50,9 +50,12 @@ import { useComments } from './useComments'
 import { useScrollTracking } from './useScrollTracking'
 // Import editor styles for proper content rendering
 import { EditorStyles } from '@/components/editor/styles/EditorStyles'
-// Import syntax highlighting
-import { lowlight } from 'lowlight'
+// Import syntax highlighting (lowlight v3 API)
+import { common, createLowlight } from 'lowlight'
 import { toHtml } from 'hast-util-to-html'
+
+// Create lowlight instance with common languages
+const lowlight = createLowlight(common)
 
 interface BlogPostClientProps {
   post: BlogPost
@@ -254,7 +257,7 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
     // Initial processing with small delay to ensure DOM is ready
     const timeoutId = setTimeout(addCopyButtonsToCodeBlocks, 100)
     
-    // Create a MutationObserver to handle dynamically added content
+    // Create a MutationObserver to handle dynamically added content (scoped to article)
     const observer = new MutationObserver((mutations) => {
       let shouldProcess = false
       mutations.forEach((mutation) => {
@@ -276,11 +279,14 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
       }
     })
     
-    // Start observing
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    })
+    // Start observing the article container instead of document.body
+    const observeTarget = articleRef?.current
+    if (observeTarget) {
+      observer.observe(observeTarget, {
+        childList: true,
+        subtree: true
+      })
+    }
     
     // Cleanup
     return () => {
@@ -364,14 +370,14 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
 
       {/* Back button and action buttons */}
       <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
-        <Button variant="ghost" size="sm" asChild className="group flex-shrink-0">
+        <Button variant="ghost" size="sm" asChild className="group shrink-0">
           <Link href="/blog">
             <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
             <span className="hidden sm:inline">Back to Articles</span>
             <span className="sm:hidden">Back</span>
           </Link>
         </Button>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <Button 
             variant="ghost" 
             size="sm" 
@@ -404,14 +410,14 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
 
       {/* Header */}
       <div className="mb-10 max-w-4xl mx-auto px-0">
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight tracking-tight break-words hyphens-auto">{currentPost.title}</h1>
-        <p className="text-xl text-muted-foreground mb-8 leading-relaxed font-medium break-words">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight tracking-tight wrap-break-word hyphens-auto">{currentPost.title}</h1>
+        <p className="text-xl text-muted-foreground mb-8 leading-relaxed font-medium wrap-break-word">
           {currentPost.excerpt}
         </p>
         
         {/* Featured image with optimized loading */}
         <div className="mb-12 relative overflow-hidden rounded-2xl">
-          <div className="aspect-[16/9] w-full transform transition-transform duration-700 hover:scale-105 bg-muted/50">
+          <div className="aspect-video w-full transform transition-transform duration-700 hover:scale-105 bg-muted/50">
             {currentPost.featuredImage ? (
               <img 
                 src={getProxiedImageUrl(currentPost.featuredImage)} 
@@ -599,10 +605,10 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
         </div>
         
         {/* Main article */}
-        <article ref={articleRef} className="lg:col-span-8 prose prose-lg dark:prose-invert max-w-none prose-table:mx-auto prose-table:border-collapse prose-table:table-auto prose-table:w-full prose-table:block prose-table:overflow-x-auto prose-td:break-words prose-th:break-words prose-pre:overflow-x-auto prose-pre:max-w-full prose-code:break-words">
+        <article ref={articleRef} className="lg:col-span-8 prose prose-lg dark:prose-invert max-w-none prose-table:mx-auto prose-table:border-collapse prose-table:table-auto prose-table:w-full prose-table:block prose-table:overflow-x-auto prose-td:wrap-break-word prose-th:wrap-break-word prose-pre:overflow-x-auto prose-pre:max-w-full prose-code:wrap-break-word">
           <div 
             dangerouslySetInnerHTML={{ __html: processContentImages(processedContent || currentPost.content) }} 
-            className="break-words overflow-wrap-anywhere prose-img:rounded-xl prose-img:shadow-md prose-img:mx-auto prose-img:max-w-full prose-img:h-auto prose-headings:scroll-mt-20 prose-headings:font-bold prose-headings:break-words prose-a:text-primary prose-a:no-underline prose-a:break-words hover:prose-a:underline prose-p:leading-relaxed prose-p:break-words prose-headings:leading-tight prose-blockquote:border-l-primary/50 prose-blockquote:bg-muted/30 prose-blockquote:px-6 prose-blockquote:py-1 prose-blockquote:italic prose-blockquote:break-words prose-code:text-sm prose-code:bg-muted/80 prose-code:rounded prose-code:px-1 prose-code:py-0.5 prose-code:break-words prose-code:max-w-full prose-pre:bg-muted/50 prose-pre:p-4 prose-pre:rounded-lg prose-pre:border"
+            className="wrap-break-word overflow-wrap-anywhere prose-img:rounded-xl prose-img:shadow-md prose-img:mx-auto prose-img:max-w-full prose-img:h-auto prose-headings:scroll-mt-20 prose-headings:font-bold prose-headings:wrap-break-word prose-a:text-primary prose-a:no-underline prose-a:wrap-break-word hover:prose-a:underline prose-p:leading-relaxed prose-p:wrap-break-word prose-headings:leading-tight prose-blockquote:border-l-primary/50 prose-blockquote:bg-muted/30 prose-blockquote:px-6 prose-blockquote:py-1 prose-blockquote:italic prose-blockquote:wrap-break-word prose-code:text-sm prose-code:bg-muted/80 prose-code:rounded prose-code:px-1 prose-code:py-0.5 prose-code:wrap-break-word prose-code:max-w-full prose-pre:bg-muted/50 prose-pre:p-4 prose-pre:rounded-lg prose-pre:border"
           />
           
           {/* Tags below article */}
@@ -1049,7 +1055,7 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
                 key={post._id} 
                 className="overflow-hidden flex flex-col h-full border group hover:shadow-md transition-all duration-300"
               >
-                <div className="h-48 overflow-hidden bg-muted/50">
+                <div className="h-40 sm:h-48 overflow-hidden bg-muted/50">
                   {post.featuredImage ? (
                     <img 
                       src={getProxiedImageUrl(post.featuredImage)} 
@@ -1067,7 +1073,7 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
                     </div>
                   )}
                 </div>
-                <CardContent className="py-6 flex-grow">
+                <CardContent className="py-6 grow">
                   <div className="space-y-3">
                     <Badge variant="outline" className="bg-primary/5 text-primary text-xs mb-2">
                       {post.category}
@@ -1103,7 +1109,7 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
       
       {/* Enhanced Scroll to top button */}
       {showScrollTop && (
-        <div className="fixed bottom-6 right-6 z-50 group">
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 group">
           {/* Main button */}
           <button
             type="button"

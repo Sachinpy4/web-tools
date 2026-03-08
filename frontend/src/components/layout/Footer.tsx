@@ -24,7 +24,7 @@ export function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 border-t border-gray-200 dark:border-gray-700">
+    <footer className="bg-linear-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 border-t border-gray-200 dark:border-gray-700">
       {/* Main Footer Content */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
@@ -37,7 +37,7 @@ export function Footer() {
                 className="w-10 h-10 rounded-full shadow-lg flex items-center justify-center relative overflow-hidden border border-gray-200 dark:border-gray-700"
                 style={{background: 'linear-gradient(135deg, #00BFA6 0%, #6C63FF 50%, #1D4ED8 100%)'}}
               >
-                <div className="absolute inset-0 bg-gradient-to-tr from-white/30 to-transparent rounded-full" />
+                <div className="absolute inset-0 bg-linear-to-tr from-white/30 to-transparent rounded-full" />
                 <span className="text-white text-lg font-bold relative z-10">🍭</span>
               </div>
               
@@ -231,22 +231,21 @@ export function Footer() {
       {/* Bottom Bar */}
       <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col lg:flex-row justify-between items-center space-y-4 lg:space-y-0">
+          <div className="flex flex-wrap justify-center lg:justify-between items-center gap-3 lg:gap-4">
             {/* Copyright */}
-            <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex flex-wrap items-center justify-center gap-x-1.5 text-sm text-gray-600 dark:text-gray-400">
               <span>© {currentYear} ToolsCandy.</span>
-              <span>Made with</span>
-              <Heart className="w-4 h-4 text-red-500 fill-current" />
+              <span className="inline-flex items-center gap-x-1">Made with <Heart className="w-4 h-4 text-red-500 fill-current inline-block" /></span>
               <span>for creators worldwide.</span>
             </div>
 
             {/* Developer Credit */}
-            <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+            <div className="text-sm text-gray-600 dark:text-gray-400 font-medium text-center">
               Developed by <span className="text-blue-600 dark:text-blue-400">Sachin Modi</span>
             </div>
 
             {/* Performance Badge */}
-            <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-500">
+            <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-500">
               <div className="flex items-center space-x-1 px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-green-700 dark:text-green-400 font-medium">99.9% Uptime</span>

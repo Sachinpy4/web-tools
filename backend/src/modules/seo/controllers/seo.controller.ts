@@ -20,7 +20,6 @@ import {
   UpdatePageSeoDto,
   InitializeDefaultSeoDto,
   PageSeoResponseDto,
-  BlogSeoResponseDto,
 } from '../dto/seo.dto';
 
 @ApiTags('SEO Management')

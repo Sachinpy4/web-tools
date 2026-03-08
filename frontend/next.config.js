@@ -9,7 +9,7 @@ const nextConfig = {
   reactStrictMode: true,
   // Performance optimizations
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
   experimental: {
     // Minimal experimental features to avoid SSR issues
@@ -21,20 +21,8 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  eslint: {
-    ignoreDuringBuilds: false,
-  },
-  // Improve hot module replacement stability
-  onDemandEntries: {
-    // Keep pages in memory longer (in ms)
-    maxInactiveAge: 120 * 1000,
-    // Increase pages buffer length
-    pagesBufferLength: 8,
-  },
-  // Ensure environment variables are available
-  env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-  },
+  // Turbopack config (Next.js 16+ default bundler)
+  turbopack: {},
   // Optimize webpack for more stable builds
   webpack: (config, { dev, isServer }) => {
     // Skip aggressive chunk splitting in development to avoid module resolution issues
@@ -85,10 +73,8 @@ const nextConfig = {
       };
     }
 
-    // Disable strict exports field enforcement for onnxruntime-web
-    config.resolve.exportsFields = [];
-    
-    // Add aliases to our empty module to avoid import errors
+    // Add aliases for onnxruntime-web subpaths to avoid import errors
+    // Note: Don't disable exportsFields globally as it breaks modern ESM packages
     config.resolve.alias = {
       ...config.resolve.alias,
       'onnxruntime-web/webgpu': require.resolve('./lib/empty-module.js'),
@@ -175,7 +161,7 @@ const nextConfig = {
        },
       {
         key: 'Cross-Origin-Embedder-Policy',
-        value: 'require-corp',
+        value: 'credentialless',
       },
       {
         key: 'Cross-Origin-Opener-Policy',

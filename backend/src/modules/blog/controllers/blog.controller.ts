@@ -367,7 +367,6 @@ export class BlogController {
     @Body() createCommentDto: CreateCommentDto,
     @Req() req: Request,
   ) {
-    const userRole = (req.user as any)?.role;
     const userId = (req.user as any)?.id;
     const visitorIP = this.getVisitorIP(req);
     

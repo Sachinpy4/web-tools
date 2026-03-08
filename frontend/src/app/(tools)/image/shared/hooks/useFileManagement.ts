@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { processHeicFiles } from '@/lib/heicConverter';
 
@@ -43,24 +43,29 @@ export const useFileManagement = ({
   const [shouldClearDropzone, setShouldClearDropzone] = useState(false);
   
   const { toast } = useToast();
+  
+  // Track previous previews to safely revoke them
+  const previousPreviewsRef = useRef<string[]>([]);
 
   // Generate preview URLs when files change
   useEffect(() => {
-    // Revoke old object URLs to avoid memory leaks
-    previews.forEach(preview => URL.revokeObjectURL(preview));
+    // Revoke previous object URLs to avoid memory leaks
+    previousPreviewsRef.current.forEach(preview => URL.revokeObjectURL(preview));
     
     // Create new preview URLs
     const newPreviews = files.map(file => URL.createObjectURL(file));
     setPreviews(newPreviews);
+    previousPreviewsRef.current = newPreviews;
     
-    // Notify parent of files change
+    // Notify parent of files change (use stable reference check)
     onFilesChange?.(files);
     
     // Clean up function to revoke URLs when component unmounts
     return () => {
-      newPreviews.forEach(preview => URL.revokeObjectURL(preview));
+      previousPreviewsRef.current.forEach(preview => URL.revokeObjectURL(preview));
+      previousPreviewsRef.current = [];
     };
-  }, [files, onFilesChange]);
+  }, [files]); // Removed onFilesChange to prevent unnecessary re-runs
 
   const handleImageDrop = async (droppedFiles: File[]) => {
     // First convert any HEIC/HEIF files to JPEG

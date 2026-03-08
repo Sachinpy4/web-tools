@@ -293,7 +293,7 @@ function EditBlogPage() {
       const processedTags = formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean);
       
       // Generate a slug if one doesn't exist
-      let slug = formData.title.toLowerCase()
+      const slug = formData.title.toLowerCase()
         .replace(/[^\w\s-]/g, '')
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-')

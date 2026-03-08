@@ -54,33 +54,46 @@ export function ThemedButton({
   children, 
   className,
   variant = "default",
+  style: propsStyle,
   ...props 
 }: ThemedButtonProps) {
   const getButtonStyles = () => {
     if (variant === "outline") {
       return cn(
         "border-2 transition-all duration-300 hover:scale-105",
-        `border-${toolTheme.accent} text-${toolTheme.accent}`,
-        `hover:bg-${toolTheme.accentLight} hover:border-${toolTheme.accent}`,
-        `dark:hover:bg-${toolTheme.accent}/20`,
         className
       )
     }
     
-    // Default variant with gradient
+    // Default variant with gradient - use inline style for dynamic colors
     return cn(
-      `bg-gradient-to-r ${toolTheme.buttonGradient}`,
-      `hover:bg-gradient-to-r hover:${toolTheme.buttonHover}`,
-      "text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl",
-      `hover:shadow-${toolTheme.accent}/25`,
-      "border-0",
+      "text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl border-0",
       className
     )
   }
 
+  const getButtonStyle = (): React.CSSProperties | undefined => {
+    if (variant === "outline") {
+      return {
+        borderColor: toolTheme.primaryColor,
+        color: toolTheme.primaryColor,
+      };
+    }
+    // Default: linear gradient from primaryColor to primaryHover
+    const rgbMatch = toolTheme.primaryColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    const shadowColor = rgbMatch
+      ? `rgba(${rgbMatch[1]}, ${rgbMatch[2]}, ${rgbMatch[3]}, 0.4)`
+      : 'rgba(0, 0, 0, 0.15)';
+    return {
+      background: `linear-gradient(to right, ${toolTheme.primaryColor}, ${toolTheme.primaryHover})`,
+      boxShadow: `0 10px 15px -3px ${shadowColor}, 0 4px 6px -2px ${shadowColor}`,
+    };
+  };
+
   return (
     <Button
       className={getButtonStyles()}
+      style={{ ...getButtonStyle(), ...propsStyle }}
       variant={variant}
       disabled={isLoading || props.disabled}
       {...props}

@@ -9,7 +9,6 @@ import {
   UseGuards,
   HttpStatus,
   Res,
-  StreamableFile,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { Response } from 'express';

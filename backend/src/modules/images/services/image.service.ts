@@ -5,7 +5,6 @@ import Sharp from 'sharp';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { promisify } from 'util';
 import archiver from 'archiver';
 import { ConfigService } from '@nestjs/config';
 import { SystemSettings, SystemSettingsDocument } from '../../admin/schemas/system-settings.schema';
@@ -215,7 +214,7 @@ export class ImageService {
       const metadata = await image.metadata();
 
       // PERFORMANCE OPTIMIZATION: Apply resize with optimal settings
-      let resizeOptions: any = { width, height };
+      const resizeOptions: any = { width, height };
       
       if (maintainAspectRatio) {
         resizeOptions.fit = 'inside';
@@ -556,7 +555,7 @@ export class ImageService {
           return; // Success - exit the retry loop
         }
         return; // File doesn't exist - nothing to clean
-      } catch (error) {
+      } catch {
         if (attempt === maxRetries) {
           // Only log as warning on final attempt to reduce noise
           this.logger.debug(`File cleanup will be handled by system cleanup: ${filePath}`);

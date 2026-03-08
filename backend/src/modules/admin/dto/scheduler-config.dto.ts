@@ -1,4 +1,4 @@
-import { IsString, IsBoolean, IsNumber, IsOptional, IsEnum, Min, Max } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsEnum, Min, Max } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum SchedulerTaskType {

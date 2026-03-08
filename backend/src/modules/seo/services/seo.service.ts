@@ -30,7 +30,7 @@ export class SeoService {
       };
     } catch (error) {
       this.logger.error('Error fetching page SEO settings:', error);
-      throw new Error('Failed to fetch page SEO settings');
+      throw new Error('Failed to fetch page SEO settings', { cause: error });
     }
   }
 
@@ -77,7 +77,7 @@ export class SeoService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new Error('Failed to fetch page SEO settings');
+      throw new Error('Failed to fetch page SEO settings', { cause: error });
     }
   }
 
@@ -94,12 +94,12 @@ export class SeoService {
       let blog;
       if (!isMongoId) {
         // Try to find by slug
-        blog = await this.blogModel.findOne({ slug: blogId });
+        blog = await this.blogModel.findOne({ slug: blogId }).populate('author', 'name');
       }
 
       // If not found by slug or if it's a MongoDB ID, try by ID
       if (!blog && isMongoId) {
-        blog = await this.blogModel.findById(blogId);
+        blog = await this.blogModel.findById(blogId).populate('author', 'name');
       }
 
       if (blog) {
@@ -133,7 +133,7 @@ export class SeoService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new Error('Failed to fetch blog SEO data');
+      throw new Error('Failed to fetch blog SEO data', { cause: error });
     }
   }
 
@@ -170,7 +170,7 @@ export class SeoService {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new Error('Failed to create page SEO settings');
+      throw new Error('Failed to create page SEO settings', { cause: error });
     }
   }
 
@@ -203,7 +203,7 @@ export class SeoService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new Error('Failed to update page SEO settings');
+      throw new Error('Failed to update page SEO settings', { cause: error });
     }
   }
 
@@ -229,7 +229,7 @@ export class SeoService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new Error('Failed to delete page SEO settings');
+      throw new Error('Failed to delete page SEO settings', { cause: error });
     }
   }
 
@@ -258,7 +258,7 @@ export class SeoService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new Error('Failed to toggle page SEO status');
+      throw new Error('Failed to toggle page SEO status', { cause: error });
     }
   }
 
@@ -453,7 +453,7 @@ export class SeoService {
       };
     } catch (error) {
       this.logger.error('Error initializing default SEO:', error);
-      throw new Error('Failed to initialize default SEO settings');
+      throw new Error('Failed to initialize default SEO settings', { cause: error });
     }
   }
 } 

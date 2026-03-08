@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, RedisClientType } from 'redis';
 
@@ -11,18 +11,21 @@ export interface RateLimitResult {
 }
 
 @Injectable()
-export class RedisRateLimitService {
+export class RedisRateLimitService implements OnModuleDestroy {
   private readonly logger = new Logger(RedisRateLimitService.name);
   private redisClient: RedisClientType | null = null;
   private isConnected = false;
   private connectionAttempts = 0;
   private maxConnectionAttempts = 3;
+  private cleanupTimer: NodeJS.Timeout | null = null;
 
   // Fallback in-memory cache when Redis is unavailable
   private fallbackCache = new Map<string, { count: number; expires: number }>();
 
   constructor(private readonly configService: ConfigService) {
     this.initializeRedis();
+    // Periodically clean up expired entries from fallback cache
+    this.cleanupTimer = setInterval(() => this.cleanupFallbackCache(), 60_000);
   }
 
   private async initializeRedis(): Promise<void> {
@@ -89,7 +92,7 @@ export class RedisRateLimitService {
 
   private async checkRateLimitRedis(key: string, limit: number, ttlSeconds: number): Promise<RateLimitResult> {
     try {
-      const multi = this.redisClient!.multi();
+      // Redis client multi is available but we use Lua script instead
       
       // Use a Lua script for atomic increment and TTL operations
       const luaScript = `
@@ -194,12 +197,12 @@ export class RedisRateLimitService {
           this.redisClient.ttl(key),
         ]);
 
-        if (count === null) {
+        if (count === null || typeof count !== 'string') {
           return null;
         }
 
         return {
-          count: parseInt(count, 10),
+          count: parseInt(count as string, 10),
           resetTime: Math.max(0, ttl),
         };
       } catch (error) {
@@ -247,6 +250,11 @@ export class RedisRateLimitService {
    * Cleanup resources
    */
   async onModuleDestroy(): Promise<void> {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
+    }
+
     if (this.redisClient) {
       try {
         await this.redisClient.quit();
@@ -255,7 +263,6 @@ export class RedisRateLimitService {
       }
     }
 
-    // Clean up fallback cache
     this.fallbackCache.clear();
   }
 } 

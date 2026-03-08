@@ -177,7 +177,7 @@ export function AdminSidebar({ onToggle, isMobile = false, isOpen = true }: Admi
                 )}
               >
                 <div className={cn(
-                  "p-1.5 rounded-md flex-shrink-0",
+                  "p-1.5 rounded-md shrink-0",
                   pathname === item.href ? item.color : "bg-background"
                 )}>
                   {React.cloneElement(item.icon as React.ReactElement<any>, {
@@ -211,7 +211,7 @@ export function AdminSidebar({ onToggle, isMobile = false, isOpen = true }: Admi
                 showCollapsed ? "justify-center" : ""
               )}
             >
-              <div className="p-1.5 rounded-md bg-background flex-shrink-0">
+              <div className="p-1.5 rounded-md bg-background shrink-0">
                 <Home className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
               </div>
               {showTitle && (
@@ -227,7 +227,7 @@ export function AdminSidebar({ onToggle, isMobile = false, isOpen = true }: Admi
               )}
               onClick={handleLogout}
             >
-              <div className="p-1.5 rounded-md bg-background flex-shrink-0">
+              <div className="p-1.5 rounded-md bg-background shrink-0">
                 <LogOut className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
               </div>
               {showTitle && (

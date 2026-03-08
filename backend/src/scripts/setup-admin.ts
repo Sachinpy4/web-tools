@@ -23,7 +23,7 @@ async function setupAdmin() {
     
     try {
       // Try to create admin user
-      const result = await authService.register({
+      await authService.register({
         name: adminName,
         email: adminEmail,
         password: adminPassword,

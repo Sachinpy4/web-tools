@@ -31,7 +31,11 @@ import {
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
+  const rawCallbackUrl = searchParams.get('callbackUrl') || '/dashboard'
+  // Validate callbackUrl to prevent open redirect: must start with '/' and not '//'
+  const callbackUrl = (rawCallbackUrl.startsWith('/') && !rawCallbackUrl.startsWith('//'))
+    ? rawCallbackUrl
+    : '/dashboard'
   const { login } = useAuth()
   
   const [email, setEmail] = useState('')
@@ -55,7 +59,7 @@ function LoginForm() {
       y: 0,
       transition: {
         duration: 0.6,
-        ease: "easeOut",
+        ease: "easeOut" as const,
         staggerChildren: 0.1
       }
     }
@@ -309,12 +313,12 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[10%] -left-[5%] w-72 h-72 bg-blue-400/10 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-[10%] -right-[5%] w-72 h-72 bg-purple-400/10 rounded-full blur-3xl"></div>
-        <div className="absolute top-[20%] right-[10%] w-32 h-32 bg-pink-400/10 rounded-full blur-2xl"></div>
+        <div className="absolute -top-[10%] -left-[5%] w-48 h-48 sm:w-72 sm:h-72 bg-blue-400/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-[10%] -right-[5%] w-48 h-48 sm:w-72 sm:h-72 bg-purple-400/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-[20%] right-[10%] w-20 h-20 sm:w-32 sm:h-32 bg-pink-400/10 rounded-full blur-2xl"></div>
       </div>
 
       <motion.div
@@ -326,13 +330,13 @@ function LoginForm() {
         <Card className="border-0 shadow-2xl shadow-black/10 backdrop-blur-sm bg-white/90 dark:bg-slate-900/90">
           <CardHeader className="space-y-4 text-center pb-8">
             <motion.div variants={itemVariants} className="flex justify-center">
-              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg">
+              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-linear-to-r from-blue-600 to-purple-600 shadow-lg">
                 <Shield className="h-8 w-8 text-white" />
               </div>
             </motion.div>
             
             <motion.div variants={itemVariants}>
-              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+              <CardTitle className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
                 Admin Portal
               </CardTitle>
               <CardDescription className="text-base mt-2 text-gray-600 dark:text-gray-400">
@@ -358,7 +362,7 @@ function LoginForm() {
                   exit="exit"
                   className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 flex items-start space-x-3"
                 >
-                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
                   <div className="text-sm text-red-700 dark:text-red-300">
                     <p className="font-medium">Authentication Error</p>
                     <p className="mt-1">{error}</p>
@@ -469,8 +473,8 @@ function LoginForm() {
                 type="submit" 
                 className={`w-full h-12 font-medium rounded-lg transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
                   isRateLimited 
-                    ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-red-500/25' 
-                    : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-blue-500/25'
+                    ? 'bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-red-500/25' 
+                    : 'bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-blue-500/25'
                 } text-white`}
                 disabled={isLoading || !isFormValid}
               >
@@ -538,10 +542,10 @@ function LoginForm() {
 // Enhanced loading component
 function LoginLoading() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 px-4">
       <div className="text-center space-y-4">
         <div className="flex justify-center">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-linear-to-r from-blue-600 to-purple-600 flex items-center justify-center">
             <Loader2 className="h-8 w-8 text-white animate-spin" />
           </div>
         </div>

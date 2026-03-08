@@ -1,6 +1,11 @@
+// Validate critical environment variables
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('FATAL: JWT_SECRET environment variable must be set in production');
+}
+
 export default () => ({
   // Server Configuration (from original env.example)
-  port: parseInt(process.env.PORT, 10) || 5000,
+  port: process.env.PORT ? parseInt(process.env.PORT, 10) : 5000,
   nodeEnv: process.env.NODE_ENV || 'development',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
 
@@ -22,7 +27,7 @@ export default () => ({
     port: parseInt(process.env.REDIS_PORT, 10) || 6379,
     password: process.env.REDIS_PASSWORD || undefined,
     username: process.env.REDIS_USERNAME || undefined,
-    db: parseInt(process.env.REDIS_DB, 10) || 0,
+    db: process.env.REDIS_DB ? parseInt(process.env.REDIS_DB, 10) : 0,
     // High-traffic Redis settings
     maxRetriesPerRequest: parseInt(process.env.REDIS_MAX_RETRIES, 10) || 3,
     connectTimeout: parseInt(process.env.REDIS_CONNECT_TIMEOUT, 10) || 10000,
@@ -32,7 +37,7 @@ export default () => ({
 
   // JWT Configuration (same as original)
   jwt: {
-    secret: process.env.JWT_SECRET || 'your-super-secret-jwt-key-should-be-at-least-64-characters-long-and-random',
+    secret: process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? undefined : 'dev-only-jwt-secret-not-for-production-use'),
     expiresIn: process.env.JWT_EXPIRE || '4h',
   },
 
@@ -84,11 +89,7 @@ export default () => ({
     enableCompression: process.env.ENABLE_CACHE_COMPRESSION !== 'false',
   },
 
-  // CORS Configuration (same as original)
-  cors: {
-    origin: process.env.CORS_ORIGIN || '*',
-    credentials: process.env.CORS_CREDENTIALS === 'true',
-  },
+  // CORS is configured directly in main.ts via app.enableCors()
 
   // Logging Configuration (same as original)
   logging: {

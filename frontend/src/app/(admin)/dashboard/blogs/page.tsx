@@ -92,7 +92,7 @@ export default function BlogsPage() {
       setLoading(true)
       
       // Build query params
-      let endpoint = '/blogs'
+      const endpoint = '/blogs'
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString()

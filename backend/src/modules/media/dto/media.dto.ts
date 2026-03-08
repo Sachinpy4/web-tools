@@ -1,6 +1,6 @@
-import { IsString, IsOptional, IsNumber, IsArray, IsMongoId, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsArray, IsMongoId, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 
 export class UploadMediaDto {
   @ApiPropertyOptional({

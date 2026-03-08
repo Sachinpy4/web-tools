@@ -105,7 +105,7 @@ const sparkleVariants = {
     transition: {
       duration: 2,
       repeat: Infinity,
-      ease: "easeInOut"
+      ease: "easeInOut" as const
     }
   }
 }
@@ -217,12 +217,12 @@ export default function HomeContent() {
           {/* Simplified Background */}
           <div className="absolute inset-0 overflow-hidden -z-10">
             {/* Main gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-teal-50 via-blue-50 to-indigo-50 dark:from-teal-950/20 dark:via-blue-950/20 dark:to-indigo-950/20"></div>
+            <div className="absolute inset-0 bg-linear-to-br from-teal-50 via-blue-50 to-indigo-50 dark:from-teal-950/20 dark:via-blue-950/20 dark:to-indigo-950/20"></div>
             
             {/* Simple geometric shapes without animation */}
-            <div className="absolute top-20 left-10 w-32 h-32 rounded-full bg-gradient-to-br from-teal-400/20 to-cyan-500/20 blur-2xl"></div>
-            <div className="absolute top-40 right-20 w-40 h-40 rounded-full bg-gradient-to-br from-blue-400/20 to-indigo-500/20 blur-2xl"></div>
-            <div className="absolute bottom-20 left-1/4 w-24 h-24 rounded-full bg-gradient-to-br from-purple-400/15 to-indigo-400/15 blur-xl"></div>
+            <div className="absolute top-20 left-10 w-32 h-32 rounded-full bg-linear-to-br from-teal-400/20 to-cyan-500/20 blur-2xl"></div>
+            <div className="absolute top-40 right-20 w-40 h-40 rounded-full bg-linear-to-br from-blue-400/20 to-indigo-500/20 blur-2xl"></div>
+            <div className="absolute bottom-20 left-1/4 w-24 h-24 rounded-full bg-linear-to-br from-purple-400/15 to-indigo-400/15 blur-xl"></div>
           </div>
           
           <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 relative z-10">
@@ -237,16 +237,16 @@ export default function HomeContent() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.1, duration: 0.3 }}
-                className="inline-flex items-center gap-2 mb-4 sm:mb-6 px-4 py-2 rounded-full bg-gradient-to-r from-teal-500/10 via-blue-500/10 to-indigo-500/10 border border-teal-200/50 dark:border-teal-800/50 backdrop-blur-sm"
+                className="inline-flex items-center gap-2 mb-4 sm:mb-6 px-4 py-2 rounded-full bg-linear-to-r from-teal-500/10 via-blue-500/10 to-indigo-500/10 border border-teal-200/50 dark:border-teal-800/50 backdrop-blur-sm"
               >
-                <span className="text-xs font-semibold bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <span className="text-xs font-semibold bg-linear-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
                   Free • Fast • Privacy-First
                 </span>
               </motion.div>
               
               {/* SEO-Optimized Main Heading - Reduced Size */}
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 sm:mb-8 leading-tight">
-                <span className="bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
                   Free Online Image Editor
                 </span>
                 <br />
@@ -269,7 +269,7 @@ export default function HomeContent() {
                 <Link href="/image/compress" title="Free Image Compressor - Reduce file size without quality loss">
                   <Button 
                     size="lg" 
-                    className="w-full sm:w-auto rounded-full px-6 py-3 bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 hover:from-teal-700 hover:via-blue-700 hover:to-indigo-700 text-white shadow-xl shadow-blue-600/25 flex items-center justify-center gap-2 h-12 sm:h-14 text-sm sm:text-base font-semibold transition-all duration-300 hover:scale-105"
+                    className="w-full sm:w-auto rounded-full px-6 py-3 bg-linear-to-r from-teal-600 via-blue-600 to-indigo-600 hover:from-teal-700 hover:via-blue-700 hover:to-indigo-700 text-white shadow-xl shadow-blue-600/25 flex items-center justify-center gap-2 h-12 sm:h-14 text-sm sm:text-base font-semibold transition-all duration-300 hover:scale-105"
                   >
                     <Sparkles className="h-4 w-4" aria-hidden="true" />
                     Compress Images Free
@@ -298,7 +298,7 @@ export default function HomeContent() {
                     className="flex flex-col sm:flex-row items-center justify-center gap-2"
                     whileHover={{ scale: 1.05 }}
                   >
-                    <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 text-green-600 dark:text-green-400 p-2 rounded-full border border-green-200/50 dark:border-green-800/50">
+                    <div className="bg-linear-to-br from-green-500/10 to-emerald-500/10 text-green-600 dark:text-green-400 p-2 rounded-full border border-green-200/50 dark:border-green-800/50">
                       <Check className="h-3 w-3" aria-hidden="true" />
                     </div>
                     <span className="font-semibold text-xs sm:text-sm">100% Free</span>
@@ -308,7 +308,7 @@ export default function HomeContent() {
                     className="flex flex-col sm:flex-row items-center justify-center gap-2"
                     whileHover={{ scale: 1.05 }}
                   >
-                    <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400 p-2 rounded-full border border-blue-200/50 dark:border-blue-800/50">
+                    <div className="bg-linear-to-br from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400 p-2 rounded-full border border-blue-200/50 dark:border-blue-800/50">
                       <Shield className="h-3 w-3" aria-hidden="true" />
                     </div>
                     <span className="font-semibold text-xs sm:text-sm">Privacy First</span>
@@ -318,7 +318,7 @@ export default function HomeContent() {
                     className="flex flex-col sm:flex-row items-center justify-center gap-2"
                     whileHover={{ scale: 1.05 }}
                   >
-                    <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 text-indigo-600 dark:text-indigo-400 p-2 rounded-full border border-indigo-200/50 dark:border-indigo-800/50">
+                    <div className="bg-linear-to-br from-indigo-500/10 to-purple-500/10 text-indigo-600 dark:text-indigo-400 p-2 rounded-full border border-indigo-200/50 dark:border-indigo-800/50">
                       <Zap className="h-3 w-3" aria-hidden="true" />
                     </div>
                     <span className="font-semibold text-xs sm:text-sm">Lightning Fast</span>
@@ -328,7 +328,7 @@ export default function HomeContent() {
                     className="flex flex-col sm:flex-row items-center justify-center gap-2"
                     whileHover={{ scale: 1.05 }}
                   >
-                    <div className="bg-gradient-to-br from-teal-500/10 to-cyan-500/10 text-teal-600 dark:text-teal-400 p-2 rounded-full border border-teal-200/50 dark:border-teal-800/50">
+                    <div className="bg-linear-to-br from-teal-500/10 to-cyan-500/10 text-teal-600 dark:text-teal-400 p-2 rounded-full border border-teal-200/50 dark:border-teal-800/50">
                       <Award className="h-3 w-3" aria-hidden="true" />
                     </div>
                     <span className="font-semibold text-xs sm:text-sm">Pro Quality</span>
@@ -349,7 +349,7 @@ export default function HomeContent() {
               className="text-center mb-12 sm:mb-16"
             >
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6">
-                <span className="bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
                   Professional Image Editing Tools
                 </span>
               </h2>
@@ -368,12 +368,12 @@ export default function HomeContent() {
               <article>
                 <Link href="/image/compress" className="group" title="Free online image compressor - Reduce JPG, PNG, WebP file sizes">
                   <motion.div variants={item}>
-                    <div className="relative h-[350px] rounded-xl border-2 border-transparent bg-gradient-to-br from-teal-50 via-cyan-50 to-teal-100 dark:from-teal-950/30 dark:via-cyan-950/30 dark:to-teal-900/30 p-6 transition-all duration-500 hover:shadow-xl hover:shadow-teal-500/20 hover:border-teal-300/50 hover:-translate-y-1 hover:scale-105 overflow-hidden flex flex-col">
+                    <div className="relative min-h-[280px] sm:h-[320px] md:h-[350px] rounded-xl border-2 border-transparent bg-linear-to-br from-teal-50 via-cyan-50 to-teal-100 dark:from-teal-950/30 dark:via-cyan-950/30 dark:to-teal-900/30 p-6 transition-all duration-500 hover:shadow-xl hover:shadow-teal-500/20 hover:border-teal-300/50 hover:-translate-y-1 hover:scale-105 overflow-hidden flex flex-col">
                       {/* Background Pattern */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                      <div className="absolute inset-0 bg-linear-to-br from-teal-500/5 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                       
                       {/* Icon */}
-                      <div className="relative mb-4 inline-flex p-3 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 text-white shadow-lg group-hover:shadow-xl group-hover:shadow-teal-500/30 transition-all duration-300">
+                      <div className="relative mb-4 inline-flex p-3 rounded-xl bg-linear-to-br from-teal-500 to-cyan-500 text-white shadow-lg group-hover:shadow-xl group-hover:shadow-teal-500/30 transition-all duration-300">
                         <Image size={20} aria-hidden="true" />
                       </div>
                       
@@ -395,10 +395,10 @@ export default function HomeContent() {
               <article>
                 <Link href="/image/resize" className="group" title="Free online image resizer - Change dimensions, scale images">
                   <motion.div variants={item}>
-                    <div className="relative h-[350px] rounded-xl border-2 border-transparent bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100 dark:from-blue-950/30 dark:via-indigo-950/30 dark:to-blue-900/30 p-6 transition-all duration-500 hover:shadow-xl hover:shadow-blue-500/20 hover:border-blue-300/50 hover:-translate-y-1 hover:scale-105 overflow-hidden flex flex-col">
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="relative min-h-[280px] sm:h-[320px] md:h-[350px] rounded-xl border-2 border-transparent bg-linear-to-br from-blue-50 via-indigo-50 to-blue-100 dark:from-blue-950/30 dark:via-indigo-950/30 dark:to-blue-900/30 p-6 transition-all duration-500 hover:shadow-xl hover:shadow-blue-500/20 hover:border-blue-300/50 hover:-translate-y-1 hover:scale-105 overflow-hidden flex flex-col">
+                      <div className="absolute inset-0 bg-linear-to-br from-blue-500/5 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                       
-                      <div className="relative mb-4 inline-flex p-3 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-lg group-hover:shadow-xl group-hover:shadow-blue-500/30 transition-all duration-300">
+                      <div className="relative mb-4 inline-flex p-3 rounded-xl bg-linear-to-br from-blue-500 to-indigo-500 text-white shadow-lg group-hover:shadow-xl group-hover:shadow-blue-500/30 transition-all duration-300">
                         <ZoomIn size={20} aria-hidden="true" />
                       </div>
                       
@@ -420,10 +420,10 @@ export default function HomeContent() {
               <article>
                 <Link href="/image/convert" className="group" title="Free image format converter - JPG to PNG, WebP, AVIF conversion">
                   <motion.div variants={item}>
-                    <div className="relative h-[350px] rounded-xl border-2 border-transparent bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100 dark:from-orange-950/30 dark:via-amber-950/30 dark:to-orange-900/30 p-6 transition-all duration-500 hover:shadow-xl hover:shadow-orange-500/20 hover:border-orange-300/50 hover:-translate-y-1 hover:scale-105 overflow-hidden flex flex-col">
-                      <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="relative min-h-[280px] sm:h-[320px] md:h-[350px] rounded-xl border-2 border-transparent bg-linear-to-br from-orange-50 via-amber-50 to-orange-100 dark:from-orange-950/30 dark:via-amber-950/30 dark:to-orange-900/30 p-6 transition-all duration-500 hover:shadow-xl hover:shadow-orange-500/20 hover:border-orange-300/50 hover:-translate-y-1 hover:scale-105 overflow-hidden flex flex-col">
+                      <div className="absolute inset-0 bg-linear-to-br from-orange-500/5 to-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                       
-                      <div className="relative mb-4 inline-flex p-3 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-lg group-hover:shadow-xl group-hover:shadow-orange-500/30 transition-all duration-300">
+                      <div className="relative mb-4 inline-flex p-3 rounded-xl bg-linear-to-br from-orange-500 to-amber-500 text-white shadow-lg group-hover:shadow-xl group-hover:shadow-orange-500/30 transition-all duration-300">
                         <RefreshCw size={20} aria-hidden="true" />
                       </div>
                       
@@ -445,10 +445,10 @@ export default function HomeContent() {
               <article>
                 <Link href="/image/crop" className="group" title="Free online image cropper - Crop images with aspect ratios">
                   <motion.div variants={item}>
-                    <div className="relative h-[350px] rounded-xl border-2 border-transparent bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100 dark:from-emerald-950/30 dark:via-teal-950/30 dark:to-emerald-900/30 p-6 transition-all duration-500 hover:shadow-xl hover:shadow-emerald-500/20 hover:border-emerald-300/50 hover:-translate-y-1 hover:scale-105 overflow-hidden flex flex-col">
-                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-teal-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="relative min-h-[280px] sm:h-[320px] md:h-[350px] rounded-xl border-2 border-transparent bg-linear-to-br from-emerald-50 via-teal-50 to-emerald-100 dark:from-emerald-950/30 dark:via-teal-950/30 dark:to-emerald-900/30 p-6 transition-all duration-500 hover:shadow-xl hover:shadow-emerald-500/20 hover:border-emerald-300/50 hover:-translate-y-1 hover:scale-105 overflow-hidden flex flex-col">
+                      <div className="absolute inset-0 bg-linear-to-br from-emerald-500/5 to-teal-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                       
-                      <div className="relative mb-4 inline-flex p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg group-hover:shadow-xl group-hover:shadow-emerald-500/30 transition-all duration-300">
+                      <div className="relative mb-4 inline-flex p-3 rounded-xl bg-linear-to-br from-emerald-500 to-teal-500 text-white shadow-lg group-hover:shadow-xl group-hover:shadow-emerald-500/30 transition-all duration-300">
                         <Crop size={20} aria-hidden="true" />
                       </div>
                       
@@ -470,10 +470,10 @@ export default function HomeContent() {
               <article>
                 <Link href="/image/metadata" className="group" title="Free EXIF data extractor - View image metadata and camera info">
                   <motion.div variants={item}>
-                    <div className="relative h-[350px] rounded-xl border-2 border-transparent bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100 dark:from-blue-950/30 dark:via-indigo-950/30 dark:to-blue-900/30 p-6 transition-all duration-500 hover:shadow-xl hover:shadow-blue-500/20 hover:border-blue-300/50 hover:-translate-y-1 hover:scale-105 overflow-hidden flex flex-col">
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="relative min-h-[280px] sm:h-[320px] md:h-[350px] rounded-xl border-2 border-transparent bg-linear-to-br from-blue-50 via-indigo-50 to-blue-100 dark:from-blue-950/30 dark:via-indigo-950/30 dark:to-blue-900/30 p-6 transition-all duration-500 hover:shadow-xl hover:shadow-blue-500/20 hover:border-blue-300/50 hover:-translate-y-1 hover:scale-105 overflow-hidden flex flex-col">
+                      <div className="absolute inset-0 bg-linear-to-br from-blue-500/5 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                       
-                      <div className="relative mb-4 inline-flex p-3 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-lg group-hover:shadow-xl group-hover:shadow-blue-500/30 transition-all duration-300">
+                      <div className="relative mb-4 inline-flex p-3 rounded-xl bg-linear-to-br from-blue-500 to-indigo-500 text-white shadow-lg group-hover:shadow-xl group-hover:shadow-blue-500/30 transition-all duration-300">
                         <Info size={20} aria-hidden="true" />
                       </div>
                       
@@ -504,7 +504,7 @@ export default function HomeContent() {
               className="text-center mb-12 sm:mb-16"
             >
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6">
-                <span className="bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
                   Why Choose Our Image Editor?
                 </span>
               </h2>
@@ -520,7 +520,7 @@ export default function HomeContent() {
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
             >
               <motion.div variants={item} className="text-center group">
-                <div className="mb-4 mx-auto w-16 h-16 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center text-white shadow-lg group-hover:shadow-xl group-hover:shadow-teal-500/30 transition-all duration-300 group-hover:scale-110">
+                <div className="mb-4 mx-auto w-16 h-16 rounded-xl bg-linear-to-br from-teal-500 to-cyan-500 flex items-center justify-center text-white shadow-lg group-hover:shadow-xl group-hover:shadow-teal-500/30 transition-all duration-300 group-hover:scale-110">
                   <Globe size={24} aria-hidden="true" />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold mb-3 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
@@ -532,7 +532,7 @@ export default function HomeContent() {
               </motion.div>
 
               <motion.div variants={item} className="text-center group">
-                <div className="mb-4 mx-auto w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white shadow-lg group-hover:shadow-xl group-hover:shadow-blue-500/30 transition-all duration-300 group-hover:scale-110">
+                <div className="mb-4 mx-auto w-16 h-16 rounded-xl bg-linear-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white shadow-lg group-hover:shadow-xl group-hover:shadow-blue-500/30 transition-all duration-300 group-hover:scale-110">
                   <Zap size={24} aria-hidden="true" />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
@@ -544,7 +544,7 @@ export default function HomeContent() {
               </motion.div>
 
               <motion.div variants={item} className="text-center group">
-                <div className="mb-4 mx-auto w-16 h-16 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-lg group-hover:shadow-xl group-hover:shadow-indigo-500/30 transition-all duration-300 group-hover:scale-110">
+                <div className="mb-4 mx-auto w-16 h-16 rounded-xl bg-linear-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-lg group-hover:shadow-xl group-hover:shadow-indigo-500/30 transition-all duration-300 group-hover:scale-110">
                   <Users size={24} aria-hidden="true" />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
@@ -568,7 +568,7 @@ export default function HomeContent() {
               className="text-center mb-12 sm:mb-16"
             >
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6">
-                <span className="bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
                   Frequently Asked Questions
                 </span>
               </h2>
@@ -595,7 +595,7 @@ export default function HomeContent() {
                 >
                   <button
                     onClick={() => toggleFAQ(index)}
-                    className={`w-full px-6 py-4 text-left flex items-center justify-between transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
+                    className={`w-full px-4 sm:px-6 py-3 sm:py-4 text-left flex items-center justify-between transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
                       openFAQ === index
                         ? 'bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50'
                         : 'hover:bg-gray-50 dark:hover:bg-slate-800'
@@ -609,7 +609,7 @@ export default function HomeContent() {
                     }`}>
                       {faq.question}
                     </h3>
-                    <div className="flex-shrink-0">
+                    <div className="shrink-0">
                       {openFAQ === index ? (
                         <ChevronUp className="w-5 h-5 text-blue-600 dark:text-blue-400 transition-transform duration-200" />
                       ) : (
@@ -624,10 +624,10 @@ export default function HomeContent() {
                       height: openFAQ === index ? "auto" : 0,
                       opacity: openFAQ === index ? 1 : 0
                     }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    transition={{ duration: 0.3, ease: "easeInOut" as const }}
                     className="overflow-hidden"
                   >
-                    <div className={`px-6 pb-4 pt-0 ${
+                    <div className={`px-4 sm:px-6 pb-3 sm:pb-4 pt-0 ${
                       openFAQ === index ? 'bg-blue-50/50 dark:bg-blue-950/20' : ''
                     }`}>
                       <p className="text-muted-foreground text-sm leading-relaxed">
@@ -652,7 +652,7 @@ export default function HomeContent() {
                 className="text-center mb-16 sm:mb-20"
               >
                 <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-                  <span className="bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  <span className="bg-linear-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
                     Image Editing Tutorials & Tips
                   </span>
                 </h2>
@@ -667,7 +667,7 @@ export default function HomeContent() {
                 {latestPosts.map((post, index) => (
                   <motion.div key={post._id} variants={item}>
                     <Link href={`/blog/${post.slug}`}>
-                      <div className="group h-full rounded-2xl border-2 border-transparent bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-300/30 hover:-translate-y-2">
+                      <div className="group h-full rounded-2xl border-2 border-transparent bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-300/30 hover:-translate-y-2">
                         {post.featuredImage && (
                           <div className="aspect-video overflow-hidden">
                             <img
@@ -681,7 +681,7 @@ export default function HomeContent() {
                         <div className="p-6">
                           <div className="flex items-center gap-3 mb-4">
                             <Avatar className="h-8 w-8">
-                              <AvatarFallback className="text-xs font-medium bg-gradient-to-br from-teal-500 to-blue-500 text-white">
+                              <AvatarFallback className="text-xs font-medium bg-linear-to-br from-teal-500 to-blue-500 text-white">
                                 {getAuthorInitials(post.author)}
                               </AvatarFallback>
                             </Avatar>
@@ -705,7 +705,7 @@ export default function HomeContent() {
                                 <Badge 
                                   key={tag} 
                                   variant="secondary" 
-                                  className="text-xs bg-gradient-to-r from-teal-100 to-blue-100 dark:from-teal-900/30 dark:to-blue-900/30 text-teal-700 dark:text-teal-300 border-0"
+                                  className="text-xs bg-linear-to-r from-teal-100 to-blue-100 dark:from-teal-900/30 dark:to-blue-900/30 text-teal-700 dark:text-teal-300 border-0"
                                 >
                                   {tag}
                                 </Badge>
@@ -751,7 +751,7 @@ export default function HomeContent() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
               <div className="text-center mb-16">
                 <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-                  <span className="bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  <span className="bg-linear-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
                     Image Editing Tutorials & Tips
                   </span>
                 </h2>

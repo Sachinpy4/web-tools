@@ -338,7 +338,7 @@ export default function BlogContent() {
     return (
       <div className="text-center py-12">
         <h1 className="text-4xl font-bold mb-4">
-          <span className="bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          <span className="bg-linear-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
             Our Latest News
           </span>
         </h1>
@@ -347,7 +347,7 @@ export default function BlogContent() {
         </p>
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, index) => (
-            <div key={`skeleton-${index}`} className="rounded-lg border p-4 h-[350px] animate-pulse">
+            <div key={`skeleton-${index}`} className="rounded-lg border p-4 h-[250px] sm:h-[300px] md:h-[350px] animate-pulse">
               <div className="h-40 bg-muted rounded-md mb-4"></div>
               <div className="h-4 w-1/4 bg-muted rounded mb-2"></div>
               <div className="h-6 bg-muted rounded mb-4"></div>
@@ -367,7 +367,7 @@ export default function BlogContent() {
     <>
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">
-          <span className="bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          <span className="bg-linear-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
             Our Latest News
           </span>
         </h1>
@@ -501,9 +501,9 @@ export default function BlogContent() {
       
       {/* Featured post - only on first page */}
       {currentPage === 1 && blogPosts.length > 0 && (
-        <div className="mb-16 bg-gradient-to-br from-teal-50/50 via-blue-50/50 to-indigo-50/50 dark:from-teal-950/20 dark:via-blue-950/20 dark:to-indigo-950/20 rounded-xl p-6 shadow-sm border border-teal-100/50 dark:border-teal-800/50">
+        <div className="mb-16 bg-linear-to-br from-teal-50/50 via-blue-50/50 to-indigo-50/50 dark:from-teal-950/20 dark:via-blue-950/20 dark:to-indigo-950/20 rounded-xl p-6 shadow-sm border border-teal-100/50 dark:border-teal-800/50">
           <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div className="h-[350px] rounded-xl overflow-hidden bg-muted">
+            <div className="h-[250px] sm:h-[300px] md:h-[350px] rounded-xl overflow-hidden bg-muted">
               {blogPosts[0].featuredImage ? (
                 <img 
                   src={getProxiedFeaturedImage(blogPosts[0].featuredImage)}
@@ -522,7 +522,7 @@ export default function BlogContent() {
             </div>
             <div className="space-y-4">
               <div>
-                <span className="text-sm font-medium text-teal-700 dark:text-teal-300 bg-gradient-to-r from-teal-100 to-cyan-100 dark:from-teal-900/30 dark:to-cyan-900/30 rounded-full px-3 py-1 border border-teal-200/50 dark:border-teal-800/50">
+                <span className="text-sm font-medium text-teal-700 dark:text-teal-300 bg-linear-to-r from-teal-100 to-cyan-100 dark:from-teal-900/30 dark:to-cyan-900/30 rounded-full px-3 py-1 border border-teal-200/50 dark:border-teal-800/50">
                   {blogPosts[0].category}
                 </span>
               </div>
@@ -546,7 +546,7 @@ export default function BlogContent() {
                   {blogPosts[0].readingTime || '5 min read'}
                 </div>
               </div>
-              <Button asChild className="bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 hover:from-teal-700 hover:via-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-600/25">
+              <Button asChild className="bg-linear-to-r from-teal-600 via-blue-600 to-indigo-600 hover:from-teal-700 hover:via-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-600/25">
                 <Link href={`/blog/${blogPosts[0].slug || blogPosts[0]._id}`}>
                   Read Article
                   <ArrowRight className="h-4 w-4 ml-2" />
@@ -561,7 +561,7 @@ export default function BlogContent() {
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         {(currentPage === 1 ? blogPosts.slice(1) : blogPosts).map(post => (
           <Card key={post._id} className="overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow">
-            <div className="h-48 overflow-hidden bg-muted/50">
+            <div className="h-40 sm:h-48 overflow-hidden bg-muted/50">
               {post.featuredImage ? (
                 <img 
                   src={getProxiedFeaturedImage(post.featuredImage)}

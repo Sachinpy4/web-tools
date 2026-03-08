@@ -135,7 +135,7 @@ export class CleanupService {
               const memoryInfo = await redisClient.memory('USAGE');
               memoryRecovered = Math.floor(memoryInfo / 1024); // Convert to KB
               details.push(`Redis memory usage: ${this.formatBytes(memoryInfo)}`);
-            } catch (e) {
+            } catch {
               details.push('Redis memory info not available');
             }
           }
@@ -234,7 +234,7 @@ export class CleanupService {
         } else {
           details.push('No expired sessions found');
         }
-      } catch (e: any) {
+      } catch {
         details.push(`Sessions: Collection not found (normal)`);
       }
       
@@ -253,7 +253,7 @@ export class CleanupService {
         } else {
           details.push('No old job tracking data found');
         }
-      } catch (e: any) {
+      } catch {
         details.push(`Job tracking: Collection not found (normal)`);
       }
       
@@ -272,7 +272,7 @@ export class CleanupService {
         } else {
           details.push('No old backup history found');
         }
-      } catch (e: any) {
+      } catch {
         details.push(`Backup history: Collection not found (normal)`);
       }
       
@@ -281,7 +281,7 @@ export class CleanupService {
       return {
         success: true,
         totalDeleted,
-        sizeRecovered: `${(totalDeleted * 1024 / 1024).toFixed(2)} KB`,
+        sizeRecovered: `${totalDeleted} records`,
         message: totalDeleted > 0 ? 
           `Cleaned ${totalDeleted} database records. ${details.join('; ')}` :
           `No cleanup needed. Database is clean. ${details.join('; ')}`
@@ -324,7 +324,7 @@ export class CleanupService {
               await fs.unlink(filePath);
               totalDeleted++;
             }
-          } catch (e) {
+          } catch {
             // File might be locked or already deleted - skip it
             continue;
           }
@@ -335,8 +335,8 @@ export class CleanupService {
         } else {
           details.push('Processed files: No old files found');
         }
-      } catch (e: any) {
-        details.push(`Processed files: Directory not accessible (${e.message})`);
+      } catch (err: any) {
+        details.push(`Processed files: Directory not accessible (${err.message})`);
       }
       
       // Clean old archive files (older than 7 days)
@@ -354,7 +354,7 @@ export class CleanupService {
               await fs.unlink(filePath);
               archiveDeleted++;
             }
-          } catch (e) {
+          } catch {
             // File might be locked or already deleted - skip it
             continue;
           }
@@ -366,8 +366,8 @@ export class CleanupService {
         } else {
           details.push('Archive files: No old archives found');
         }
-      } catch (e: any) {
-        details.push(`Archive files: Directory not accessible (${e.message})`);
+      } catch (err: any) {
+        details.push(`Archive files: Directory not accessible (${err.message})`);
       }
       
       // Clean orphaned upload files (older than 1 hour)
@@ -390,7 +390,7 @@ export class CleanupService {
               await fs.unlink(filePath);
               uploadDeleted++;
             }
-          } catch (e) {
+          } catch {
             // File might be locked or already deleted - skip it
             continue;
           }
@@ -439,42 +439,20 @@ export class CleanupService {
         global.gc();
       }
       
-      // Clear some module cache (be careful with this in production)
-      const modulesToClear = Object.keys(require.cache).filter(key => 
-        key.includes('node_modules') && 
-        !key.includes('express') && 
-        !key.includes('mongoose') &&
-        !key.includes('redis') &&
-        !key.includes('@nestjs') &&
-        !key.includes('bull')
-      );
-      
-      let clearedModules = 0;
-      // Only clear a limited number to avoid breaking the application
-      for (const moduleKey of modulesToClear.slice(0, 20)) {
-        try {
-          delete require.cache[moduleKey];
-          clearedModules++;
-        } catch (e) {
-          // Ignore errors - some modules can't be safely cleared
-        }
-      }
-      
       const memAfter = process.memoryUsage();
       const memorySaved = Math.max(0, memBefore.heapUsed - memAfter.heapUsed);
       
       const details = [
         `Memory before: ${(memBefore.heapUsed / 1024 / 1024).toFixed(2)}MB`,
         `Memory after: ${(memAfter.heapUsed / 1024 / 1024).toFixed(2)}MB`,
-        `Modules cleared: ${clearedModules}`,
         global.gc ? 'GC forced' : 'GC not available (use --expose-gc)'
       ];
       
-      this.logger.log(`Memory optimization completed: ${(memorySaved / 1024 / 1024).toFixed(2)}MB recovered, ${clearedModules} modules cleared`);
+      this.logger.log(`Memory optimization completed: ${(memorySaved / 1024 / 1024).toFixed(2)}MB recovered`);
       
       return {
         success: true,
-        totalDeleted: clearedModules,
+        totalDeleted: 0,
         sizeRecovered: `${(memorySaved / 1024 / 1024).toFixed(2)} MB`,
         message: `Memory optimization completed. ${details.join('; ')}`
       };

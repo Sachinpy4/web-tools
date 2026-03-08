@@ -66,22 +66,22 @@ export default function ContactContent() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-blue-500/5 to-purple-500/5"></div>
-        <div className="container mx-auto px-4 relative">
+      <section className="relative py-12 sm:py-16 md:py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-linear-to-br from-teal-500/5 via-blue-500/5 to-purple-500/5"></div>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             className="max-w-4xl mx-auto text-center"
           >
-            <div className="inline-block mb-6 px-6 py-2 rounded-full bg-gradient-to-r from-teal-500/10 to-blue-500/10 text-teal-600 dark:text-teal-400 font-medium text-sm">
+            <div className="inline-block mb-6 px-6 py-2 rounded-full bg-linear-to-r from-teal-500/10 to-blue-500/10 text-teal-600 dark:text-teal-400 font-medium text-sm">
               Contact Us
             </div>
             
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
               Get in 
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-blue-600"> Touch</span>
+              <span className="bg-clip-text text-transparent bg-linear-to-r from-teal-600 to-blue-600"> Touch</span>
             </h1>
             
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
@@ -94,7 +94,7 @@ export default function ContactContent() {
 
       {/* Contact Methods */}
       <section className="py-16">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -103,7 +103,7 @@ export default function ContactContent() {
           >
             <motion.div variants={itemVariants}>
               <Card className="text-center h-full border-2 border-teal-100 dark:border-teal-900/30 hover:shadow-lg transition-all duration-300">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="bg-teal-500/10 text-teal-600 dark:text-teal-400 p-4 rounded-xl mb-4 inline-block">
                     <Mail className="h-8 w-8" />
                   </div>
@@ -118,7 +118,7 @@ export default function ContactContent() {
 
             <motion.div variants={itemVariants}>
               <Card className="text-center h-full border-2 border-blue-100 dark:border-blue-900/30 hover:shadow-lg transition-all duration-300">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 p-4 rounded-xl mb-4 inline-block">
                     <MessageSquare className="h-8 w-8" />
                   </div>
@@ -133,7 +133,7 @@ export default function ContactContent() {
 
             <motion.div variants={itemVariants}>
               <Card className="text-center h-full border-2 border-purple-100 dark:border-purple-900/30 hover:shadow-lg transition-all duration-300">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="bg-purple-500/10 text-purple-600 dark:text-purple-400 p-4 rounded-xl mb-4 inline-block">
                     <Globe className="h-8 w-8" />
                   </div>
@@ -148,7 +148,7 @@ export default function ContactContent() {
 
             <motion.div variants={itemVariants}>
               <Card className="text-center h-full border-2 border-amber-100 dark:border-amber-900/30 hover:shadow-lg transition-all duration-300">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="bg-amber-500/10 text-amber-600 dark:text-amber-400 p-4 rounded-xl mb-4 inline-block">
                     <Clock className="h-8 w-8" />
                   </div>
@@ -164,7 +164,7 @@ export default function ContactContent() {
 
       {/* Contact Form */}
       <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -184,7 +184,7 @@ export default function ContactContent() {
               transition={{ delay: 0.3 }}
             >
               <Card className="border-2 border-gray-100 dark:border-gray-800">
-                <CardContent className="p-8">
+                <CardContent className="p-4 sm:p-6 md:p-8">
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
@@ -246,7 +246,7 @@ export default function ContactContent() {
                       type="submit" 
                       size="lg" 
                       disabled={isSubmitting}
-                      className="w-full h-12 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white font-medium"
+                      className="w-full h-12 bg-linear-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white font-medium"
                     >
                       {isSubmitting ? (
                         <>
@@ -270,7 +270,7 @@ export default function ContactContent() {
 
       {/* FAQ Section */}
       <section className="py-16">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}

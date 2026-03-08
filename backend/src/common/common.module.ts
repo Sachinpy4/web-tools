@@ -1,20 +1,18 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ScheduleModule } from '@nestjs/schedule';
+import { APP_GUARD } from '@nestjs/core';
+// ScheduleModule is registered in AppModule - do not duplicate here
 import { RedisStatusService } from './services/redis-status.service';
 import { RedisRateLimitService } from './services/redis-rate-limit.service';
 import { SettingsCacheService } from './services/settings-cache.service';
-import { DynamicThrottlerGuard } from './guards/dynamic-throttler.guard';
-import { AllExceptionsFilter } from './filters/all-exceptions.filter';
-import { LoggingInterceptor } from './interceptors/logging.interceptor';
+import { AdvancedSecurityGuard } from './guards/advanced-security.guard';
 import { SystemSettings, SystemSettingsSchema } from '../modules/admin/schemas/system-settings.schema';
 
 @Global()
 @Module({
   imports: [
     ConfigModule,
-    ScheduleModule.forRoot(),
     MongooseModule.forFeature([
       { name: SystemSettings.name, schema: SystemSettingsSchema },
     ]),
@@ -23,17 +21,16 @@ import { SystemSettings, SystemSettingsSchema } from '../modules/admin/schemas/s
     RedisStatusService,
     RedisRateLimitService,
     SettingsCacheService,
-    DynamicThrottlerGuard,
-    AllExceptionsFilter,
-    LoggingInterceptor,
+    // Register AdvancedSecurityGuard via DI so lifecycle hooks (onModuleDestroy) are called
+    {
+      provide: APP_GUARD,
+      useClass: AdvancedSecurityGuard,
+    },
   ],
   exports: [
     RedisStatusService,
     RedisRateLimitService,
     SettingsCacheService,
-    DynamicThrottlerGuard,
-    AllExceptionsFilter,
-    LoggingInterceptor,
   ],
 })
 export class CommonModule {} 

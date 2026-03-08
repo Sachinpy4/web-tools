@@ -152,7 +152,7 @@ export function AdminTopbar({ user, onMobileMenuToggle, isMobileMenuOpen = false
               <span className="sr-only">Notifications</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-72 sm:w-80 rounded-xl p-3 sm:p-4">
+          <DropdownMenuContent align="end" className="w-72 sm:w-80 max-w-[calc(100vw-2rem)] rounded-xl p-3 sm:p-4">
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-semibold text-sm sm:text-base">Notifications</h3>
               <Badge variant="outline" className="ml-2 bg-primary/10 hover:bg-primary/20 text-primary text-xs">
@@ -162,7 +162,7 @@ export function AdminTopbar({ user, onMobileMenuToggle, isMobileMenuOpen = false
             <DropdownMenuSeparator />
             <div className="space-y-2 sm:space-y-3 mt-2">
               <div className="flex items-start gap-2 sm:gap-3 p-2 rounded-lg hover:bg-secondary/50 transition-colors">
-                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 flex-shrink-0">
+                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
                   <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -172,7 +172,7 @@ export function AdminTopbar({ user, onMobileMenuToggle, isMobileMenuOpen = false
                 </div>
               </div>
               <div className="flex items-start gap-2 sm:gap-3 p-2 rounded-lg hover:bg-secondary/50 transition-colors">
-                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 flex-shrink-0">
+                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
                   <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -219,7 +219,7 @@ export function AdminTopbar({ user, onMobileMenuToggle, isMobileMenuOpen = false
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-1 sm:gap-2 px-1 sm:px-2 rounded-full h-8 sm:h-10 hover:bg-secondary/50">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary ring-2 ring-background flex-shrink-0">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary ring-2 ring-background shrink-0">
                 <span className="text-xs font-medium">
                   {user?.name?.split(' ').map(n => n[0]).join('') || 'AU'}
                 </span>

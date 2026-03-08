@@ -178,7 +178,7 @@ export class CircuitBreakerService {
    */
   async testMongoDBBreaker(): Promise<{ success: boolean; message: string; stats: any }> {
     try {
-      const result = await this.execute(
+      await this.execute(
         'mongodb',
         async () => {
           // Test MongoDB connection

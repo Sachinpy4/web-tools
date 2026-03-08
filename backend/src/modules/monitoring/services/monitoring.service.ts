@@ -6,7 +6,6 @@ import { CircuitBreakerService } from './circuit-breaker.service';
 import { LoadBalancerService } from './load-balancer.service';
 import { RedisStatusService } from '../../../common/services/redis-status.service';
 import * as os from 'os';
-import { memoryUsage } from 'process';
 
 @Injectable()
 export class MonitoringService {
@@ -134,7 +133,7 @@ export class MonitoringService {
     try {
       // Calculate the start date based on the time range
       const now = new Date();
-      let startDate = new Date(now);
+      const startDate = new Date(now);
 
       switch (timeRange) {
         case 'today':
@@ -258,7 +257,7 @@ export class MonitoringService {
       };
     } catch (error) {
       this.logger.error(`Error fetching tool usage stats: ${error instanceof Error ? error.message : String(error)}`);
-      throw new Error('Failed to retrieve tool usage statistics');
+      throw new Error('Failed to retrieve tool usage statistics', { cause: error });
     }
   }
 
@@ -267,10 +266,8 @@ export class MonitoringService {
    */
   async getSystemHealth() {
     try {
-      // Check database status with timing
-      const mongoStart = Date.now();
+      // Check database status
       const dbStatus = this.connection.readyState === 1;
-      const mongoResponseTime = Date.now() - mongoStart;
 
       // Get system metrics
       const totalMemory = os.totalmem();
@@ -344,7 +341,7 @@ export class MonitoringService {
       };
     } catch (error) {
       this.logger.error(`Health check error: ${error instanceof Error ? error.message : String(error)}`);
-      throw new Error('Failed to retrieve health metrics');
+      throw new Error('Failed to retrieve health metrics', { cause: error });
     }
   }
 

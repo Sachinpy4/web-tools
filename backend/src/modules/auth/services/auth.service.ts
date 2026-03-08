@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
@@ -10,6 +10,8 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private jwtService: JwtService,
@@ -20,7 +22,7 @@ export class AuthService {
    * Register a new user
    */
   async register(registerDto: RegisterDto) {
-    const { name, email, password, role = 'user' } = registerDto;
+    const { name, email, password } = registerDto;
 
     // Check if user already exists
     const userExists = await this.userModel.findOne({ email });
@@ -28,12 +30,12 @@ export class AuthService {
       throw new ConflictException('User already exists');
     }
 
-    // Create new user
+    // Always create as 'user' role — admin roles must be assigned by existing admins
     const user = await this.userModel.create({
       name,
       email,
       password,
-      role,
+      role: 'user',
     });
 
     // Generate JWT token
@@ -286,7 +288,7 @@ export class AuthService {
     user.accountLockedUntil = null;
     await user.save();
 
-    console.log(`🔓 Account unlocked for user ${user.email} by admin`);
+    this.logger.log(`Account unlocked for user ${user.email} by admin`);
 
     return {
       status: 'success',
@@ -344,7 +346,7 @@ export class AuthService {
     user.accountLockedUntil = null;
     await user.save();
 
-    console.log(`🔓 [DEV] Account unlocked for ${user.email} via development endpoint`);
+    this.logger.log(`Account unlocked for ${user.email} via development endpoint`);
 
     return {
       status: 'success',
@@ -363,7 +365,7 @@ export class AuthService {
   private generateToken(payload: JwtPayload): string {
     return this.jwtService.sign(payload, {
       secret: this.configService.get<string>('jwt.secret'),
-      expiresIn: this.configService.get<string>('jwt.expiresIn'),
+      expiresIn: this.configService.get<string>('jwt.expiresIn') as any,
     });
   }
 } 

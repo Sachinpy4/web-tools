@@ -34,22 +34,22 @@ export default function AboutContent() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-blue-500/5 to-teal-500/5"></div>
-        <div className="container mx-auto px-4 relative">
+      <section className="relative py-12 sm:py-16 md:py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-linear-to-br from-purple-500/5 via-blue-500/5 to-teal-500/5"></div>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             className="max-w-4xl mx-auto text-center"
           >
-            <div className="inline-block mb-6 px-6 py-2 rounded-full bg-gradient-to-r from-purple-500/10 to-blue-500/10 text-purple-600 dark:text-purple-400 font-medium text-sm">
+            <div className="inline-block mb-6 px-6 py-2 rounded-full bg-linear-to-r from-purple-500/10 to-blue-500/10 text-purple-600 dark:text-purple-400 font-medium text-sm">
               About ToolsCandy
             </div>
             
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
               Making Image Processing 
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600"> Sweet & Simple</span>
+              <span className="bg-clip-text text-transparent bg-linear-to-r from-purple-600 to-blue-600"> Sweet & Simple</span>
             </h1>
             
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
@@ -62,7 +62,7 @@ export default function AboutContent() {
 
       {/* Mission & Vision */}
       <section className="py-16">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -70,8 +70,8 @@ export default function AboutContent() {
             className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto"
           >
             <motion.div variants={itemVariants}>
-              <Card className="h-full border-2 border-purple-100 dark:border-purple-900/30 bg-gradient-to-br from-purple-50/50 to-transparent dark:from-purple-900/10">
-                <CardContent className="p-8">
+              <Card className="h-full border-2 border-purple-100 dark:border-purple-900/30 bg-linear-to-br from-purple-50/50 to-transparent dark:from-purple-900/10">
+                <CardContent className="p-4 sm:p-6 md:p-8">
                   <div className="bg-purple-500/10 text-purple-600 dark:text-purple-400 p-3 rounded-xl mb-6 inline-block">
                     <Target className="h-8 w-8" />
                   </div>
@@ -85,8 +85,8 @@ export default function AboutContent() {
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <Card className="h-full border-2 border-blue-100 dark:border-blue-900/30 bg-gradient-to-br from-blue-50/50 to-transparent dark:from-blue-900/10">
-                <CardContent className="p-8">
+              <Card className="h-full border-2 border-blue-100 dark:border-blue-900/30 bg-linear-to-br from-blue-50/50 to-transparent dark:from-blue-900/10">
+                <CardContent className="p-4 sm:p-6 md:p-8">
                   <div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 p-3 rounded-xl mb-6 inline-block">
                     <Lightbulb className="h-8 w-8" />
                   </div>
@@ -104,7 +104,7 @@ export default function AboutContent() {
 
       {/* Core Values */}
       <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -124,7 +124,7 @@ export default function AboutContent() {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto"
           >
             <motion.div variants={itemVariants}>
-              <Card className="text-center p-6 h-full hover:shadow-lg transition-all duration-300 border-2 hover:border-purple-200 dark:hover:border-purple-800">
+              <Card className="text-center p-4 sm:p-6 h-full hover:shadow-lg transition-all duration-300 border-2 hover:border-purple-200 dark:hover:border-purple-800">
                 <CardContent className="p-4">
                   <div className="bg-purple-500/10 text-purple-600 dark:text-purple-400 p-4 rounded-xl mb-4 inline-block">
                     <Shield className="h-8 w-8" />
@@ -138,7 +138,7 @@ export default function AboutContent() {
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <Card className="text-center p-6 h-full hover:shadow-lg transition-all duration-300 border-2 hover:border-blue-200 dark:hover:border-blue-800">
+              <Card className="text-center p-4 sm:p-6 h-full hover:shadow-lg transition-all duration-300 border-2 hover:border-blue-200 dark:hover:border-blue-800">
                 <CardContent className="p-4">
                   <div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 p-4 rounded-xl mb-4 inline-block">
                     <Zap className="h-8 w-8" />
@@ -152,7 +152,7 @@ export default function AboutContent() {
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <Card className="text-center p-6 h-full hover:shadow-lg transition-all duration-300 border-2 hover:border-teal-200 dark:hover:border-teal-800">
+              <Card className="text-center p-4 sm:p-6 h-full hover:shadow-lg transition-all duration-300 border-2 hover:border-teal-200 dark:hover:border-teal-800">
                 <CardContent className="p-4">
                   <div className="bg-teal-500/10 text-teal-600 dark:text-teal-400 p-4 rounded-xl mb-4 inline-block">
                     <Globe className="h-8 w-8" />
@@ -166,7 +166,7 @@ export default function AboutContent() {
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <Card className="text-center p-6 h-full hover:shadow-lg transition-all duration-300 border-2 hover:border-amber-200 dark:hover:border-amber-800">
+              <Card className="text-center p-4 sm:p-6 h-full hover:shadow-lg transition-all duration-300 border-2 hover:border-amber-200 dark:hover:border-amber-800">
                 <CardContent className="p-4">
                   <div className="bg-amber-500/10 text-amber-600 dark:text-amber-400 p-4 rounded-xl mb-4 inline-block">
                     <Award className="h-8 w-8" />
@@ -184,7 +184,7 @@ export default function AboutContent() {
 
       {/* Story Section */}
       <section className="py-16">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -220,7 +220,7 @@ export default function AboutContent() {
                       because working with images should be sweet, not bitter.
                     </p>
                     
-                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 p-6 rounded-xl mt-8">
+                    <div className="bg-linear-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 p-6 rounded-xl mt-8">
                       <div className="flex items-center gap-3 mb-4">
                         <Heart className="h-6 w-6 text-red-500" />
                         <span className="font-semibold text-lg">Made with passion</span>
@@ -240,7 +240,7 @@ export default function AboutContent() {
 
       {/* Stats Section */}
       <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

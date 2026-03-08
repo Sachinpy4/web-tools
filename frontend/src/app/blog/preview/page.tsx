@@ -8,9 +8,12 @@ import Link from 'next/link'
 import { toast } from '@/components/ui/use-toast'
 import { Badge } from '@/components/ui/badge'
 import { getProxiedImageUrl } from '@/lib/imageProxy'
-// Import syntax highlighting
-import { lowlight } from 'lowlight'
+import DOMPurify from 'dompurify'
+import { common, createLowlight } from 'lowlight'
 import { toHtml } from 'hast-util-to-html'
+
+// Create lowlight instance with common languages
+const lowlight = createLowlight(common)
 
 export default function BlogPreviewPage() {
   const [blog, setBlog] = useState<any>(null)
@@ -48,8 +51,6 @@ export default function BlogPreviewPage() {
 
   // Add code block copy functionality and syntax highlighting
   useEffect(() => {
-    // lowlight is already initialized with common languages in v2
-
     const addCopyButtonsToCodeBlocks = () => {
       const codeBlocks = document.querySelectorAll('pre:not([data-copy-processed])')
       
@@ -230,12 +231,19 @@ export default function BlogPreviewPage() {
     )
   }
   
-  // Function to process blog content and replace backend URLs with proxied ones
   const processContentImages = (htmlContent: string): string => {
     if (!htmlContent) return htmlContent
-    
-    // Replace backend image URLs in the HTML content with proxied URLs
-    return htmlContent.replace(
+
+    // Sanitize HTML to prevent XSS
+    const sanitized = typeof window !== 'undefined'
+      ? DOMPurify.sanitize(htmlContent, {
+          ADD_TAGS: ['iframe'],
+          ADD_ATTR: ['target', 'rel', 'allowfullscreen', 'frameborder', 'loading'],
+          ALLOW_DATA_ATTR: false,
+        })
+      : htmlContent
+
+    return sanitized.replace(
       /src="([^"]*\/api\/media\/file\/[^"]*)"/g,
       (match, url) => {
         const proxiedUrl = getProxiedImageUrl(url)

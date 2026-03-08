@@ -14,11 +14,54 @@ export interface ApiRequestOptions {
   headers?: Record<string, string>;
   requireAuth?: boolean;
   isFormData?: boolean; // New option for FormData support
+  responseType?: 'json' | 'blob'; // Response type - blob for file downloads
   noRedirect?: boolean; // Option to prevent automatic redirects on auth errors
   retry?: number; // Number of retries for failed requests
   retryDelay?: number; // Delay between retries in ms
   // Circuit breaker options
   bypassCircuitBreaker?: boolean; // Option to bypass circuit breaker
+}
+
+// Rate limit information from API responses
+export interface RateLimitInfo {
+  limit: string | null;
+  remaining: string | null;
+  reset: string | null;
+  resetAfter: string | null;
+  retryAfter: string | null;
+}
+
+// API Error details interface
+export interface ApiErrorDetails {
+  status: number;
+  rateLimitInfo: RateLimitInfo | null;
+  data: Record<string, unknown> | null;
+  response: { status: number; data: Record<string, unknown> | null };
+  validation: boolean;
+}
+
+// Custom API Error class with typed properties
+export class ApiError extends Error {
+  status: number;
+  rateLimitInfo: RateLimitInfo | null;
+  data: Record<string, unknown> | null;
+  response: { status: number; data: Record<string, unknown> | null };
+  validation: boolean;
+
+  constructor(message: string, details: ApiErrorDetails) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = details.status;
+    this.rateLimitInfo = details.rateLimitInfo;
+    this.data = details.data;
+    this.response = details.response;
+    this.validation = details.validation;
+
+    // Maintains proper stack trace for where error was thrown (V8 only)
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, ApiError);
+    }
+  }
 }
 
 // Track failed endpoints to avoid repeated toasts
@@ -35,7 +78,7 @@ interface CircuitBreakerState {
 
 const circuitBreaker: CircuitBreakerState = {
   isOpen: false,
-  failureCount: 0, 
+  failureCount: 0,
   lastFailureTime: 0,
   nextAttemptTime: 0
 };
@@ -48,14 +91,14 @@ const MAX_CIRCUIT_RESET_TIMEOUT = 2 * 60 * 1000; // Cap at 2 minutes
 // Check if circuit breaker is open for all non-essential requests
 const isCircuitOpen = (): boolean => {
   const now = Date.now();
-  
+
   // If the circuit is open but it's time to try again, allow one request through
   if (circuitBreaker.isOpen && now >= circuitBreaker.nextAttemptTime) {
     // Allow this request through but keep the circuit open
     // If this request succeeds, the circuit will be reset in the main function
     return false;
   }
-  
+
   return circuitBreaker.isOpen;
 };
 
@@ -63,13 +106,13 @@ const isCircuitOpen = (): boolean => {
 const openCircuitBreaker = (): void => {
   circuitBreaker.isOpen = true;
   circuitBreaker.lastFailureTime = Date.now();
-  
+
   // Calculate backoff time - exponential with maximum cap
   const backoffMs = Math.min(
     CIRCUIT_RESET_TIMEOUT_BASE * Math.pow(2, Math.min(circuitBreaker.failureCount, 6)),
     MAX_CIRCUIT_RESET_TIMEOUT
   );
-  
+
   circuitBreaker.nextAttemptTime = Date.now() + backoffMs;
 };
 
@@ -106,6 +149,7 @@ export async function apiRequest<T>(
     headers = {},
     requireAuth = false,
     isFormData = false,
+    responseType = 'json',
     noRedirect = false,
     retry = 1, // Default to 1 retry
     retryDelay = 500, // Default delay of 500ms
@@ -130,7 +174,7 @@ export async function apiRequest<T>(
       const requestHeaders: Record<string, string> = {
         ...headers,
       };
-      
+
       // Only set Content-Type to application/json if not form data
       if (!isFormData) {
         requestHeaders['Content-Type'] = 'application/json';
@@ -138,6 +182,11 @@ export async function apiRequest<T>(
 
       // Add authorization header if needed
       if (requireAuth) {
+        // Guard against SSR - localStorage only available in browser
+        if (typeof window === 'undefined') {
+          throw new Error('Authentication required (SSR context)');
+        }
+        
         // Ensure we're getting the latest token from localStorage
         const token = localStorage.getItem('token');
         if (!token) {
@@ -145,17 +194,21 @@ export async function apiRequest<T>(
           if (!noRedirect) {
             window.location.href = `/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`;
           }
-          
+
           throw new Error('Authentication required');
         }
         requestHeaders['Authorization'] = `Bearer ${token}`;
       }
 
-      // Prepare request options
+      // Prepare request options with AbortController for 30s timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
       const requestOptions: RequestInit = {
         method,
         headers: requestHeaders,
         credentials: 'include', // Include cookies for cross-origin requests
+        signal: controller.signal,
       };
 
       // Add body for non-GET requests
@@ -167,22 +220,24 @@ export async function apiRequest<T>(
         }
       }
 
-      const response = await fetch(url, requestOptions);
-      
-      // On successful response, reset circuit breaker
-      resetCircuitBreaker();
-      
-      // Handle HTTP errors
+      let response: Response;
+      try {
+        response = await fetch(url, requestOptions);
+      } finally {
+        clearTimeout(timeoutId);
+      }
+
+      // Handle HTTP errors before resetting circuit breaker
       if (!response.ok) {
         let errorMessage = `API Error: ${response.status} ${response.statusText}`;
-        let rateLimitInfo = null;
-        let errorData = null;
-        
+        let rateLimitInfo: RateLimitInfo | null = null;
+        let errorData: Record<string, unknown> | null = null;
+
         try {
           // Try to parse error message from response
           errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-          
+          errorMessage = (errorData?.message as string) || errorMessage;
+
           // Store rate limit information from headers if available
           if (response.status === 429) {
             rateLimitInfo = {
@@ -192,7 +247,7 @@ export async function apiRequest<T>(
               resetAfter: response.headers.get('RateLimit-Reset-After'),
               retryAfter: response.headers.get('Retry-After')
             };
-            
+
             // Enhance the error message with rate limit info
             if (rateLimitInfo.retryAfter) {
               errorMessage = `You've reached your limit. It will reset after ${rateLimitInfo.retryAfter} seconds.`;
@@ -206,24 +261,16 @@ export async function apiRequest<T>(
         } catch (e) {
           // If response is not JSON, use status text
         }
-        
-        const error = new Error(errorMessage);
-        // @ts-ignore
-        error.status = response.status;
-        // @ts-ignore
-        error.rateLimitInfo = rateLimitInfo;
-        // @ts-ignore
-        error.data = errorData;
-        // @ts-ignore
-        error.response = { status: response.status, data: errorData };
-        
-        // Handle specific validation errors for forms
-        if (response.status === 400) {
-          // Add validation details to the error
-          // @ts-ignore
-          error.validation = true;
-        }
-        
+
+        // Create typed API error
+        const error = new ApiError(errorMessage, {
+          status: response.status,
+          rateLimitInfo,
+          data: errorData,
+          response: { status: response.status, data: errorData },
+          validation: response.status === 400
+        });
+
         // Handle auth errors
         if (response.status === 401 && !noRedirect) {
           // Only redirect if we're not already on the login page
@@ -233,49 +280,57 @@ export async function apiRequest<T>(
             window.location.href = `/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`;
           }
         }
-        
+
         throw error;
       }
-      
+
+      // Successful response — reset circuit breaker
+      resetCircuitBreaker();
+
+      // Clear this endpoint from the failed endpoints list if it was previously failed
+      if (failedEndpoints.has(endpoint)) {
+        clearFailedEndpoint(endpoint);
+      }
+
+      // Handle blob response (e.g. file downloads)
+      if (responseType === 'blob') {
+        return (await response.blob()) as unknown as T;
+      }
+
       // Try to parse as JSON, or return text
       try {
-        const data = await response.json();
-        
-        // Clear this endpoint from the failed endpoints list if it was previously failed
-        if (failedEndpoints.has(endpoint)) {
-          clearFailedEndpoint(endpoint);
-        }
-        
-        return data as T;
-      } catch (e) {
-        // If not JSON, return as text
         const text = await response.text();
-        
-        // Clear this endpoint from the failed endpoints list if it was previously failed
+
+        try {
+          return JSON.parse(text) as T;
+        } catch {
+          // If not valid JSON, return as text
+          return text as unknown as T;
+        }
+      } catch (e) {
         if (failedEndpoints.has(endpoint)) {
           clearFailedEndpoint(endpoint);
         }
-        
-        return text as unknown as T;
+        throw new Error('Failed to read response body');
       }
     } catch (error) {
       // Check for network errors that might indicate server is down
-      const isNetworkError = 
-        error instanceof TypeError && 
-        (error.message.includes('Failed to fetch') || 
-         error.message.includes('NetworkError') ||
-         error.message.includes('Network request failed'));
-      
+      const isNetworkError =
+        error instanceof TypeError &&
+        (error.message.includes('Failed to fetch') ||
+          error.message.includes('NetworkError') ||
+          error.message.includes('Network request failed'));
+
       if (isNetworkError) {
         // Increment circuit breaker failure count
         circuitBreaker.failureCount++;
-        
+
         // Open circuit breaker if threshold reached
         if (circuitBreaker.failureCount >= CIRCUIT_OPEN_THRESHOLD) {
           openCircuitBreaker();
         }
       }
-      
+
       // Only retry on network errors (or other errors that might be temporary)
       if (attemptsLeft > 0 && isNetworkError) {
         // Wait before retrying
@@ -283,18 +338,18 @@ export async function apiRequest<T>(
         // Attempt retry with one less attempt remaining
         return makeRequest(attemptsLeft - 1);
       }
-      
+
       // Errors are handled by the calling functions
-      
+
       // Only show a toast if this endpoint hasn't failed recently
       if (!failedEndpoints.has(endpoint)) {
         failedEndpoints.add(endpoint);
-        
+
         // Set a timeout to clear this endpoint from the failed list
         failedEndpointTimeouts[endpoint] = setTimeout(() => {
           clearFailedEndpoint(endpoint);
         }, 30000); // Clear after 30 seconds
-        
+
         // Show a user-friendly toast for non-health check endpoints
         if (endpoint !== 'health') {
           toast({
@@ -304,12 +359,12 @@ export async function apiRequest<T>(
           });
         }
       }
-      
+
       // Re-throw for caller to handle
       throw error;
     }
   };
-  
+
   // Start the request process with the specified number of retries
   return makeRequest(retry);
 } 

@@ -8,7 +8,6 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { Logger } from '@nestjs/common';
 import { SanitizationPipe } from './common/pipes/sanitization.pipe';
-import { AdvancedSecurityGuard } from './common/guards/advanced-security.guard';
 import { Reflector } from '@nestjs/core';
 
 // CRITICAL PERFORMANCE OPTIMIZATION: Configure Sharp for optimal performance
@@ -16,12 +15,13 @@ import Sharp from 'sharp';
 
 // Import worker setup (same pattern as original backend)
 import { startImageWorkers } from './worker';
+import * as os from 'os';
 
 // CRITICAL PERFORMANCE FIX: Configure Sharp for high-performance concurrent processing
 const configureSharpPerformance = () => {
   try {
     // Set Sharp concurrency to utilize all CPU cores efficiently
-    const cpuCount = require('os').cpus().length;
+    const cpuCount = os.cpus().length;
     const optimalConcurrency = Math.max(1, Math.floor(cpuCount * 0.8)); // Use 80% of CPU cores
     
     Sharp.concurrency(optimalConcurrency);
@@ -34,43 +34,20 @@ const configureSharpPerformance = () => {
       items: 200   // Cache 200 metadata items
     });
     
-    // Disable Sharp's internal queue to let BullMQ handle queuing
-    Sharp.queue.on('change', (queueLength) => {
-      if (queueLength > 50) {
-        console.warn(`⚠️ Sharp internal queue growing: ${queueLength} operations pending`);
-      }
-    });
-    
-    console.log('✅ Sharp performance optimizations applied');
+    console.log('Sharp performance optimizations applied');
   } catch (error) {
     console.warn('⚠️ Failed to configure Sharp performance optimizations:', error.message);
   }
 };
 
-// CRITICAL PERFORMANCE FIX: Set Node.js performance optimizations
-const configureNodePerformance = () => {
-  try {
-    // Set optimal garbage collection for image processing workloads
-    if (process.env.NODE_ENV === 'production') {
-      // Enable incremental GC for better performance with large files
-      process.env.NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + ' --incremental-marking --max-old-space-size=8192 --expose-gc';
-    } else {
-      // Enable GC in development for better file cleanup
-      process.env.NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + ' --expose-gc';
-    }
-    
-    // Set optimal UV thread pool size for file operations
-    process.env.UV_THREADPOOL_SIZE = process.env.UV_THREADPOOL_SIZE || '16';
-    
-    console.log('✅ Node.js performance optimizations applied');
-  } catch (error) {
-    console.warn('⚠️ Failed to configure Node.js performance optimizations:', error.message);
-  }
-};
+// NOTE: UV_THREADPOOL_SIZE must be set before Node starts (via env or npm script).
+// Setting it here has no effect — libuv reads it at process startup only.
 
-// Apply performance optimizations before app initialization
+// NOTE: Node.js flags like --max-old-space-size, --expose-gc, --incremental-marking
+// must be set via CLI args or NODE_OPTIONS BEFORE process startup (in package.json scripts).
+
+// Apply Sharp performance optimizations before app initialization
 configureSharpPerformance();
-configureNodePerformance();
 
 // Handle Bull.js Redis connection errors gracefully
 process.on('unhandledRejection', (reason, promise) => {
@@ -102,21 +79,9 @@ process.on('unhandledRejection', (reason, promise) => {
   }
 });
 
-// Handle uncaught exceptions as well
+// Uncaught exceptions should crash the process — continuing is unsafe
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
-  
-  // Don't crash for Redis-related errors
-  if (error.message && (
-    error.message.includes('Redis') ||
-    error.message.includes('Connection is closed') ||
-    error.message.includes('ECONNREFUSED')
-  )) {
-    console.warn('⚠️ Redis-related uncaught exception handled gracefully');
-    return;
-  }
-  
-  // Exit for other uncaught exceptions
   process.exit(1);
 });
 
@@ -141,10 +106,10 @@ async function bootstrap() {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdnjs.cloudflare.com', 'https://cdn.jsdelivr.net'],
+        scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com', 'https://cdn.jsdelivr.net'],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
-        imgSrc: ["'self'", '*', 'data:', 'blob:'],
+        imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
                  connectSrc: ["'self'", configService.get<string>('frontendUrl') || 'http://localhost:3000', 'https://toolscandy.com', 'https://*.toolscandy.com'],
         objectSrc: ["'none'"],
         mediaSrc: ["'self'", 'blob:', 'data:'],
@@ -168,11 +133,11 @@ async function bootstrap() {
     referrerPolicy: { policy: "strict-origin-when-cross-origin" }
   }));
 
-  // Logging middleware (same as Express version)
-  app.use(morgan('dev'));
+  app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
   // Global sanitization pipe (applied first, with smart filtering)
-  app.useGlobalPipes(new SanitizationPipe());
+  // Pass Reflector so @SkipSanitization decorator works
+  app.useGlobalPipes(new SanitizationPipe(app.get(Reflector)));
 
   // Global validation pipe
   app.useGlobalPipes(
@@ -189,21 +154,23 @@ async function bootstrap() {
   // Global exception filter
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Advanced security guard (only for high-risk endpoints)
-  app.useGlobalGuards(new AdvancedSecurityGuard(app.get(Reflector)));
+  // Advanced security guard is registered via APP_GUARD in CommonModule
+  // This ensures lifecycle hooks (onModuleDestroy) are called properly
 
   // API prefix (same as Express version)
   app.setGlobalPrefix('api');
 
-  // Swagger documentation
-  const config = new DocumentBuilder()
-    .setTitle('Web Tools API')
-    .setDescription('Image processing and web tools API')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  // Swagger documentation (disabled in production to avoid exposing API schema)
+  if (process.env.NODE_ENV !== 'production') {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Web Tools API')
+      .setDescription('Image processing and web tools API')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('api/docs', app, swaggerDocument);
+  }
 
   await app.listen(port);
   
@@ -212,11 +179,10 @@ async function bootstrap() {
 
   // Start image workers automatically (same as original backend)
   try {
-    const workerResult = await startImageWorkers(app);
+    await startImageWorkers(app);
     logger.log('✅ Image workers started successfully');
   } catch (error) {
     logger.error('❌ Failed to start image workers:', error);
-    // Don't exit - server can run without workers for direct processing
   }
 }
 

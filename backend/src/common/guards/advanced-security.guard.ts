@@ -3,7 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 
 // Decorator to skip advanced security for specific endpoints  
-export const SkipAdvancedSecurity = () => Reflector.createDecorator<boolean>()();
+export const SkipAdvancedSecurity = Reflector.createDecorator<boolean>();
 
 @Injectable()
 export class AdvancedSecurityGuard implements CanActivate {
@@ -11,8 +11,18 @@ export class AdvancedSecurityGuard implements CanActivate {
   private readonly suspiciousIPs = new Map<string, { count: number; lastAttempt: number }>();
   private readonly rateLimitWindow = 60000; // 1 minute
   private readonly maxSuspiciousRequests = 10;
+  private readonly cleanupInterval: NodeJS.Timeout;
 
-  constructor(private reflector: Reflector) {}
+  constructor(private reflector: Reflector) {
+    // Periodic cleanup of stale IP entries to prevent unbounded memory growth
+    this.cleanupInterval = setInterval(() => this.cleanupStaleEntries(), 5 * 60 * 1000); // Every 5 minutes
+  }
+
+  onModuleDestroy() {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
+  }
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Request>();
@@ -100,10 +110,14 @@ export class AdvancedSecurityGuard implements CanActivate {
   }
 
   private getClientIP(request: Request): string {
+    const forwarded = request.headers['x-forwarded-for'];
+    const forwardedValue = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+    const realIp = request.headers['x-real-ip'];
+    const realIpValue = Array.isArray(realIp) ? realIp[0] : realIp;
+    
     return (
-      request.headers['x-forwarded-for'] as string ||
-      request.headers['x-real-ip'] as string ||
-      request.connection.remoteAddress ||
+      forwardedValue ||
+      realIpValue ||
       request.socket.remoteAddress ||
       'unknown'
     ).split(',')[0].trim();
@@ -138,8 +152,10 @@ export class AdvancedSecurityGuard implements CanActivate {
     }
   }
 
-  private containsMaliciousPatterns(body: any, query: any, url: string): boolean {
-    const allData = JSON.stringify({ body, query, url }).toLowerCase();
+  private containsMaliciousPatterns(_body: any, query: any, url: string): boolean {
+    // Only check URL and query params — not body content, which may contain
+    // legitimate text mentioning SQL keywords, dollar signs, etc.
+    const urlAndQueryData = JSON.stringify({ query, url }).toLowerCase();
 
     // SQL injection patterns
     const sqlPatterns = [
@@ -153,7 +169,7 @@ export class AdvancedSecurityGuard implements CanActivate {
       /execute\s*\(/i,
     ];
 
-    // NoSQL injection patterns
+    // NoSQL injection patterns (only in URL/query, not body)
     const nosqlPatterns = [
       /\$where/i,
       /\$ne/i,
@@ -184,7 +200,7 @@ export class AdvancedSecurityGuard implements CanActivate {
 
     const allPatterns = [...sqlPatterns, ...nosqlPatterns, ...xssPatterns, ...commandPatterns];
     
-    return allPatterns.some(pattern => pattern.test(allData));
+    return allPatterns.some(pattern => pattern.test(urlAndQueryData));
   }
 
   private isSuspiciousUserAgent(userAgent: string): boolean {
@@ -202,5 +218,22 @@ export class AdvancedSecurityGuard implements CanActivate {
     ];
 
     return suspiciousPatterns.some(pattern => pattern.test(userAgent));
+  }
+
+  /**
+   * Periodic cleanup of stale IP entries to prevent unbounded memory growth
+   */
+  private cleanupStaleEntries(): void {
+    const now = Date.now();
+    let cleaned = 0;
+    for (const [ip, record] of this.suspiciousIPs.entries()) {
+      if (now - record.lastAttempt > this.rateLimitWindow * 2) {
+        this.suspiciousIPs.delete(ip);
+        cleaned++;
+      }
+    }
+    if (cleaned > 0) {
+      this.logger.debug(`Cleaned ${cleaned} stale IP entries from security guard`);
+    }
   }
 } 

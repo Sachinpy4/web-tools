@@ -14,6 +14,16 @@ import { generateOrganizationSchema, generateWebSiteSchema, renderJsonLd } from 
 // Using system font stack for optimal performance
 const fontStack = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
 
+// Get backend URL from environment variable
+const getBackendHost = () => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+  try {
+    return new URL(apiUrl).origin
+  } catch {
+    return 'http://localhost:5000'
+  }
+}
+
 // Only keep essential metadata that won't conflict with page-specific SEO
 export const metadata: Metadata = {
   icons: {
@@ -58,28 +68,31 @@ export default function RootLayout({
         
         {/* Critical resource preloads for performance */}
         {/* DNS prefetch for external resources */}
-        <link rel="dns-prefetch" href="https://tools-backend.z4bapj.easypanel.host" />
+        <link rel="dns-prefetch" href={getBackendHost()} />
         {/* Inline critical CSS for faster rendering */}
         <style dangerouslySetInnerHTML={{
           __html: `
             html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.6;scroll-behavior:smooth;max-width:100vw;overflow-x:hidden}
-            body{margin:0;padding:0;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;max-width:100vw}
+            body{margin:0;padding:0;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;max-width:100vw}
             *,*::before,*::after{box-sizing:border-box}
-            header{position:fixed;top:0;left:0;right:0;z-index:50;height:4rem;backdrop-filter:blur(8px);will-change:transform}
-            main{padding-top:4rem;min-height:100vh;flex:1;display:flex;flex-direction:column}
+            header{position:fixed;top:env(safe-area-inset-top,0);left:0;right:0;z-index:50;height:4rem;backdrop-filter:blur(8px);will-change:transform}
+            main{padding-top:calc(4rem + env(safe-area-inset-top,0px));min-height:100vh;flex:1;display:flex;flex-direction:column}
             .hero-section{padding:3rem 1rem;text-align:center;contain:layout paint}
-            .container{max-width:1200px;margin:0 auto}
+            .container{max-width:1200px;margin:0 auto;padding-left:1rem;padding-right:1rem}
             img{max-width:100%;height:auto;loading:lazy;display:block}
             button{cursor:pointer;font-family:inherit}
             a{color:inherit;text-decoration:none}
             .loading{opacity:0;animation:fadeIn 0.3s ease forwards}
             @keyframes fadeIn{to{opacity:1}}
-            @media(max-width:768px){.hero-section{padding:2rem 1rem}}
+            @media(max-width:479px){.hero-section{padding:1.5rem 0.75rem}.container{padding-left:0.75rem;padding-right:0.75rem}}
+            @media(min-width:480px) and (max-width:767px){.hero-section{padding:2rem 1rem}}
+            @media(min-width:768px){.container{padding-left:1.5rem;padding-right:1.5rem}}
+            @media(min-width:1024px){.hero-section{padding:3rem 2rem}.container{padding-left:2rem;padding-right:2rem}}
             @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important}}
           `
         }} />
         {/* Resource hints for performance */}
-        <link rel="preconnect" href="https://tools-backend.z4bapj.easypanel.host" />
+        <link rel="preconnect" href={getBackendHost()} />
         <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
       </head>

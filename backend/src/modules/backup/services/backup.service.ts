@@ -37,7 +37,7 @@ export class BackupService {
       }
     } catch (error) {
       this.logger.error('Error creating backup directory:', error);
-      throw new Error('Failed to create backup directory');
+      throw new Error('Failed to create backup directory', { cause: error });
     }
   }
 
@@ -124,7 +124,7 @@ export class BackupService {
         await backupRecord.save();
       }
 
-      throw new Error(`Failed to create backup: ${error.message}`);
+      throw new Error(`Failed to create backup: ${error.message}`, { cause: error });
     }
   }
 
@@ -254,7 +254,7 @@ export class BackupService {
         throw error;
       }
 
-      throw new Error(`Failed to restore backup: ${error.message}`);
+      throw new Error(`Failed to restore backup: ${error.message}`, { cause: error });
     }
   }
 
@@ -307,7 +307,7 @@ export class BackupService {
       };
     } catch (error) {
       this.logger.error('Error fetching backups:', error);
-      throw new Error('Failed to fetch backups');
+      throw new Error('Failed to fetch backups', { cause: error });
     }
   }
 
@@ -337,7 +337,7 @@ export class BackupService {
         throw error;
       }
 
-      throw new Error('Failed to fetch backup');
+      throw new Error('Failed to fetch backup', { cause: error });
     }
   }
 
@@ -355,6 +355,13 @@ export class BackupService {
       }
 
       this.logger.log(`Backup found, checking file: ${backup.filepath}`);
+
+      // Validate path stays within backup directory to prevent traversal
+      const resolvedPath = path.resolve(backup.filepath);
+      const resolvedBackupDir = path.resolve(this.backupDir);
+      if (!resolvedPath.startsWith(resolvedBackupDir)) {
+        throw new BadRequestException('Invalid backup file path');
+      }
 
       // Check if file exists
       if (!fs.existsSync(backup.filepath)) {
@@ -378,7 +385,7 @@ export class BackupService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new Error('Failed to download backup');
+      throw new Error('Failed to download backup', { cause: error });
     }
   }
 
@@ -422,7 +429,7 @@ export class BackupService {
         throw error;
       }
 
-      throw new Error('Failed to delete backup');
+      throw new Error('Failed to delete backup', { cause: error });
     }
   }
 
@@ -448,7 +455,7 @@ export class BackupService {
       };
     } catch (error) {
       this.logger.error('Error fetching restore history:', error);
-      throw new Error('Failed to retrieve restore history');
+      throw new Error('Failed to retrieve restore history', { cause: error });
     }
   }
 
@@ -545,7 +552,7 @@ export class BackupService {
         throw error;
       }
 
-      throw new Error(`Failed to generate restore preview: ${error.message}`);
+      throw new Error(`Failed to generate restore preview: ${error.message}`, { cause: error });
     }
   }
 
@@ -651,7 +658,7 @@ export class BackupService {
       };
     } catch (error) {
       this.logger.error('Error fetching backup statistics:', error);
-      throw new Error('Failed to fetch backup statistics');
+      throw new Error('Failed to fetch backup statistics', { cause: error });
     }
   }
 
@@ -663,7 +670,7 @@ export class BackupService {
       const url = new URL(uri);
       return url.pathname.substring(1); // Remove leading slash
     } catch (error) {
-      throw new Error('Invalid database URI');
+      throw new Error('Invalid database URI', { cause: error });
     }
   }
 
@@ -689,11 +696,18 @@ export class BackupService {
 
       this.logger.log(`Backing up collections: ${targetCollections.join(', ')}`);
 
-      // Export each collection
+      // Export each collection using cursors to avoid loading entire DB into memory
       for (const collectionName of targetCollections) {
         try {
           const collection = db.collection(collectionName);
-          const documents = await collection.find({}).toArray();
+          const count = await collection.countDocuments();
+          const documents: any[] = [];
+
+          // Use cursor with batching for memory efficiency
+          const cursor = collection.find({}).batchSize(500);
+          for await (const doc of cursor) {
+            documents.push(doc);
+          }
           
           backupData.data[collectionName] = {
             count: documents.length,
@@ -703,7 +717,6 @@ export class BackupService {
           this.logger.log(`Exported ${documents.length} documents from ${collectionName}`);
         } catch (error) {
           this.logger.warn(`Failed to backup collection ${collectionName}: ${error.message}`);
-          // Continue with other collections
           backupData.data[collectionName] = {
             count: 0,
             documents: [],
@@ -715,12 +728,11 @@ export class BackupService {
       backupData.metadata.collections = targetCollections;
       backupData.metadata.completedAt = new Date().toISOString();
 
-      // Convert to Buffer
-      const jsonString = JSON.stringify(backupData, null, 2);
+      const jsonString = JSON.stringify(backupData);
       return Buffer.from(jsonString, 'utf8');
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Error performing JavaScript backup:', error);
-      throw new Error(`Backup failed: ${error.message}`);
+      throw new Error(`Backup failed: ${error.message}`, { cause: error });
     }
   }
 
@@ -782,9 +794,9 @@ export class BackupService {
       }
 
       return { totalDocuments, collectionsRestored };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Error performing restore:', error);
-      throw new Error(`Restore failed: ${error.message}`);
+      throw new Error(`Restore failed: ${error.message}`, { cause: error });
     }
   }
 

@@ -26,16 +26,13 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
-  FileText,
-  Calendar,
-  ArrowRight,
   Settings,
   Eye,
   PlayCircle,
   Sparkles,
   Zap
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { withAdminAuth } from '@/middleware/authCheck'
 import { apiRequest } from '@/lib/apiClient'
 import { toast } from '@/components/ui/use-toast'
@@ -295,31 +292,24 @@ function BackupManagement() {
   // Download backup
   const handleDownloadBackup = async (backupId: string, filename: string) => {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
-      const response = await fetch(`${baseUrl}/admin/backup/${backupId}/download`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      const blob = await apiRequest<Blob>(`admin/backup/${backupId}/download`, {
+        requireAuth: true,
+        responseType: 'blob'
       })
 
-      if (response.ok) {
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = filename
-        document.body.appendChild(a)
-        a.click()
-        window.URL.revokeObjectURL(url)
-        document.body.removeChild(a)
-        
-        toast({
-          title: "📥 Download Started",
-          description: `Downloading ${filename}`,
-        })
-      } else {
-        throw new Error('Download failed')
-      }
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      toast({
+        title: "📥 Download Started",
+        description: `Downloading ${filename}`,
+      })
     } catch (error) {
       console.error('Download failed:', error)
       toast({
@@ -405,16 +395,12 @@ function BackupManagement() {
         formData.append('collections', restoreForm.collections.join(','))
       }
 
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
-      const response = await fetch(`${baseUrl}/backup/restore/upload`, {
+      const result = await apiRequest<{ status: string; message?: string }>('backup/restore/upload', {
         method: 'POST',
         body: formData,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        isFormData: true,
+        requireAuth: true
       })
-
-      const result = await response.json()
 
       if (result.status === 'success') {
         toast({
@@ -565,12 +551,12 @@ function BackupManagement() {
     >
       {/* Header */}
       <motion.div variants={itemVariants}>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-violet-500 bg-clip-text text-transparent">
+            <h1 className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-pink-500 via-purple-500 to-violet-500 bg-clip-text text-transparent">
               Database Backup & Restore
             </h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-sm sm:text-base text-muted-foreground mt-2">
               Manage database backups and restore operations safely
             </p>
           </div>
@@ -652,7 +638,7 @@ function BackupManagement() {
       {/* Main Content */}
       <motion.div variants={itemVariants}>
         <Tabs defaultValue="backup" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
             <TabsTrigger value="backup">Create Backup</TabsTrigger>
             <TabsTrigger value="restore">Restore</TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>
@@ -772,7 +758,7 @@ function BackupManagement() {
                     activeOperation === 'creating' || 
                     (createBackupForm.type === 'selective' && createBackupForm.collections.length === 0)
                   }
-                  className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-violet-500 hover:from-pink-600 hover:via-purple-600 hover:to-violet-600"
+                  className="w-full bg-linear-to-r from-pink-500 via-purple-500 to-violet-500 hover:from-pink-600 hover:via-purple-600 hover:to-violet-600"
                 >
                   {activeOperation === 'creating' ? (
                     <>
@@ -1015,11 +1001,11 @@ function BackupManagement() {
                     backupHistory.map((backup) => (
                       <div
                         key={backup._id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                       >
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{backup.originalName}</span>
+                        <div className="space-y-1 min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-medium truncate max-w-[200px] sm:max-w-none">{backup.originalName}</span>
                             {getStatusBadge(backup.status)}
                             <Badge variant="outline" className="text-xs">
                               {backup.type}
@@ -1105,11 +1091,11 @@ function BackupManagement() {
                     restoreHistory.map((restore) => (
                       <div
                         key={restore._id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                       >
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">
+                        <div className="space-y-1 min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-medium truncate max-w-[200px] sm:max-w-none">
                               {restore.sourceType === 'existing_backup' 
                                 ? (restore.sourceBackupId?.originalName || restore.sourceBackupName || 'Unknown Backup')
                                 : (restore.uploadedFileName || 'Uploaded File')

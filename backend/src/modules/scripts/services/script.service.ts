@@ -28,7 +28,7 @@ export class ScriptService {
       };
     } catch (error) {
       this.logger.error('Error fetching scripts:', error);
-      throw new Error('Failed to fetch scripts');
+      throw new Error('Failed to fetch scripts', { cause: error });
     }
   }
 
@@ -57,7 +57,7 @@ export class ScriptService {
       const scripts = await this.scriptModel
         .find(query)
         .sort({ priority: 1, createdAt: 1 })
-        .select('content placement priority platform');
+        .select('content placement priority platform targetPages excludePages');
 
       // Filter scripts based on page targeting
       const filteredScripts = scripts.filter((script: any) => {
@@ -86,7 +86,7 @@ export class ScriptService {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new Error('Failed to fetch scripts');
+      throw new Error('Failed to fetch scripts', { cause: error });
     }
   }
 
@@ -127,7 +127,7 @@ export class ScriptService {
         throw new BadRequestException(error.message);
       }
 
-      throw new Error('Failed to create script');
+      throw new Error('Failed to create script', { cause: error });
     }
   }
 
@@ -169,7 +169,7 @@ export class ScriptService {
         throw new BadRequestException(error.message);
       }
 
-      throw new Error('Failed to update script');
+      throw new Error('Failed to update script', { cause: error });
     }
   }
 
@@ -197,7 +197,7 @@ export class ScriptService {
         throw error;
       }
 
-      throw new Error('Failed to delete script');
+      throw new Error('Failed to delete script', { cause: error });
     }
   }
 
@@ -225,7 +225,7 @@ export class ScriptService {
         throw error;
       }
 
-      throw new Error('Failed to fetch script');
+      throw new Error('Failed to fetch script', { cause: error });
     }
   }
 
@@ -257,7 +257,7 @@ export class ScriptService {
         throw error;
       }
 
-      throw new Error('Failed to toggle script status');
+      throw new Error('Failed to toggle script status', { cause: error });
     }
   }
 
@@ -277,7 +277,7 @@ export class ScriptService {
       };
     } catch (error) {
       this.logger.error('Error fetching scripts by platform:', error);
-      throw new Error('Failed to fetch scripts by platform');
+      throw new Error('Failed to fetch scripts by platform', { cause: error });
     }
   }
 
@@ -335,7 +335,7 @@ export class ScriptService {
       };
     } catch (error) {
       this.logger.error('Error fetching script statistics:', error);
-      throw new Error('Failed to fetch script statistics');
+      throw new Error('Failed to fetch script statistics', { cause: error });
     }
   }
 } 

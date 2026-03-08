@@ -17,28 +17,28 @@ interface SeoData {
 }
 
 // Define valid OpenGraph types
-type OpenGraphType = 
-  | 'website' 
-  | 'article' 
-  | 'book' 
+type OpenGraphType =
+  | 'website'
+  | 'article'
+  | 'book'
   | 'profile'
-  | 'music.song' 
-  | 'music.album' 
-  | 'music.playlist' 
+  | 'music.song'
+  | 'music.album'
+  | 'music.playlist'
   | 'music.radio_station'
-  | 'video.movie' 
-  | 'video.episode' 
-  | 'video.tv_show' 
+  | 'video.movie'
+  | 'video.episode'
+  | 'video.tv_show'
   | 'video.other';
 
 // Helper to convert ogType from SeoData to valid OpenGraph type
 function getValidOgType(ogType: string): OpenGraphType {
   const validTypes = [
-    'website', 'article', 'book', 'profile', 
+    'website', 'article', 'book', 'profile',
     'music.song', 'music.album', 'music.playlist', 'music.radio_station',
     'video.movie', 'video.episode', 'video.tv_show', 'video.other'
   ];
-  
+
   return (validTypes.includes(ogType) ? ogType : 'website') as OpenGraphType;
 }
 
@@ -46,29 +46,29 @@ function getValidOgType(ogType: string): OpenGraphType {
 export async function getServerSideMetadata(pagePath: string): Promise<Metadata> {
   // Get API URL from environment variable
   let apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  
+
   if (!apiUrl) {
     return generateMetadataFromFallback(pagePath);
   }
-  
+
   try {
     // Fix any trailing slashes and ensure path is properly formed
     if (apiUrl.endsWith('/')) {
       apiUrl = apiUrl.slice(0, -1);
     }
-    
+
     // Special handling for root path - use 'home' instead of empty string
     const normalizedPath = pagePath === '/' ? 'home' : (pagePath.startsWith('/') ? pagePath.slice(1) : pagePath);
-    
+
     // Ensure we have /api in the path if needed
-    const endpoint = apiUrl.endsWith('/api') 
-      ? `${apiUrl}/seo/page/${encodeURIComponent(normalizedPath)}` 
+    const endpoint = apiUrl.endsWith('/api')
+      ? `${apiUrl}/seo/page/${encodeURIComponent(normalizedPath)}`
       : `${apiUrl}/api/seo/page/${encodeURIComponent(normalizedPath)}`;
-    
+
     // Add timeout to prevent long-hanging requests
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
-    
+
     const response = await fetch(endpoint, {
       next: { revalidate: 60 }, // Reduce cache time to 1 minute for testing
       signal: controller.signal,
@@ -76,21 +76,21 @@ export async function getServerSideMetadata(pagePath: string): Promise<Metadata>
         'Accept': 'application/json'
       }
     });
-    
+
     clearTimeout(timeoutId);
-    
+
     if (!response.ok) {
       return generateMetadataFromFallback(pagePath);
     }
-    
+
     const data = await response.json();
-    
+
     if (!data || !data.data) {
       return generateMetadataFromFallback(pagePath);
     }
-    
+
     const seoData: SeoData = data.data;
-    
+
     // Convert to Next.js Metadata format
     return {
       title: seoData.metaTitle,
@@ -139,7 +139,7 @@ export async function getServerSideMetadata(pagePath: string): Promise<Metadata>
         // Request timeout
       }
     }
-    
+
     return generateMetadataFromFallback(pagePath);
   }
 }
@@ -147,7 +147,7 @@ export async function getServerSideMetadata(pagePath: string): Promise<Metadata>
 // Helper to generate fallback metadata from the existing fallback function
 function generateMetadataFromFallback(pagePath: string): Metadata {
   const fallbackData = getFallbackSeoData(pagePath)
-  
+
   return {
     title: fallbackData.metaTitle,
     description: fallbackData.metaDescription,
@@ -169,18 +169,16 @@ function generateMetadataFromFallback(pagePath: string): Metadata {
       description: fallbackData.metaDescription,
       ...(fallbackData.ogImage ? { images: [fallbackData.ogImage] } : {}),
     },
-    ...(fallbackData.canonicalUrl ? { 
-      alternates: { 
-        canonical: fallbackData.canonicalUrl 
-      } 
+    ...(fallbackData.canonicalUrl ? {
+      alternates: {
+        canonical: fallbackData.canonicalUrl
+      }
     } : {})
   }
 }
 
 // Function to fetch SEO data server-side (safe for builds)
 export async function fetchSeoData(pagePath: string): Promise<SeoData> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL
-  
   // For static generation, always use fallback to prevent build errors
   // Dynamic SEO will be handled by updatePageSeo function after hydration
   return getFallbackSeoData(pagePath)
@@ -189,21 +187,17 @@ export async function fetchSeoData(pagePath: string): Promise<SeoData> {
 // Function to fetch dynamic SEO data at runtime (client-side)
 export async function fetchDynamicSeoData(pagePath: string): Promise<SeoData | null> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
-  
-  if (!apiUrl) {
-    return null
-  }
-  
+
   try {
     // Remove leading slash if it exists
     const normalizedPath = pagePath.startsWith('/') ? pagePath.slice(1) : pagePath
     const fullUrl = `${apiUrl}/seo/page/${encodeURIComponent(normalizedPath)}`
-    
+
     const response = await fetch(fullUrl, {
       cache: 'no-store',
       signal: AbortSignal.timeout(5000)
     })
-    
+
     if (response.ok) {
       const data = await response.json()
       return data.data
@@ -218,11 +212,11 @@ export async function fetchDynamicSeoData(pagePath: string): Promise<SeoData | n
 // Function to update page SEO dynamically after page load
 export function updatePageSeo(seoData: SeoData) {
   if (typeof window === 'undefined') return // Only run in browser
-  
+
   try {
     // Update document title
     document.title = seoData.metaTitle
-    
+
     // Update meta description
     let metaDesc = document.querySelector('meta[name="description"]')
     if (metaDesc) {
@@ -233,7 +227,7 @@ export function updatePageSeo(seoData: SeoData) {
       metaDesc.setAttribute('content', seoData.metaDescription)
       document.head.appendChild(metaDesc)
     }
-    
+
     // Update meta keywords
     let metaKeywords = document.querySelector('meta[name="keywords"]')
     if (metaKeywords) {
@@ -244,19 +238,19 @@ export function updatePageSeo(seoData: SeoData) {
       metaKeywords.setAttribute('content', seoData.metaKeywords.join(', '))
       document.head.appendChild(metaKeywords)
     }
-    
+
     // Update Open Graph tags
     updateMetaProperty('og:title', seoData.metaTitle)
     updateMetaProperty('og:description', seoData.metaDescription)
     updateMetaProperty('og:type', seoData.ogType)
-    
+
     if (seoData.ogImage) {
       updateMetaProperty('og:image', seoData.ogImage)
     }
-    
+
     if (seoData.canonicalUrl) {
       updateMetaProperty('og:url', seoData.canonicalUrl)
-      
+
       // Update canonical link
       let canonical = document.querySelector('link[rel="canonical"]')
       if (canonical) {
@@ -268,37 +262,37 @@ export function updatePageSeo(seoData: SeoData) {
         document.head.appendChild(canonical)
       }
     }
-    
+
     // Update Twitter Card tags
     updateMetaProperty('twitter:card', seoData.twitterCard)
     updateMetaProperty('twitter:title', seoData.metaTitle)
     updateMetaProperty('twitter:description', seoData.metaDescription)
-    
+
     if (seoData.ogImage) {
       updateMetaProperty('twitter:image', seoData.ogImage)
     }
-    
+
     // Handle blog-specific article metadata
     if (seoData.articlePublishedTime) {
       updateMetaProperty('article:published_time', seoData.articlePublishedTime)
     }
-    
+
     if (seoData.articleModifiedTime) {
       updateMetaProperty('article:modified_time', seoData.articleModifiedTime)
     }
-    
+
     if (seoData.articleAuthor) {
       updateMetaProperty('article:author', seoData.articleAuthor)
     }
-    
+
     if (seoData.articleSection) {
       updateMetaProperty('article:section', seoData.articleSection)
     }
-    
+
     if (seoData.articleTags && seoData.articleTags.length > 0) {
       updateMetaProperty('article:tag', seoData.articleTags.join(', '))
     }
-    
+
   } catch (error) {
     // Error handling
   }
@@ -307,7 +301,7 @@ export function updatePageSeo(seoData: SeoData) {
 // Helper function to update meta property tags
 function updateMetaProperty(property: string, content: string) {
   if (typeof window === 'undefined') return
-  
+
   let meta = document.querySelector(`meta[property="${property}"]`)
   if (meta) {
     meta.setAttribute('content', content)
@@ -330,9 +324,9 @@ function getFallbackSeoData(pagePath: string): SeoData {
         ogType: 'website',
         twitterCard: 'summary_large_image',
         canonicalUrl: 'https://toolscandy.com',
-        ogImage: ''
+        ogImage: undefined
       }
-    
+
     case '/about':
       return {
         metaTitle: 'About ToolsCandy - Making Image Processing Sweet & Simple',
@@ -341,9 +335,9 @@ function getFallbackSeoData(pagePath: string): SeoData {
         ogType: 'website',
         twitterCard: 'summary_large_image',
         canonicalUrl: 'https://toolscandy.com/about',
-        ogImage: ''
+        ogImage: undefined
       }
-    
+
     case '/contact':
       return {
         metaTitle: 'Contact ToolsCandy - Get in Touch with Our Team',
@@ -352,9 +346,9 @@ function getFallbackSeoData(pagePath: string): SeoData {
         ogType: 'website',
         twitterCard: 'summary_large_image',
         canonicalUrl: 'https://toolscandy.com/contact',
-        ogImage: ''
+        ogImage: undefined
       }
-    
+
     case '/privacy':
       return {
         metaTitle: 'Privacy Policy - ToolsCandy\'s Commitment to Your Privacy',
@@ -363,9 +357,9 @@ function getFallbackSeoData(pagePath: string): SeoData {
         ogType: 'website',
         twitterCard: 'summary_large_image',
         canonicalUrl: 'https://toolscandy.com/privacy',
-        ogImage: ''
+        ogImage: undefined
       }
-    
+
     case '/terms':
       return {
         metaTitle: 'Terms of Service - ToolsCandy Usage Guidelines',
@@ -374,9 +368,9 @@ function getFallbackSeoData(pagePath: string): SeoData {
         ogType: 'website',
         twitterCard: 'summary_large_image',
         canonicalUrl: 'https://toolscandy.com/terms',
-        ogImage: ''
+        ogImage: undefined
       }
-    
+
     case '/disclaimer':
       return {
         metaTitle: 'Disclaimer - Important Information About ToolsCandy',
@@ -384,10 +378,10 @@ function getFallbackSeoData(pagePath: string): SeoData {
         metaKeywords: ['ToolsCandy', 'disclaimer', 'service limitations', 'user responsibility', 'legal disclaimer', 'terms of use', 'liability'],
         ogType: 'website',
         twitterCard: 'summary_large_image',
-        canonicalUrl: 'https://toolscandy.com',
-        ogImage: ''
+        canonicalUrl: 'https://toolscandy.com/disclaimer',
+        ogImage: undefined
       }
-    
+
     case '/blog':
       return {
         metaTitle: 'ToolsCandy Blog - Web Performance & Image Optimization Tips',
@@ -396,9 +390,9 @@ function getFallbackSeoData(pagePath: string): SeoData {
         ogType: 'website',
         twitterCard: 'summary_large_image',
         canonicalUrl: 'https://toolscandy.com/blog',
-        ogImage: ''
+        ogImage: undefined
       }
-    
+
     case '/image/compress':
       return {
         metaTitle: 'Free Image Compression Tool - Reduce File Size Online | ToolsCandy',
@@ -407,9 +401,9 @@ function getFallbackSeoData(pagePath: string): SeoData {
         ogType: 'website',
         twitterCard: 'summary_large_image',
         canonicalUrl: 'https://toolscandy.com/image/compress',
-        ogImage: ''
+        ogImage: undefined
       }
-    
+
     case '/image/resize':
       return {
         metaTitle: 'Free Image Resize Tool - Change Image Dimensions Online | ToolsCandy',
@@ -417,10 +411,10 @@ function getFallbackSeoData(pagePath: string): SeoData {
         metaKeywords: ['image resize', 'resize images', 'change image size', 'image dimensions', 'scale images', 'image resizer', 'online resize tool', 'ToolsCandy'],
         ogType: 'website',
         twitterCard: 'summary_large_image',
-        canonicalUrl: 'https://toolscandy.com',
-        ogImage: ''
+        canonicalUrl: 'https://toolscandy.com/image/resize',
+        ogImage: undefined
       }
-    
+
     case '/image/crop':
       return {
         metaTitle: 'Free Image Crop Tool - Crop Images Online | ToolsCandy',
@@ -428,10 +422,10 @@ function getFallbackSeoData(pagePath: string): SeoData {
         metaKeywords: ['image crop', 'crop images', 'image cropping', 'trim images', 'cut images', 'image editor', 'online crop tool', 'ToolsCandy'],
         ogType: 'website',
         twitterCard: 'summary_large_image',
-        canonicalUrl: 'https://toolscandy.com',
-        ogImage: ''
+        canonicalUrl: 'https://toolscandy.com/image/crop',
+        ogImage: undefined
       }
-    
+
     case '/image/convert':
       return {
         metaTitle: 'Free Image Format Converter - Convert Images Online | ToolsCandy',
@@ -440,9 +434,9 @@ function getFallbackSeoData(pagePath: string): SeoData {
         ogType: 'website',
         twitterCard: 'summary_large_image',
         canonicalUrl: 'https://toolscandy.com/image/convert',
-        ogImage: ''
+        ogImage: undefined
       }
-    
+
     case '/image/metadata':
       return {
         metaTitle: 'Free Image Metadata Analyzer - Extract EXIF & Image Data | ToolsCandy',
@@ -450,10 +444,10 @@ function getFallbackSeoData(pagePath: string): SeoData {
         metaKeywords: ['image metadata', 'EXIF data', 'image analyzer', 'image properties', 'metadata extractor', 'image information', 'technical specifications', 'ToolsCandy'],
         ogType: 'website',
         twitterCard: 'summary_large_image',
-        canonicalUrl: 'https://toolscandy.com',
-        ogImage: ''
+        canonicalUrl: 'https://toolscandy.com/image/metadata',
+        ogImage: undefined
       }
-    
+
     default:
       // Generic fallback
       return {
@@ -463,7 +457,7 @@ function getFallbackSeoData(pagePath: string): SeoData {
         ogType: 'website',
         twitterCard: 'summary_large_image',
         canonicalUrl: 'https://toolscandy.com',
-        ogImage: ''
+        ogImage: undefined
       }
   }
 }

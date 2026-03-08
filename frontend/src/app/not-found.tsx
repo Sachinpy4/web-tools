@@ -4,13 +4,13 @@ import { Home, Search } from 'lucide-react'
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="max-w-md w-full mx-auto text-center p-6">
-        <div className="mb-8">
-          <div className="text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
+      <div className="max-w-md w-full mx-auto text-center p-4 sm:p-6">
+        <div className="mb-6 sm:mb-8">
+          <div className="text-6xl sm:text-8xl font-bold text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-purple-600 mb-4">
             404
           </div>
-          <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-purple-600 mx-auto rounded-full"></div>
+          <div className="w-24 h-1 bg-linear-to-r from-blue-600 to-purple-600 mx-auto rounded-full"></div>
         </div>
 
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
@@ -40,7 +40,7 @@ export default function NotFound() {
           <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
             Popular Tools
           </h3>
-          <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
             <Link href="/image/compress" className="text-blue-600 hover:text-blue-800 dark:text-blue-400">
               Compress
             </Link>

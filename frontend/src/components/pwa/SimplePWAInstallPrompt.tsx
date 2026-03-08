@@ -98,7 +98,7 @@ export default function SimplePWAInstallPrompt() {
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-teal-400 via-purple-500 to-blue-600 rounded-lg flex items-center justify-center overflow-hidden">
+            <div className="w-8 h-8 bg-linear-to-br from-teal-400 via-purple-500 to-blue-600 rounded-lg flex items-center justify-center overflow-hidden">
               <img 
                 src="/favicon.svg" 
                 alt="ToolsCandy" 

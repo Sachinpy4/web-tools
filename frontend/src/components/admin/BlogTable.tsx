@@ -130,7 +130,7 @@ export function BlogTable({ blogs, onPostDeleted }: BlogTableProps) {
                   </div>
                   <Badge 
                     variant={blog.status === 'published' ? 'default' : 'outline'}
-                    className="flex-shrink-0 text-xs"
+                    className="shrink-0 text-xs"
                   >
                     {blog.status === 'published' ? 'Published' : 'Draft'}
                   </Badge>

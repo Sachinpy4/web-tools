@@ -5,6 +5,7 @@ import {
   Query,
   UseGuards,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { MonitoringService } from '../services/monitoring.service';
@@ -26,7 +27,9 @@ import {
 @ApiTags('Monitoring & Health')
 @Controller('monitoring')
 export class MonitoringController {
-  constructor(private readonly monitoringService: MonitoringService) {}
+  private readonly logger = new Logger(MonitoringController.name);
+
+  constructor(private readonly monitoringService: MonitoringService) { }
 
   // Public health check endpoint
   @Get('health')
@@ -75,10 +78,10 @@ export class MonitoringController {
   async getToolUsageStats(@Query() query: ToolUsageQueryDto): Promise<ToolUsageResponseDto> {
     try {
       const toolStats = await this.monitoringService.getToolUsageStats(query.timeRange);
-      console.log('🔍 MONITORING - Tool usage stats:', JSON.stringify(toolStats, null, 2));
+      this.logger.debug('Tool usage stats retrieved', { stats: toolStats });
       return toolStats;
     } catch (error) {
-      console.error('❌ MONITORING - Tool usage error:', error);
+      this.logger.error('Tool usage error:', error);
       throw error;
     }
   }
@@ -107,10 +110,10 @@ export class MonitoringController {
   async getSystemHealth() {
     try {
       const healthData = await this.monitoringService.getSystemHealth();
-      console.log('🔍 MONITORING - System health data:', JSON.stringify(healthData, null, 2));
+      this.logger.debug('System health data retrieved', { data: healthData });
       return healthData;
     } catch (error) {
-      console.error('❌ MONITORING - System health error:', error);
+      this.logger.error('System health error:', error);
       throw error;
     }
   }
@@ -141,13 +144,13 @@ export class MonitoringController {
   async getCircuitBreakerStatus(): Promise<CircuitBreakerStatusResponseDto> {
     try {
       const status = this.monitoringService.getCircuitBreakerStatus();
-      console.log('🔍 MONITORING - Circuit breaker status:', JSON.stringify(status, null, 2));
+      this.logger.debug('Circuit breaker status retrieved', { status });
       return {
         status: 'success',
         data: status
       } as any;
     } catch (error) {
-      console.error('❌ MONITORING - Circuit breaker error:', error);
+      this.logger.error('Circuit breaker error:', error);
       throw error;
     }
   }
@@ -203,13 +206,13 @@ export class MonitoringController {
   async getLoadBalancerStatus(): Promise<LoadBalancerStatusResponseDto> {
     try {
       const status = this.monitoringService.getLoadBalancerStatus();
-      console.log('🔍 MONITORING - Load balancer status:', JSON.stringify(status, null, 2));
+      this.logger.debug('Load balancer status retrieved', { status });
       return {
         status: 'success',
         data: status
       } as any;
     } catch (error) {
-      console.error('❌ MONITORING - Load balancer error:', error);
+      this.logger.error('Load balancer error:', error);
       throw error;
     }
   }

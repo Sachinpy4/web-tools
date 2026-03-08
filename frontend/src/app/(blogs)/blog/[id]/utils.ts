@@ -1,6 +1,7 @@
 import { BlogPost, HeadingInfo } from './types'
 import { getProxiedImageUrl } from '@/lib/imageProxy'
 import { toast } from '@/components/ui/use-toast'
+import DOMPurify from 'dompurify'
 
 // Get related posts based on tags
 export const getRelatedPosts = (currentPost: BlogPost, allPosts: BlogPost[]) => {
@@ -182,12 +183,20 @@ export const formatCommentDate = (dateString: string) => {
   }
 }
 
-// Process blog content and replace backend URLs with proxied ones
+// Process blog content: sanitize HTML then replace backend URLs with proxied ones
 export const processContentImages = (htmlContent: string): string => {
   if (!htmlContent) return htmlContent
   
-  // Replace backend image URLs in the HTML content with proxied URLs
-  return htmlContent.replace(
+  // Sanitize HTML to prevent XSS while allowing rich blog content
+  const sanitized = typeof window !== 'undefined'
+    ? DOMPurify.sanitize(htmlContent, {
+        ADD_TAGS: ['iframe'],
+        ADD_ATTR: ['target', 'rel', 'allowfullscreen', 'frameborder', 'loading'],
+        ALLOW_DATA_ATTR: false,
+      })
+    : htmlContent
+
+  return sanitized.replace(
     /src="([^"]*\/api\/media\/file\/[^"]*)"/g,
     (match, url) => {
       const proxiedUrl = getProxiedImageUrl(url)

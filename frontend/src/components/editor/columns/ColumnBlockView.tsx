@@ -5,15 +5,17 @@ import { NodeViewContent, NodeViewProps, NodeViewWrapper } from '@tiptap/react'
 import { Trash, GripVertical } from 'lucide-react'
 
 export function ColumnBlockView({ node, getPos, editor }: NodeViewProps) {
+  // Get the position (Tiptap 3: getPos can return undefined)
+  const pos = typeof getPos === 'function' ? getPos() : undefined;
+  
   // Check if this is the first column by examining its position in parent
-  const isFirstColumn = typeof getPos === 'function' && editor?.state.doc.resolve(getPos()).index() === 0;
+  const isFirstColumn = pos !== undefined && editor?.state.doc.resolve(pos).index() === 0;
   
   // Get the parent column layout to determine total columns
-  const pos = typeof getPos === 'function' ? getPos() : 0;
-  const resolvedPos = editor?.state.doc.resolve(pos);
+  const resolvedPos = pos !== undefined ? editor?.state.doc.resolve(pos) : undefined;
   const parent = resolvedPos?.parent;
   const totalColumns = parent?.childCount || 2;
-  const currentColumnIndex = (typeof getPos === 'function' ? resolvedPos?.index() || 0 : 0) + 1;
+  const currentColumnIndex = (resolvedPos?.index() ?? 0) + 1;
 
   // Function to delete the entire column layout
   const deleteColumnLayout = () => {

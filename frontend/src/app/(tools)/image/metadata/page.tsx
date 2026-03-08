@@ -24,7 +24,7 @@ interface ImagePreviewProps {
 const ImagePreview: React.FC<ImagePreviewProps> = ({ file, preview, metadata, onRemove }) => {
   return (
     <div className="relative group">
-      <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-xl overflow-hidden flex items-center justify-center shadow-sm border">
+      <div className="aspect-video bg-linear-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-xl overflow-hidden flex items-center justify-center shadow-sm border">
         {preview ? (
           <img 
             src={preview} 
@@ -355,7 +355,7 @@ const QuickStats: React.FC<{ metadata: any }> = ({ metadata }) => {
   ]
 
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {stats.map((stat, index) => (
         <div key={index} className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg">
           <div className="p-2 bg-primary/10 rounded-md">
@@ -475,7 +475,7 @@ const CameraCommentDisplay: React.FC<{ comment: string }> = ({ comment }) => {
                 View full comment ({comment.length} characters)
               </summary>
               <div className="mt-2 bg-muted/30 p-3 rounded-lg">
-                <p className="text-sm leading-relaxed break-words">{comment}</p>
+                <p className="text-sm leading-relaxed wrap-break-word">{comment}</p>
               </div>
             </details>
           </div>
@@ -483,7 +483,7 @@ const CameraCommentDisplay: React.FC<{ comment: string }> = ({ comment }) => {
       }
     } else {
       // Short comment - display normally
-      return <p className="font-medium text-sm leading-relaxed break-words">{comment}</p>;
+      return <p className="font-medium text-sm leading-relaxed wrap-break-word">{comment}</p>;
     }
   }
   
@@ -510,7 +510,7 @@ const CameraCommentDisplay: React.FC<{ comment: string }> = ({ comment }) => {
         return (
           <div key={category} className="space-y-2">
             <h5 className="font-medium text-sm text-muted-foreground">{category}</h5>
-            <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               {Object.entries(categoryData).map(([key, value]) => (
                 <div key={key} className="flex justify-between items-center p-2 bg-muted/30 rounded">
                   <span className="capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
@@ -532,7 +532,7 @@ const CameraCommentDisplay: React.FC<{ comment: string }> = ({ comment }) => {
         return (
           <div className="space-y-2">
             <h5 className="font-medium text-sm text-muted-foreground">Other Parameters</h5>
-            <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               {remaining.map(([key, value]) => (
                 <div key={key} className="flex justify-between items-center p-2 bg-muted/30 rounded">
                   <span className="capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
@@ -864,7 +864,7 @@ export default function MetadataAnalysisTool() {
         icon={<Info className="h-6 w-6" />}
       />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {/* Left: Upload & Controls */}
           <div className="lg:col-span-1 xl:col-span-1 space-y-6">
@@ -912,7 +912,7 @@ export default function MetadataAnalysisTool() {
                         onClick={() => setSelectedFileIndex(index)}
                       >
                         <div className="flex items-center min-w-0 flex-1">
-                          <div className="h-10 w-10 mr-3 flex-shrink-0 bg-background rounded-lg overflow-hidden border">
+                          <div className="h-10 w-10 mr-3 shrink-0 bg-background rounded-lg overflow-hidden border">
                             {previews[index] ? (
                               <img 
                                 src={previews[index]!} 
@@ -941,7 +941,7 @@ export default function MetadataAnalysisTool() {
                             e.stopPropagation()
                             handleRemoveFile(index)
                           }}
-                          className="text-muted-foreground hover:text-destructive flex-shrink-0"
+                          className="text-muted-foreground hover:text-destructive shrink-0"
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -1054,10 +1054,10 @@ export default function MetadataAnalysisTool() {
                   Comprehensive metadata extraction and image analysis
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="overflow-x-auto">
                 {metadata ? (
                   <Tabs defaultValue="properties" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
+                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
                       <TabsTrigger value="properties">Properties</TabsTrigger>
                       <TabsTrigger value="camera">Camera</TabsTrigger>
                       <TabsTrigger value="analysis">Analysis</TabsTrigger>
@@ -1071,7 +1071,7 @@ export default function MetadataAnalysisTool() {
                           <Info className="h-4 w-4" />
                           Basic Properties
                         </h3>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                           <div className="space-y-1">
                             <span className="text-muted-foreground">File Name</span>
                             <p className="font-medium break-all">{metadata.fileName}</p>
@@ -1115,7 +1115,7 @@ export default function MetadataAnalysisTool() {
                           <Settings className="h-4 w-4" />
                           Technical Details
                         </h3>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                           <div className="space-y-1">
                             <span className="text-muted-foreground">Bit Depth</span>
                             <p className="font-medium">{metadata.bitDepth ? `${metadata.bitDepth} bits` : 'Unknown'}</p>
@@ -1160,7 +1160,7 @@ export default function MetadataAnalysisTool() {
                               <Camera className="h-4 w-4" />
                               Camera Information
                             </h3>
-                            <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                               {metadata.exif.camera && (
                                 <div className="space-y-1">
                                   <span className="text-muted-foreground">Camera</span>
@@ -1190,7 +1190,7 @@ export default function MetadataAnalysisTool() {
                               <Settings className="h-4 w-4" />
                               Camera Settings
                             </h3>
-                            <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                               {metadata.exif.focalLength && (
                                 <div className="space-y-1">
                                   <span className="text-muted-foreground">Focal Length</span>
@@ -1360,7 +1360,7 @@ export default function MetadataAnalysisTool() {
                                   <Settings className="h-4 w-4" />
                                   Advanced Settings
                                 </h3>
-                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                                   {metadata.exif.exposureMode && (
                                     <div className="space-y-1">
                                       <span className="text-muted-foreground">Exposure Mode</span>

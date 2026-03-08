@@ -101,7 +101,7 @@ export class BlogCacheService {
 
     try {
       const cached = await this.redisClient!.get(key);
-      if (cached) {
+      if (cached && typeof cached === 'string') {
         return JSON.parse(cached);
       }
       return null;
@@ -150,10 +150,15 @@ export class BlogCacheService {
     }
 
     try {
-      const keys = await this.redisClient!.keys(pattern);
-      if (keys.length > 0) {
-        await this.redisClient!.del(keys);
-      }
+      // Use SCAN instead of KEYS to avoid blocking Redis
+      let cursor = 0;
+      do {
+        const result = await this.redisClient!.scan(cursor, { MATCH: pattern, COUNT: 100 });
+        cursor = result.cursor;
+        if (result.keys.length > 0) {
+          await this.redisClient!.del(result.keys);
+        }
+      } while (cursor !== 0);
     } catch (error) {
       this.logger.warn('Failed to delete pattern from blog cache:', error.message);
     }
@@ -348,11 +353,16 @@ export class BlogCacheService {
    * Clean up expired cache entries
    */
   async cleanup(): Promise<void> {
-    // Redis handles TTL automatically, but we can log cache stats
     if (this.isAvailable()) {
       try {
-        const keys = await this.redisClient!.keys('blog:*');
-        this.logger.log(`Blog cache contains ${keys.length} entries`);
+        let count = 0;
+        let cursor = 0;
+        do {
+          const result = await this.redisClient!.scan(cursor, { MATCH: 'blog:*', COUNT: 100 });
+          cursor = result.cursor;
+          count += result.keys.length;
+        } while (cursor !== 0);
+        this.logger.log(`Blog cache contains ${count} entries`);
       } catch (error) {
         this.logger.warn('Failed to get blog cache stats:', error.message);
       }
@@ -372,7 +382,14 @@ export class BlogCacheService {
     }
 
     try {
-      const keys = await this.redisClient!.keys('blog:*');
+      const keys: string[] = [];
+      let cursor = 0;
+      do {
+        const result = await this.redisClient!.scan(cursor, { MATCH: 'blog:*', COUNT: 100 });
+        cursor = result.cursor;
+        keys.push(...result.keys);
+      } while (cursor !== 0);
+
       return {
         available: true,
         connected: this.isConnected,

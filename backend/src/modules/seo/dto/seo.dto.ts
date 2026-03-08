@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray, IsBoolean, IsNumber, IsEnum, MaxLength, IsUrl } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsBoolean, IsNumber, IsEnum, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreatePageSeoDto {

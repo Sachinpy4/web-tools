@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Blog, BlogDocument } from '../schemas/blog.schema';
+import { Blog, BlogDocument, hashIP } from '../schemas/blog.schema';
 import { CreateBlogDto, UpdateBlogDto, BlogQueryDto, LikeBlogDto } from '../dto/blog.dto';
 import { CreateCommentDto } from '../../comments/dto/comment.dto';
 import { BlogCacheService } from './blog-cache.service';
@@ -111,9 +111,6 @@ export class BlogService {
         dbQuery.date.$lte = new Date(query.endDate);
       }
     }
-
-    // Handle scheduled posts - check if any should be published
-    await this.publishScheduledPosts();
 
     // Count total items for pagination
     const total = await this.blogModel.countDocuments(dbQuery);
@@ -374,32 +371,28 @@ export class BlogService {
       throw new BadRequestException('Unable to track like - invalid request');
     }
 
-    const hasLiked = blog.likedByIPs.includes(visitorIP);
+    const hashedIP = hashIP(visitorIP);
+    const hasLiked = blog.likedByIPs.includes(hashedIP);
 
     if (likeBlogDto.liked && !hasLiked) {
-      // Add like
       blog.likes += 1;
-      blog.likedByIPs.push(visitorIP);
+      blog.likedByIPs.push(hashedIP);
     } else if (!likeBlogDto.liked && hasLiked) {
-      // Remove like
       blog.likes = Math.max(0, blog.likes - 1);
-      blog.likedByIPs = blog.likedByIPs.filter(ip => ip !== visitorIP);
+      blog.likedByIPs = blog.likedByIPs.filter(ip => ip !== hashedIP);
     }
 
     await blog.save();
 
-    // Invalidate caches for this blog since like count changed
     await this.blogCacheService.invalidateBlog(blogId);
     await this.blogCacheService.invalidateLikeCaches(blogId);
-    
-    // Invalidate popular blogs cache since view count affects popularity
     await this.blogCacheService.delPattern('blog:popular:*');
 
     return {
       status: 'success',
       data: {
         likes: blog.likes,
-        hasLiked: blog.likedByIPs.includes(visitorIP),
+        hasLiked: blog.likedByIPs.includes(hashedIP),
       },
     };
   }
@@ -418,7 +411,7 @@ export class BlogService {
       status: 'success',
       data: {
         likes: blog.likes,
-        hasLiked: blog.likedByIPs.includes(visitorIP),
+        hasLiked: blog.likedByIPs.includes(hashIP(visitorIP)),
       },
     };
   }
@@ -530,14 +523,16 @@ export class BlogService {
     // Add view for current time
     blog.pageViews.push(now.getTime());
 
-    // Track unique visitors by IP address
     if (visitorIP) {
-      // Initialize or update visitor IPs tracking
+      const hashedVisitorIP = hashIP(visitorIP);
       if (!blog.visitorIPs) {
-        blog.visitorIPs = [visitorIP];
+        blog.visitorIPs = [hashedVisitorIP];
         blog.uniqueVisitors = 1;
-      } else if (!blog.visitorIPs.includes(visitorIP)) {
-        blog.visitorIPs.push(visitorIP);
+      } else if (!blog.visitorIPs.includes(hashedVisitorIP)) {
+        // Cap stored IPs to prevent unbounded array growth
+        if (blog.visitorIPs.length < 10000) {
+          blog.visitorIPs.push(hashedVisitorIP);
+        }
         blog.uniqueVisitors = blog.visitorIPs.length;
       }
     }
@@ -546,9 +541,9 @@ export class BlogService {
   }
 
   /**
-   * Publish scheduled posts (private method)
+   * Publish scheduled posts. Call this from a scheduler (e.g. cron) - not from getBlogs.
    */
-  private async publishScheduledPosts() {
+  async publishScheduledPosts() {
     const now = new Date();
     try {
       await this.blogModel.updateMany(
@@ -560,7 +555,7 @@ export class BlogService {
           $set: { status: 'published' },
         }
       );
-    } catch (error) {
+    } catch {
       // Silent error handling
     }
   }

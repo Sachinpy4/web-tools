@@ -190,7 +190,7 @@ export class RedisStatusService extends EventEmitter implements OnModuleInit, On
     this.healthCheckInterval = setInterval(async () => {
       try {
         await this.testRedisConnection();
-      } catch (error) {
+      } catch {
         this.handleFailure();
       }
     }, this.REDIS_CHECK_INTERVAL);

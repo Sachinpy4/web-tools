@@ -428,14 +428,14 @@ export default function ConvertTool() {
                   <div className="max-h-[200px] sm:max-h-[250px] lg:max-h-[300px] overflow-y-auto space-y-2">
                     {files.map((file, index) => (
                       <div 
-                        key={index} 
+                        key={`${file.name}-${file.size}-${file.lastModified}`} 
                         className={`flex items-center justify-between p-2 rounded ${
                           selectedFileIndex === index ? 'bg-accent' : 'hover:bg-accent/50'
                         } cursor-pointer transition-colors`}
                         onClick={() => setSelectedFileIndex(index)}
                       >
                         <div className="flex items-center min-w-0 flex-1">
-                          <div className="h-8 w-8 sm:h-10 sm:w-10 mr-3 flex-shrink-0 bg-background rounded overflow-hidden">
+                          <div className="h-8 w-8 sm:h-10 sm:w-10 mr-3 shrink-0 bg-background rounded overflow-hidden">
                             <img 
                               src={previews[index]} 
                               alt={file.name} 
@@ -468,7 +468,7 @@ export default function ConvertTool() {
                           </div>
                         </div>
                         <button 
-                          className="p-1.5 hover:bg-background rounded ml-2 flex-shrink-0"
+                          className="p-1.5 hover:bg-background rounded ml-2 shrink-0"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleRemoveFile(index);
@@ -490,8 +490,8 @@ export default function ConvertTool() {
               <h3 className="font-medium mb-4 text-sm sm:text-base">Image Preview</h3>
               
               {selectedFileIndex !== null ? (
-                <div className="flex-grow flex flex-col">
-                  <div className="flex-grow flex items-center justify-center bg-accent/20 rounded-lg mb-4 overflow-hidden min-h-[200px] sm:min-h-[250px] lg:min-h-[300px]">
+                <div className="grow flex flex-col">
+                  <div className="grow flex items-center justify-center bg-accent/20 rounded-lg mb-4 overflow-hidden min-h-[200px] sm:min-h-[250px] lg:min-h-[300px]">
                     <img 
                       src={previews[selectedFileIndex]} 
                       alt={files[selectedFileIndex].name}
@@ -535,7 +535,7 @@ export default function ConvertTool() {
                   </div>
                 </div>
               ) : (
-                <div className="flex-grow flex items-center justify-center text-center text-muted-foreground bg-accent/10 rounded-lg min-h-[200px] sm:min-h-[250px] lg:min-h-[300px]">
+                <div className="grow flex items-center justify-center text-center text-muted-foreground bg-accent/10 rounded-lg min-h-[200px] sm:min-h-[250px] lg:min-h-[300px]">
                   <div>
                     <Repeat className="h-8 w-8 sm:h-10 sm:w-10 mx-auto mb-2 opacity-30" />
                     {files.length > 0 ? (

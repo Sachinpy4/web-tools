@@ -385,24 +385,16 @@ export class AdminService {
     return await this.circuitBreakerService.execute(
       'mongodb',
       async () => {
-        const [memoryUsage, loadAverage, settings] = await Promise.all([
+        const [memoryUsage, loadAverage] = await Promise.all([
           this.getMemoryUsage(),
           this.getLoadAverage(),
-          (this.systemSettingsModel as any).getCurrentSettings()
         ]);
 
-        // Get Redis connection status (if available)
         let redisConnected = false;
         try {
-          // Check if Redis is available through any Redis service
-          // This is a simplified check - in practice you'd inject Redis service
-          redisConnected = true; // Default to true, should be checked properly
-        } catch (error) {
-          redisConnected = false;
-        }
-
-        // Simulate active jobs count (should come from actual queue service)
-        const activeJobs = Math.floor(Math.random() * 10); // Replace with actual queue service
+          redisConnected = this.queueService?.isRedisQuickAvailable() ?? false;
+        } catch { /* Redis status unknown */ }
+        const activeJobs = 0;
 
         // Determine queue health based on load and memory
         let queueHealth: 'healthy' | 'degraded' | 'critical' = 'healthy';
@@ -780,17 +772,16 @@ export class AdminService {
         
         this.logger.log(`Performing database operation: ${operation}`, { collections });
         
-        let results: any = {};
-        
+        let operationResults: any;
         switch (operation) {
           case 'compact':
-            results = await this.compactDatabase(collections);
+            operationResults = await this.compactDatabase(collections);
             break;
           case 'repair':
-            results = await this.repairDatabase(collections);
+            operationResults = await this.repairDatabase(collections);
             break;
           case 'reindex':
-            results = await this.reindexDatabase(collections);
+            operationResults = await this.reindexDatabase(collections);
             break;
           default:
             throw new BadRequestException(`Unsupported database operation: ${operation}`);
@@ -800,7 +791,7 @@ export class AdminService {
           status: 'success',
           data: {
             operation,
-            results,
+            results: operationResults,
             message: `Database ${operation} operation completed successfully`,
           },
         };
@@ -881,7 +872,7 @@ export class AdminService {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
-  private async performImageCleanup(emergencyMode: boolean) {
+  private async performImageCleanup(_emergencyMode: boolean) {
     const results = {
       processedFiles: { deleted: 0, errors: 0, size: 0 },
       tempFiles: { deleted: 0, errors: 0, size: 0 },
@@ -960,7 +951,7 @@ export class AdminService {
               size: 0, // Size not available with countDocuments
               avgObjSize: 0, // Average object size not available
             });
-          } catch (error) {
+          } catch {
             // Some collections might not support stats
             collectionStats.push({
               name: collection.name,
@@ -1040,7 +1031,7 @@ export class AdminService {
             size += stats.size;
             fileCount++;
           }
-        } catch (error) {
+        } catch {
           // Skip files that can't be accessed
         }
       }
@@ -1050,7 +1041,7 @@ export class AdminService {
         size,
         sizeFormatted: this.formatFileSize(size),
       };
-    } catch (error) {
+    } catch {
       return { files: 0, size: 0, sizeFormatted: '0 Bytes' };
     }
   }
@@ -1107,7 +1098,6 @@ export class AdminService {
   private async getDiskUsage() {
     try {
       // This is a simplified version - in production you'd use proper disk usage detection
-      const stats = await fs.stat('.');
       const uploadsPath = 'uploads';
       
       // Get upload directory size as a proxy for disk usage
@@ -1115,16 +1105,15 @@ export class AdminService {
       try {
         const uploadStats = await this.getDirectoryStats(uploadsPath);
         totalUsed = uploadStats.size;
-      } catch (error) {
+      } catch {
         // If uploads directory doesn't exist, default to 0
         totalUsed = 0;
       }
 
-      // Simulate disk space (in production, use proper disk space detection)
-      const totalSpace = 100 * 1024 * 1024 * 1024; // 100GB simulation
-      const usedSpace = totalUsed + (50 * 1024 * 1024 * 1024); // Add 50GB base usage
-      const availableSpace = totalSpace - usedSpace;
-      const usedPercent = Math.round((usedSpace / totalSpace) * 100);
+      const totalSpace = totalUsed;
+      const usedSpace = totalUsed;
+      const availableSpace = 0;
+      const usedPercent = totalUsed > 0 ? 100 : 0;
 
       return {
         used: usedSpace,
@@ -1135,7 +1124,7 @@ export class AdminService {
         availableFormatted: this.formatFileSize(availableSpace),
         totalFormatted: this.formatFileSize(totalSpace)
       };
-    } catch (error) {
+    } catch {
       return { 
         used: 0, 
         total: 0, 
@@ -1150,18 +1139,28 @@ export class AdminService {
 
   private async getLogFileStats() {
     try {
-      // In a real application, you'd check actual log files
-      // For now, we'll simulate log file stats
-      const logSize = Math.floor(Math.random() * 100) * 1024 * 1024; // Random size up to 100MB
-      const errorLogSize = Math.floor(Math.random() * 10) * 1024 * 1024; // Random size up to 10MB
-      const estimatedLines = Math.floor(logSize / 100); // Estimate ~100 bytes per log line
+      const logsDir = path.join(process.cwd(), 'logs');
+      let logSize = 0;
+      let errorLogSize = 0;
+
+      try {
+        const logStats = await fs.stat(path.join(logsDir, 'all.log'));
+        logSize = logStats.size;
+      } catch { /* file may not exist */ }
+
+      try {
+        const errorStats = await fs.stat(path.join(logsDir, 'error.log'));
+        errorLogSize = errorStats.size;
+      } catch { /* file may not exist */ }
+
+      const estimatedLines = Math.floor(logSize / 100);
 
       return {
         size: this.formatFileSize(logSize),
         lines: estimatedLines,
         errorSize: this.formatFileSize(errorLogSize)
       };
-    } catch (error) {
+    } catch {
       return {
         size: '0 Bytes',
         lines: 0,
@@ -1172,21 +1171,17 @@ export class AdminService {
 
   private async getCacheStats() {
     try {
-      // Try to get Redis stats if available
-      // For now, we'll simulate cache stats
-      // In production, you'd inject and use the Redis service
-      
-      // Simulate Redis connection check
-      const connected = Math.random() > 0.1; // 90% chance of being connected
-      const keys = connected ? Math.floor(Math.random() * 1000) : 0;
-      const memoryUsage = connected ? Math.floor(Math.random() * 50) * 1024 * 1024 : 0; // Up to 50MB
+      let connected = false;
+      try {
+        connected = this.queueService?.isRedisQuickAvailable() ?? false;
+      } catch { /* ignore */ }
 
       return {
         connected,
-        keys,
-        memory: connected ? this.formatFileSize(memoryUsage) : 'N/A'
+        keys: 0,
+        memory: connected ? 'N/A (use monitoring)' : 'N/A'
       };
-    } catch (error) {
+    } catch {
       return {
         connected: false,
         keys: 0,

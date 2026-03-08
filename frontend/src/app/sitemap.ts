@@ -110,9 +110,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.7,
       }))
     }
-  } catch (error) {
-    console.error('Failed to fetch blog posts for sitemap:', error)
-    // Continue without blog pages if API fails
+  } catch {
+    // Backend unreachable during static build - this is expected
+    // Blog pages will be fetched at runtime when sitemap is revalidated
   }
 
   // Blog index page

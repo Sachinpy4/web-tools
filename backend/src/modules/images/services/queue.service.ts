@@ -1,7 +1,6 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Queue, Worker } from 'bullmq';
-import { createClient } from 'redis';
+import { Queue } from 'bullmq';
 import { v4 as uuidv4 } from 'uuid';
 import { CompressJobData } from '../dto/compress-image.dto';
 import { RedisStatusService } from '../../../common/services/redis-status.service';
@@ -62,8 +61,7 @@ class LocalQueue<T = any> {
   }
 
   async clean(): Promise<void> {
-    // Remove completed jobs older than 1 hour (same as original)
-    const oneHourAgo = Date.now() - 3600000;
+    // Remove completed or failed jobs
     for (const [id, job] of this.jobs.entries()) {
       if (job.status === 'completed' || job.status === 'failed') {
         this.jobs.delete(id);
@@ -98,9 +96,13 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     private readonly settingsCacheService: SettingsCacheService,
   ) {}
 
-  async onModuleInit() {    try {
-      await this.initializeQueues();      this.setupRedisStatusListener();    } catch (error) {
-      this.logger.error('❌ Error during QueueService initialization:', error);      throw error;
+  async onModuleInit() {
+    try {
+      await this.initializeQueues();
+      this.setupRedisStatusListener();
+    } catch (error) {
+      this.logger.error('❌ Error during QueueService initialization:', error);
+      throw error;
     }
   }
 
@@ -115,10 +117,14 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Initialize queues based on Redis status (using global Redis status service)
-  private async initializeQueues(): Promise<void> {    
-    if (this.redisStatusService.isRedisAvailable) {      await this.switchToBullQueues();
-    } else {      this.switchToLocalQueues();
-    }  }
+  private async initializeQueues(): Promise<void> {
+    
+    if (this.redisStatusService.isRedisAvailable) {
+      await this.switchToBullQueues();
+    } else {
+      this.switchToLocalQueues();
+    }
+  }
 
   // Setup Redis status listener (same pattern as original)
   private setupRedisStatusListener(): void {
@@ -230,7 +236,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
             if (client && client.quit) {
               await client.quit();
             }
-          } catch (disconnectError) {
+          } catch {
             // Ignore disconnect errors - they're expected when Redis is down
           }
           
@@ -239,7 +245,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
             if (queue.removeAllListeners) {
               queue.removeAllListeners();
             }
-          } catch (listenerError) {
+          } catch {
             // Ignore listener cleanup errors
           }
         }
@@ -272,8 +278,14 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
 
   // Switch to Bull queues (using Redis status service configuration)
   private async switchToBullQueues(): Promise<void> {
-    try {      const redisConfig = this.redisStatusService.getRedisConfig();
-      // Create BullMQ queues with error event handlers to prevent unhandled rejections      this.compressQueue = new Queue<CompressJobData>('image-compression', { connection: redisConfig });      this.resizeQueue = new Queue('image-resize', { connection: redisConfig });      this.convertQueue = new Queue('image-convert', { connection: redisConfig });      this.cropQueue = new Queue('image-crop', { connection: redisConfig });      this.batchQueue = new Queue('image-batch', { connection: redisConfig });
+    try {
+      const redisConfig = this.redisStatusService.getRedisConfig();
+      // Create BullMQ queues with error event handlers to prevent unhandled rejections
+      this.compressQueue = new Queue<CompressJobData>('image-compression', { connection: redisConfig });
+      this.resizeQueue = new Queue('image-resize', { connection: redisConfig });
+      this.convertQueue = new Queue('image-convert', { connection: redisConfig });
+      this.cropQueue = new Queue('image-crop', { connection: redisConfig });
+      this.batchQueue = new Queue('image-batch', { connection: redisConfig });
       // Add error handlers to all queues to prevent unhandled rejections
       const queues = [
         { queue: this.compressQueue, name: 'compress' },
@@ -281,7 +293,8 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
         { queue: this.convertQueue, name: 'convert' },
         { queue: this.cropQueue, name: 'crop' },
         { queue: this.batchQueue, name: 'batch' }
-      ];      queues.forEach(async ({ queue, name }) => {
+      ];
+      queues.forEach(async ({ queue, name }) => {
         if (queue && 'on' in queue) {
           queue.on('error', (error) => {
             this.logger.warn(`⚠️ ${name} queue error (handled):`, error.message);
@@ -304,7 +317,8 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
 
       this.logger.log('✅ Switched to Bull queues with Redis');
     } catch (error) {
-      this.logger.error('❌ Failed to switch to Bull queues:', error);      this.switchToLocalQueues();
+      this.logger.error('❌ Failed to switch to Bull queues:', error);
+      this.switchToLocalQueues();
     }
   }
 
@@ -491,7 +505,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
             finishedOn: (job as any).finishedOn,
             failedReason: (job as any).failedReason
           });
-        } catch (stateError) {
+        } catch {
           console.log('⚠️ QUEUE SERVICE - Could not get BullMQ state, using fallback');
           // Fallback for BullMQ
           state = 'waiting';
@@ -622,7 +636,8 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Process queues (for worker setup)
-  getCompressQueue(): Queue<CompressJobData> | LocalQueue<CompressJobData> {    return this.compressQueue;
+  getCompressQueue(): Queue<CompressJobData> | LocalQueue<CompressJobData> {
+    return this.compressQueue;
   }
 
   getResizeQueue(): Queue<any> | LocalQueue<any> {

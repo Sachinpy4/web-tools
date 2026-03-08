@@ -2,18 +2,21 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 import { EditorContent, useEditor } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Image from '@tiptap/extension-image'
-import Link from '@tiptap/extension-link'
-import Placeholder from '@tiptap/extension-placeholder'
-import TextAlign from '@tiptap/extension-text-align'
-import Underline from '@tiptap/extension-underline'
-import Table from '@tiptap/extension-table'
-import TableRow from '@tiptap/extension-table-row'
-import TableHeader from '@tiptap/extension-table-header'
-import TableCell from '@tiptap/extension-table-cell'
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
-import { lowlight } from 'lowlight'
+import { StarterKit } from '@tiptap/starter-kit'
+import { Image } from '@tiptap/extension-image'
+import { Link } from '@tiptap/extension-link'
+import { Placeholder } from '@tiptap/extension-placeholder'
+import { TextAlign } from '@tiptap/extension-text-align'
+import { Underline } from '@tiptap/extension-underline'
+import { Table } from '@tiptap/extension-table'
+import { TableRow } from '@tiptap/extension-table-row'
+import { TableHeader } from '@tiptap/extension-table-header'
+import { TableCell } from '@tiptap/extension-table-cell'
+import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight'
+import { common, createLowlight } from 'lowlight'
+
+// Create lowlight instance with common languages (lowlight v3 API)
+const lowlight = createLowlight(common)
 import { 
   Bold, 
   Italic, 
@@ -62,8 +65,6 @@ import { ImageControls } from './controls/ImageControls'
 import { AutoSaveStatus } from './controls/AutoSaveStatus'
 import { EditorStyles } from './styles/EditorStyles'
 import { RichTextEditorProps, SelectedImage } from './types/editor'
-
-  // lowlight v2 is already initialized with common languages
 
 // Extended Image extension with custom attributes for alignment
 const CustomImage = Image.extend({

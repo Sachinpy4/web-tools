@@ -142,7 +142,7 @@ function AdminDashboard() {
       ])
 
       // Initialize stats with default values
-      let statsData: DashboardStats = {
+      const statsData: DashboardStats = {
         totalBlogs: 0,
         publishedBlogs: 0,
         draftBlogs: 0,
@@ -266,12 +266,6 @@ function AdminDashboard() {
     return num.toString()
   }
 
-  // Calculate growth percentage (placeholder - in real app, compare with previous period)
-  const calculateGrowth = (current: number) => {
-    const growth = Math.floor(Math.random() * 30) + 5 // Random growth for demo
-    return current > 0 ? `+${growth}%` : '0%'
-  }
-
   if (loading && !stats) {
     return <DashboardSkeleton />
   }
@@ -340,7 +334,7 @@ function AdminDashboard() {
                   <div className="flex items-baseline gap-2">
                     <p className="text-xl sm:text-2xl font-bold">{formatNumber(stats?.totalBlogs || 0)}</p>
                     <Badge variant="outline" className="bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 text-xs">
-                      +{calculateGrowth(stats?.totalBlogs || 0)}%
+                      —
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -364,7 +358,7 @@ function AdminDashboard() {
                   <div className="flex items-baseline gap-2">
                     <p className="text-xl sm:text-2xl font-bold">{formatNumber(stats?.totalViews || 0)}</p>
                     <Badge variant="outline" className="bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400 text-xs">
-                      +{calculateGrowth(stats?.totalViews || 0)}%
+                      —
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -388,7 +382,7 @@ function AdminDashboard() {
                   <div className="flex items-baseline gap-2">
                     <p className="text-xl sm:text-2xl font-bold">{formatNumber(stats?.totalUsers || 0)}</p>
                     <Badge variant="outline" className="bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 text-xs">
-                      +{calculateGrowth(stats?.totalUsers || 0)}%
+                      —
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -644,8 +638,8 @@ function AdminDashboard() {
                 </Button>
               </Link>
               <Link href="/dashboard/backup">
-                <Button variant="outline" className="w-full h-auto p-3 sm:p-4 flex-col gap-2 hover:bg-gradient-to-r hover:from-pink-50 hover:via-purple-50 hover:to-violet-50 hover:border-pink-200">
-                  <Database className="h-5 w-5 sm:h-6 sm:w-6 text-gradient bg-gradient-to-r from-pink-500 via-purple-500 to-violet-500 bg-clip-text text-transparent" />
+                <Button variant="outline" className="w-full h-auto p-3 sm:p-4 flex-col gap-2 hover:bg-linear-to-r hover:from-pink-50 hover:via-purple-50 hover:to-violet-50 hover:border-pink-200">
+                  <Database className="h-5 w-5 sm:h-6 sm:w-6 text-gradient bg-linear-to-r from-pink-500 via-purple-500 to-violet-500 bg-clip-text text-transparent" />
                   <span className="text-xs sm:text-sm font-medium">Database Backup</span>
                 </Button>
               </Link>
@@ -674,8 +668,8 @@ function DashboardSkeleton() {
   return (
     <div className="space-y-6">
       <div>
-        <Skeleton className="h-8 w-48 mb-2" />
-        <Skeleton className="h-4 w-96" />
+        <Skeleton className="h-8 w-32 sm:w-48 mb-2" />
+        <Skeleton className="h-4 w-full sm:w-96" />
       </div>
       
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">

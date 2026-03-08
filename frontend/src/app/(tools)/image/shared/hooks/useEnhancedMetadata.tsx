@@ -337,7 +337,7 @@ export function useEnhancedMetadata() {
     // Analyze color distribution and properties
     let totalR = 0, totalG = 0, totalB = 0
     let brightness = 0
-    let contrast = 0
+    const contrast = 0
     const colorMap = new Map<string, number>()
     
     const sampleSize = Math.min(10000, data.length / 4)

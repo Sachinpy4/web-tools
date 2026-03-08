@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
@@ -11,21 +11,23 @@ import { UploadMediaDto, UpdateMediaDto, MediaQueryDto, BulkDeleteDto, BulkUpdat
 
 @Injectable()
 export class MediaService {
+  private readonly logger = new Logger(MediaService.name);
+
   constructor(
     @InjectModel(Media.name) private mediaModel: Model<MediaDocument>,
     private configService: ConfigService,
-  ) {}
+  ) { }
 
   /**
    * Format file size in human-readable format
    */
   private formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 Bytes';
-    
+
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
+
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
@@ -37,41 +39,41 @@ export class MediaService {
       throw new BadRequestException('No files uploaded');
     }
 
-    console.log(`Processing ${files.length} file(s) for upload`);
-    
+    this.logger.log(`Processing ${files.length} file(s) for upload`);
+
     const mediaResults: any[] = [];
-    
+
     for (const file of files) {
-      console.log(`Media upload - Type: ${file.mimetype}, Size: ${this.formatFileSize(file.size)}`);
-      
+      this.logger.debug(`Media upload - Type: ${file.mimetype}, Size: ${this.formatFileSize(file.size)}`);
+
       try {
         // Generate unique filename while preserving the original filename
         const originalNameWithoutExt = path.basename(file.originalname, path.extname(file.originalname));
         const cleanedName = originalNameWithoutExt.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
         const uniqueId = uuidv4().split('-')[0];
         const uniqueFilename = `blog-${cleanedName}-${uniqueId}${path.extname(file.originalname)}`;
-        
+
         // Always use blogs directory for media uploads
         const uploadDir = path.join('uploads', 'blogs');
         const uploadPath = path.join(uploadDir, uniqueFilename);
-        
-        console.log(`Uploading to: ${uploadPath}`);
-        
+
+        this.logger.debug(`Uploading to: ${uploadPath}`);
+
         // Ensure the directory exists
         if (!fs.existsSync(uploadDir)) {
           fs.mkdirSync(uploadDir, { recursive: true });
-          console.log(`Created directory: ${uploadDir}`);
+          this.logger.debug(`Created directory: ${uploadDir}`);
         }
-        
+
         // Get image dimensions using Sharp
         let width: number | undefined;
         let height: number | undefined;
-        
+
         if (file.mimetype.startsWith('image/')) {
           const metadata = await Sharp(file.buffer || file.path).metadata();
           width = metadata.width;
           height = metadata.height;
-          
+
           // Save optimized version for images
           await Sharp(file.buffer || file.path)
             .resize(1920) // Limit max width to 1920px
@@ -80,19 +82,19 @@ export class MediaService {
           // For non-image files, just save the file as is
           fs.writeFileSync(uploadPath, file.buffer || fs.readFileSync(file.path));
         }
-        
+
         // Create the correct URL path based on the directory
         const urlPath = `/api/media/file/blogs/${uniqueFilename}`;
-        
+
         // Parse tags if provided
-        const tags = uploadMediaDto.tags 
+        const tags = uploadMediaDto.tags
           ? uploadMediaDto.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
           : [];
-        
+
         // Get alt text for this specific file index if provided
         const altIndex = files.indexOf(file);
         let altText = file.originalname;
-        
+
         if (uploadMediaDto.alt) {
           if (typeof uploadMediaDto.alt === 'string') {
             try {
@@ -130,15 +132,15 @@ export class MediaService {
           tags,
           uploadedBy: userId,
         });
-        
+
         mediaResults.push(media);
-        
+
       } catch (error) {
-        console.error('Error processing upload:', error);
+        this.logger.error('Error processing upload:', error);
         throw new InternalServerErrorException(`Failed to process file: ${file.originalname}`);
       }
     }
-    
+
     return {
       status: 'success',
       data: mediaResults,
@@ -152,39 +154,41 @@ export class MediaService {
     const page = query.page || 1;
     const limit = Math.min(query.limit || 20, 100); // Max 100 items per page
     const skip = (page - 1) * limit;
-    
+
     // Build query
     const dbQuery: any = {};
-    
-    // Filter by type if provided
+
+    // Filter by type if provided (escape regex metacharacters to prevent ReDoS)
     if (query.type) {
-      dbQuery.mimetype = { $regex: new RegExp(`^${query.type}/`) };
+      const escapedType = query.type.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      dbQuery.mimetype = { $regex: new RegExp(`^${escapedType}/`) };
     }
-    
+
     // Search if provided
     if (query.search) {
       dbQuery.$text = { $search: query.search };
     }
-    
+
     // Filter by tags if provided
     if (query.tag) {
       dbQuery.tags = query.tag;
     }
-    
+
     // Filter by uploader if provided
     if (query.uploadedBy) {
       dbQuery.uploadedBy = query.uploadedBy;
     }
-    
-    // Build sort object
-    const sortBy = query.sortBy || 'createdAt';
+
+    // Build sort object (whitelist allowed sort fields to prevent injection)
+    const allowedSortFields = ['createdAt', 'updatedAt', 'filename', 'size', 'mimetype', 'uses'];
+    const sortBy = allowedSortFields.includes(query.sortBy || '') ? query.sortBy : 'createdAt';
     const sortOrder = query.sortOrder === 'asc' ? 1 : -1;
     const sort: any = {};
     sort[sortBy] = sortOrder;
-    
+
     // Count total items for pagination
     const total = await this.mediaModel.countDocuments(dbQuery);
-    
+
     // Execute query with pagination
     const media = await this.mediaModel
       .find(dbQuery)
@@ -192,7 +196,7 @@ export class MediaService {
       .skip(skip)
       .limit(limit)
       .populate('uploadedBy', 'name email');
-    
+
     return {
       status: 'success',
       total,
@@ -210,11 +214,11 @@ export class MediaService {
     const media = await this.mediaModel
       .findById(mediaId)
       .populate('uploadedBy', 'name email');
-    
+
     if (!media) {
       throw new NotFoundException('Media item not found');
     }
-    
+
     return {
       status: 'success',
       data: media,
@@ -226,17 +230,17 @@ export class MediaService {
    */
   async updateMediaItem(mediaId: string, updateMediaDto: UpdateMediaDto) {
     const media = await this.mediaModel.findById(mediaId);
-    
+
     if (!media) {
       throw new NotFoundException('Media item not found');
     }
-    
+
     const updatedMedia = await this.mediaModel.findByIdAndUpdate(
       mediaId,
       updateMediaDto,
       { new: true, runValidators: true }
     ).populate('uploadedBy', 'name email');
-    
+
     return {
       status: 'success',
       data: updatedMedia,
@@ -248,24 +252,24 @@ export class MediaService {
    */
   async deleteMediaItem(mediaId: string) {
     const media = await this.mediaModel.findById(mediaId);
-    
+
     if (!media) {
       throw new NotFoundException('Media item not found');
     }
-    
+
     // Delete the physical file
     try {
       if (fs.existsSync(media.path)) {
         fs.unlinkSync(media.path);
-        console.log(`Deleted file: ${media.path}`);
+        this.logger.log(`Deleted file: ${media.path}`);
       }
     } catch (error) {
-      console.error('Error deleting file:', error);
+      this.logger.error('Error deleting file:', error);
       // Continue with database deletion even if file deletion fails
     }
-    
+
     await this.mediaModel.findByIdAndDelete(mediaId);
-    
+
     return {
       status: 'success',
       message: 'Media item deleted successfully',
@@ -276,15 +280,21 @@ export class MediaService {
    * Serve a media file
    */
   async serveFile(folder: string, filename: string): Promise<{ path: string; mimetype: string }> {
-    const filePath = path.join('uploads', folder, filename);
-    
+    const uploadsRoot = path.resolve('uploads');
+    const filePath = path.resolve('uploads', folder, filename);
+
+    // Security: Prevent path traversal attacks
+    if (!filePath.startsWith(uploadsRoot + path.sep)) {
+      throw new NotFoundException('File not found');
+    }
+
     if (!fs.existsSync(filePath)) {
       throw new NotFoundException('File not found');
     }
-    
+
     // Get media record to retrieve mimetype
     const media = await this.mediaModel.findOne({ filename });
-    
+
     return {
       path: filePath,
       mimetype: media?.mimetype || 'application/octet-stream',
@@ -306,7 +316,7 @@ export class MediaService {
    */
   async getMediaStats() {
     const totalFiles = await this.mediaModel.countDocuments();
-    
+
     // Get total size
     const sizeResult = await this.mediaModel.aggregate([
       {
@@ -316,9 +326,9 @@ export class MediaService {
         },
       },
     ]);
-    
+
     const totalSizeBytes = sizeResult[0]?.totalSize || 0;
-    
+
     // Get file types distribution
     const fileTypesResult = await this.mediaModel.aggregate([
       {
@@ -328,27 +338,27 @@ export class MediaService {
         },
       },
     ]);
-    
+
     const fileTypes: any = {};
     fileTypesResult.forEach(item => {
       fileTypes[item._id] = item.count;
     });
-    
+
     // Get uploads this month
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
-    
+
     const uploadsThisMonth = await this.mediaModel.countDocuments({
       createdAt: { $gte: startOfMonth },
     });
-    
+
     // Get most used files
     const mostUsedFiles = await this.mediaModel
       .find({}, 'originalname uses url')
       .sort({ uses: -1 })
       .limit(10);
-    
+
     return {
       status: 'success',
       data: {
@@ -371,7 +381,7 @@ export class MediaService {
       .sort({ createdAt: -1 })
       .limit(limit)
       .populate('uploadedBy', 'name email');
-    
+
     return {
       status: 'success',
       data: media,
@@ -383,10 +393,10 @@ export class MediaService {
    */
   async bulkDeleteMedia(bulkDeleteDto: BulkDeleteDto) {
     const { mediaIds } = bulkDeleteDto;
-    
+
     // Find all media items to delete
     const mediaItems = await this.mediaModel.find({ _id: { $in: mediaIds } });
-    
+
     // Delete physical files
     let deletedFiles = 0;
     for (const media of mediaItems) {
@@ -396,13 +406,13 @@ export class MediaService {
           deletedFiles++;
         }
       } catch (error) {
-        console.error(`Error deleting file ${media.path}:`, error);
+        this.logger.error(`Error deleting file ${media.path}:`, error);
       }
     }
-    
+
     // Delete database records
     const result = await this.mediaModel.deleteMany({ _id: { $in: mediaIds } });
-    
+
     return {
       status: 'success',
       message: `${result.deletedCount} media items deleted successfully`,
@@ -416,26 +426,26 @@ export class MediaService {
    */
   async bulkUpdateMedia(bulkUpdateDto: BulkUpdateDto) {
     const { mediaIds, addTags, removeTags } = bulkUpdateDto;
-    
+
     const updateOperations: any = {};
-    
+
     if (addTags && addTags.length > 0) {
       updateOperations.$addToSet = { tags: { $each: addTags } };
     }
-    
+
     if (removeTags && removeTags.length > 0) {
       updateOperations.$pullAll = { tags: removeTags };
     }
-    
+
     if (Object.keys(updateOperations).length === 0) {
       throw new BadRequestException('No update operations specified');
     }
-    
+
     const result = await this.mediaModel.updateMany(
       { _id: { $in: mediaIds } },
       updateOperations
     );
-    
+
     return {
       status: 'success',
       message: `${result.modifiedCount} media items updated successfully`,
@@ -455,7 +465,7 @@ export class MediaService {
       .sort({ score: { $meta: 'textScore' } })
       .limit(limit)
       .populate('uploadedBy', 'name email');
-    
+
     return {
       status: 'success',
       data: media,
