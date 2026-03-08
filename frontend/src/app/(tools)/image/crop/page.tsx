@@ -66,7 +66,8 @@ export default function CropTool() {
     processingFiles, 
     setVisualProgress,
     setProcessingFiles,
-    simulateProgress: _simulateProgress, 
+    startProgressSimulation,
+    cancelProgressSimulation,
     showResultsAfterProgress: sharedShowResultsAfterProgress, 
     clearAllProgress, 
     adjustProgressIndices 
@@ -411,10 +412,7 @@ export default function CropTool() {
     
     // Mark file as being processed and start visual progress
     setProcessingFiles(new Set([selectedFileIndex]))
-    setVisualProgress(prev => ({
-      ...prev,
-      [selectedFileIndex]: 0
-    }));
+    startProgressSimulation(selectedFileIndex);
     
     try {
       const file = files[selectedFileIndex];
@@ -496,17 +494,7 @@ export default function CropTool() {
         console.error('Crop failed:', error);
         
         // Clean up progress state on error
-        setVisualProgress(prev => {
-          const newProgress = { ...prev };
-          delete newProgress[selectedFileIndex];
-          return newProgress;
-        });
-        
-        setProcessingFiles(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(selectedFileIndex);
-          return newSet;
-        });
+        cancelProgressSimulation(selectedFileIndex);
         
         // Special handling for rate limit errors
         if (error.status === 429) {
@@ -528,17 +516,7 @@ export default function CropTool() {
       console.error('Crop error:', error);
       
       // Clean up progress state on major error
-      setVisualProgress(prev => {
-        const newProgress = { ...prev };
-        delete newProgress[selectedFileIndex];
-        return newProgress;
-      });
-      
-      setProcessingFiles(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(selectedFileIndex);
-        return newSet;
-      });
+      cancelProgressSimulation(selectedFileIndex);
       
       toast({
         title: "Crop failed",
@@ -714,7 +692,8 @@ export default function CropTool() {
                         <div>
                           <a 
                             href={`${getApiUrl().replace('/api', '')}${results[selectedFileIndex].downloadUrl}`}
-                            className="text-xs inline-flex items-center px-3 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+                            className="text-xs inline-flex items-center px-3 py-2 rounded font-medium text-white shadow-sm hover:opacity-90 transition-opacity"
+                            style={{ background: `linear-gradient(to right, ${toolTheme.primaryColor}, ${toolTheme.primaryHover})` }}
                           >
                             <Download className="h-3 w-3 mr-1" /> Download
                           </a>
@@ -906,8 +885,8 @@ export default function CropTool() {
                     toolTheme={toolTheme}
                     className="w-full" 
                     onClick={handleCrop}
-                    disabled={!completedCrop || !completedCrop.width || !completedCrop.height || (selectedFileIndex !== null && results[selectedFileIndex])}
-                    isLoading={isLoading}
+                    disabled={!completedCrop || !completedCrop.width || !completedCrop.height || (selectedFileIndex !== null && results[selectedFileIndex]) || processingFiles.has(selectedFileIndex)}
+                    isLoading={isLoading || processingFiles.has(selectedFileIndex)}
                     loadingText="Cropping..."
                   >
                     <Crop className="mr-2 h-4 w-4" /> Crop Image

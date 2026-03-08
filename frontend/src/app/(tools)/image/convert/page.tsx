@@ -58,7 +58,8 @@ export default function ConvertTool() {
     processingFiles, 
     setVisualProgress,
     setProcessingFiles,
-    simulateProgress: _simulateProgress, 
+    startProgressSimulation,
+    cancelProgressSimulation,
     showResultsAfterProgress: sharedShowResultsAfterProgress, 
     clearAllProgress, 
     adjustProgressIndices 
@@ -240,10 +241,7 @@ export default function ConvertTool() {
         const index = fileIndices[i];
         
         // Start visual progress for this file
-        setVisualProgress(prev => ({
-          ...prev,
-          [index]: 0
-        }));
+        startProgressSimulation(index);
         
         const formData = new FormData();
         formData.append('image', file);
@@ -291,17 +289,7 @@ export default function ConvertTool() {
           console.error(`Failed to convert file ${i+1}/${filesToConvert.length}:`, error);
           
           // Clean up progress state on error
-          setVisualProgress(prev => {
-            const newProgress = { ...prev };
-            delete newProgress[index];
-            return newProgress;
-          });
-          
-          setProcessingFiles(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(index);
-            return newSet;
-          });
+          cancelProgressSimulation(index);
           
           // Special handling for rate limit errors
           if (error.status === 429) {
@@ -514,7 +502,8 @@ export default function ConvertTool() {
                         <div>
                           <a 
                             href={`${getApiUrl().replace('/api', '')}${results[selectedFileIndex].downloadUrl}`}
-                            className="text-xs inline-flex items-center px-3 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+                            className="text-xs inline-flex items-center px-3 py-2 rounded font-medium text-white shadow-sm hover:opacity-90 transition-opacity"
+                            style={{ background: `linear-gradient(to right, ${toolTheme.primaryColor}, ${toolTheme.primaryHover})` }}
                           >
                             <Download className="h-3 w-3 mr-1" /> Download
                           </a>
@@ -715,8 +704,12 @@ export default function ConvertTool() {
                 className="w-full" 
                 size="lg" 
                 onClick={handleConvertSingle}
-                disabled={selectedFileIndex === null || (selectedFileIndex !== null && results[selectedFileIndex])}
-                isLoading={isLoading}
+                disabled={
+                  selectedFileIndex === null || 
+                  !!(selectedFileIndex !== null && results[selectedFileIndex]) ||
+                  (selectedFileIndex !== null && processingFiles.has(selectedFileIndex))
+                }
+                isLoading={isLoading || (selectedFileIndex !== null && processingFiles.has(selectedFileIndex))}
                 loadingText="Converting..."
               >
                 <Repeat className="mr-2 h-4 w-4" /> Convert Selected Image
@@ -748,8 +741,8 @@ export default function ConvertTool() {
                 className="w-full" 
                 size="lg" 
                 onClick={handleConvertAll}
-                disabled={files.length === 0 || files.every((_, index) => results[index])}
-                isLoading={isLoading}
+                disabled={files.length === 0 || files.every((_, index) => results[index]) || processingFiles.size > 0}
+                isLoading={isLoading || processingFiles.size > 0}
                 loadingText="Converting..."
               >
                 <Repeat className="mr-2 h-4 w-4" /> Convert All Images

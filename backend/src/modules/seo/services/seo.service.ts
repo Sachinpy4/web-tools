@@ -65,7 +65,16 @@ export class SeoService {
       }
 
       if (!pageSeo) {
-        throw new NotFoundException('SEO settings not found for this page');
+        return {
+          status: 'success',
+          data: {
+            pagePath: pathToFind,
+            title: '',
+            description: '',
+            keywords: [],
+            isActive: false,
+          },
+        };
       }
 
       return {
@@ -74,9 +83,6 @@ export class SeoService {
       };
     } catch (error) {
       this.logger.error('Error fetching page SEO:', error);
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
       throw new Error('Failed to fetch page SEO settings', { cause: error });
     }
   }
@@ -125,14 +131,19 @@ export class SeoService {
           },
         };
       } else {
-        this.logger.warn(`Blog post not found for SEO: ${blogId}`);
-        throw new NotFoundException('Blog post not found');
+        return {
+          status: 'success',
+          data: {
+            pagePath: `blog/${blogId}`,
+            title: '',
+            description: '',
+            keywords: [],
+            isActive: false,
+          },
+        };
       }
     } catch (error) {
       this.logger.error('Error fetching blog post for SEO:', error);
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
       throw new Error('Failed to fetch blog SEO data', { cause: error });
     }
   }

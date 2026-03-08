@@ -101,11 +101,11 @@ class ImageWorker {
         const worker = new Worker(queueName, async (job: Job) => {
           try {
             this.logger.log(`Processing ${processorName} job ${job.id}`);
-            await job.updateProgress(10);
+            await job.updateProgress(5);
 
             const result = await processJob(job);
 
-            await job.updateProgress(100);
+            await job.updateProgress(95);
             return result;
           } catch (error) {
             this.logger.error(`${processorName} job ${job.id} failed:`, error);
@@ -170,18 +170,20 @@ class ImageWorker {
       processJob: async (job) => {
         const { filePath, quality, originalFilename, originalSize, webhookUrl } = job.data;
         try {
+          if (job.updateProgress) await job.updateProgress(15);
           const result = await this.imageService.compressImage(filePath, quality, originalFilename);
+          if (job.updateProgress) await job.updateProgress(85);
 
           const response = {
             jobId: job.id.toString(),
             status: 'completed',
             message: 'Image compression completed successfully',
-            downloadUrl: `/api/images/download/${result.outputPath.split('/').pop()}`,
+            downloadUrl: `/api/images/download/${path.basename(result.outputPath)}`,
             originalSize,
             compressedSize: result.processedSize,
             compressionRatio: result.compressionRatio,
             originalFilename,
-            filename: result.outputPath.split('/').pop(),
+            filename: path.basename(result.outputPath),
           };
 
           await this.sendWebhook(webhookUrl, response, job.id, 'compress');
@@ -201,15 +203,17 @@ class ImageWorker {
       processJob: async (job) => {
         const { filePath, width, height, maintainAspectRatio, originalFilename, webhookUrl } = job.data;
         try {
+          if (job.updateProgress) await job.updateProgress(15);
           const result = await this.imageService.resizeImage(filePath, width, height, originalFilename, maintainAspectRatio);
+          if (job.updateProgress) await job.updateProgress(85);
 
           const response = {
             jobId: job.id.toString(),
             status: 'completed',
             message: 'Image resize completed successfully',
-            downloadUrl: `/api/images/download/${result.outputPath.split('/').pop()}`,
+            downloadUrl: `/api/images/download/${path.basename(result.outputPath)}`,
             originalFilename,
-            filename: result.outputPath.split('/').pop(),
+            filename: path.basename(result.outputPath),
             width: result.dimensions.width,
             height: result.dimensions.height,
             mime: `image/${path.extname(originalFilename).slice(1)}`,
@@ -232,15 +236,17 @@ class ImageWorker {
       processJob: async (job) => {
         const { filePath, format, quality, originalFilename, webhookUrl } = job.data;
         try {
+          if (job.updateProgress) await job.updateProgress(15);
           const result = await this.imageService.convertFormat(filePath, format, originalFilename, quality);
+          if (job.updateProgress) await job.updateProgress(85);
 
           const response = {
             jobId: job.id.toString(),
             status: 'completed',
             message: 'Image conversion completed successfully',
-            downloadUrl: `/api/images/download/${result.outputPath.split('/').pop()}`,
+            downloadUrl: `/api/images/download/${path.basename(result.outputPath)}`,
             originalFilename,
-            filename: result.outputPath.split('/').pop(),
+            filename: path.basename(result.outputPath),
             originalFormat: path.extname(originalFilename).slice(1),
             convertedFormat: format,
             mime: `image/${format}`,
@@ -265,15 +271,17 @@ class ImageWorker {
       processJob: async (job) => {
         const { filePath, crop, originalFilename, webhookUrl } = job.data;
         try {
+          if (job.updateProgress) await job.updateProgress(15);
           const result = await this.imageService.cropImage(filePath, crop, originalFilename);
+          if (job.updateProgress) await job.updateProgress(85);
 
           const response = {
             jobId: job.id.toString(),
             status: 'completed',
             message: 'Image crop completed successfully',
-            downloadUrl: `/api/images/download/${result.outputPath.split('/').pop()}`,
+            downloadUrl: `/api/images/download/${path.basename(result.outputPath)}`,
             originalFilename,
-            filename: result.outputPath.split('/').pop(),
+            filename: path.basename(result.outputPath),
             width: result.dimensions.width,
             height: result.dimensions.height,
             mime: `image/${path.extname(originalFilename).slice(1)}`,
@@ -296,21 +304,23 @@ class ImageWorker {
       processJob: async (job) => {
         const { operation, filePaths, options, webhookUrl } = job.data;
         try {
+          if (job.updateProgress) await job.updateProgress(10);
           const archivePath = await this.imageService.processBatch(filePaths, operation, options);
+          if (job.updateProgress) await job.updateProgress(90);
 
+          const archiveFilename = path.basename(archivePath);
           const response = {
             jobId: job.id.toString(),
             status: 'completed',
             message: `Batch ${operation} completed successfully`,
-            downloadUrl: `/api/images/download/${archivePath.split('/').pop()}`,
+            downloadUrl: `/api/images/download/${archiveFilename}`,
             operation,
             fileCount: filePaths.length,
-            archivePath,
+            filename: archiveFilename,
           };
 
           await this.sendWebhook(webhookUrl, response, job.id, 'batch');
 
-          // Cleanup all original files
           for (const fp of filePaths) {
             await this.imageService.cleanup(fp);
           }

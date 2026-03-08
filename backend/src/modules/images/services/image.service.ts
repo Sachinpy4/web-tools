@@ -99,52 +99,94 @@ export class ImageService {
       
       const metadata = await image.metadata();
 
-      // PERFORMANCE OPTIMIZATION: Apply format-specific optimizations
+      // Use Sharp's detected format (reliable) with file extension as fallback
+      const detectedFormat = metadata.format || ext.replace('.', '');
       let processedImage = image;
 
-      if (ext === '.jpeg' || ext === '.jpg') {
-        processedImage = processedImage.jpeg({ 
-          quality,
-          progressive: true,
-          mozjpeg: true, // Use mozjpeg for better compression
-          optimiseScans: true, // Optimize progressive scans
-          overshootDeringing: true, // Reduce ringing artifacts
-          trellisQuantisation: true, // Better quality at same file size
-        });
-      } else if (ext === '.png') {
-        processedImage = processedImage.png({ 
-          quality,
-          progressive: true,
-          compressionLevel: Math.min(9, Math.max(1, Math.round(quality / 10))), // 1-9 range
-          adaptiveFiltering: true, // Better compression
-          palette: quality < 80, // Use palette for lower quality
-        });
-      } else if (ext === '.webp') {
-        processedImage = processedImage.webp({ 
-          quality,
-          effort: 6, // Maximum effort for best compression
-          lossless: quality >= 95, // Use lossless for very high quality
-          nearLossless: quality >= 90 && quality < 95, // Near-lossless for high quality
-          smartSubsample: true, // Better quality
-        });
-      } else {
-        // Convert to JPEG for other formats with optimizations
-        processedImage = processedImage.jpeg({ 
-          quality,
-          progressive: true,
-          mozjpeg: true,
-          optimiseScans: true,
-          overshootDeringing: true,
-          trellisQuantisation: true,
-        });
+      switch (detectedFormat) {
+        case 'jpeg':
+        case 'jpg':
+          processedImage = processedImage.jpeg({
+            quality,
+            progressive: true,
+            mozjpeg: true,
+            optimiseScans: true,
+            overshootDeringing: true,
+            trellisQuantisation: true,
+          });
+          break;
+
+        case 'png': {
+          const usePalette = quality <= 95;
+          processedImage = processedImage.png({
+            quality: usePalette ? quality : undefined,
+            compressionLevel: 9,
+            adaptiveFiltering: true,
+            palette: usePalette,
+          });
+          break;
+        }
+
+        case 'webp':
+          processedImage = processedImage.webp({
+            quality,
+            effort: 6,
+            smartSubsample: true,
+            // Only go fully lossless at 100; otherwise quality always matters
+            lossless: quality === 100,
+            nearLossless: quality >= 95 && quality < 100,
+          });
+          break;
+
+        case 'tiff':
+          processedImage = processedImage.tiff({
+            quality,
+            compression: quality < 90 ? 'jpeg' : 'deflate',
+            predictor: 'horizontal',
+          });
+          break;
+
+        case 'avif':
+          processedImage = processedImage.avif({
+            quality,
+            effort: 4,
+            lossless: quality === 100,
+            chromaSubsampling: quality >= 90 ? '4:4:4' : '4:2:0',
+          });
+          break;
+
+        case 'gif':
+          processedImage = processedImage.gif({
+            colours: Math.max(2, Math.round(256 * (quality / 100))),
+            effort: 7,
+            dither: quality < 80 ? 0.8 : 1.0,
+          });
+          break;
+
+        default:
+          this.logger.warn(`Unsupported format "${detectedFormat}" for ${originalFilename}, re-encoding as JPEG`);
+          processedImage = processedImage.jpeg({
+            quality,
+            progressive: true,
+            mozjpeg: true,
+          });
+          break;
       }
 
-      // PERFORMANCE OPTIMIZATION: Write with optimal buffer size
       await processedImage.toFile(outputPath);
 
       // Get processed file stats
-      const processedStats = fs.statSync(outputPath);
-      const processedSize = processedStats.size;
+      let processedStats = fs.statSync(outputPath);
+      let processedSize = processedStats.size;
+
+      // If compressed file is larger than original, use the original instead
+      if (processedSize >= originalSize) {
+        this.logger.warn(`Compressed file (${processedSize}B) >= original (${originalSize}B), copying original`);
+        await fs.promises.copyFile(inputPath, outputPath);
+        processedStats = fs.statSync(outputPath);
+        processedSize = processedStats.size;
+      }
+
       const compressionRatio = Math.round(((originalSize - processedSize) / originalSize) * 100);
 
       const processingTime = Date.now() - startTime;
@@ -225,31 +267,53 @@ export class ImageService {
         resizeOptions.kernel = 'lanczos3'; // High-quality resampling
       }
 
-      // PERFORMANCE OPTIMIZATION: Apply format-specific optimizations during resize
       let processedImage = image.resize(resizeOptions);
+      const detectedFormat = metadata.format || ext.replace('.', '');
 
-      // Apply format-specific optimizations (same as compress method)
-      if (ext === '.jpeg' || ext === '.jpg') {
-        processedImage = processedImage.jpeg({ 
-          quality: 85, // Good quality for resized images
-          progressive: true,
-          mozjpeg: true,
-          optimiseScans: true,
-          overshootDeringing: true,
-          trellisQuantisation: true,
-        });
-      } else if (ext === '.png') {
-        processedImage = processedImage.png({ 
-          compressionLevel: 6, // Balanced compression
-          adaptiveFiltering: true,
-          progressive: true,
-        });
-      } else if (ext === '.webp') {
-        processedImage = processedImage.webp({ 
-          quality: 85,
-          effort: 6,
-          smartSubsample: true,
-        });
+      switch (detectedFormat) {
+        case 'jpeg':
+        case 'jpg':
+          processedImage = processedImage.jpeg({
+            quality: 85,
+            progressive: true,
+            mozjpeg: true,
+            optimiseScans: true,
+            overshootDeringing: true,
+            trellisQuantisation: true,
+          });
+          break;
+        case 'png':
+          processedImage = processedImage.png({
+            compressionLevel: 6,
+            adaptiveFiltering: true,
+          });
+          break;
+        case 'webp':
+          processedImage = processedImage.webp({
+            quality: 85,
+            effort: 6,
+            smartSubsample: true,
+          });
+          break;
+        case 'tiff':
+          processedImage = processedImage.tiff({
+            quality: 85,
+            compression: 'jpeg',
+          });
+          break;
+        case 'avif':
+          processedImage = processedImage.avif({
+            quality: 85,
+            effort: 4,
+          });
+          break;
+        case 'gif':
+          processedImage = processedImage.gif({
+            effort: 7,
+          });
+          break;
+        default:
+          break;
       }
 
       await processedImage.toFile(outputPath);
@@ -528,6 +592,17 @@ export class ImageService {
         output.on('error', reject);
       });
       
+      // Clean up individual processed files now that they're archived
+      for (const result of results) {
+        try {
+          if (fs.existsSync(result.outputPath)) {
+            await fs.promises.unlink(result.outputPath);
+          }
+        } catch {
+          this.logger.debug(`Deferred cleanup for processed file: ${result.outputPath}`);
+        }
+      }
+      
       this.logger.log(`Batch processing complete: ${results.length}/${filePaths.length} files processed`);
       
       return archivePath;
@@ -570,7 +645,7 @@ export class ImageService {
 
   // FILE VALIDATION - Uses dynamic settings from database
   async validateImageFile(file: Express.Multer.File): Promise<void> {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/tiff', 'image/avif'];
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/tiff', 'image/avif', 'image/gif'];
     
     // Get dynamic settings from database
     const settings = await (this.systemSettingsModel as any).getCurrentSettings();

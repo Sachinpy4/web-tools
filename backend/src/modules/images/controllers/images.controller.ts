@@ -53,7 +53,7 @@ const imageStorage = diskStorage({
 });
 
 const imageFileFilter = (req: any, file: any, cb: any) => {
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/tiff', 'image/avif'];
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/tiff', 'image/avif', 'image/gif'];
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -118,7 +118,7 @@ export class ImagesController {
             file.originalname
           );
 
-          const filename = result.outputPath.split('/').pop() || result.outputPath.split('\\').pop();
+          const filename = path.basename(result.outputPath);
 
           // Return immediate response with same structure as original backend
           const response = {
@@ -231,7 +231,7 @@ export class ImagesController {
             maintainAspectRatio === 'true'
           );
 
-          const filename = result.outputPath.split('/').pop() || result.outputPath.split('\\').pop();
+          const filename = path.basename(result.outputPath);
 
           // Return immediate response with same structure as original backend
           return {
@@ -328,7 +328,7 @@ export class ImagesController {
             quality || 80
           );
 
-          const filename = result.outputPath.split('/').pop() || result.outputPath.split('\\').pop();
+          const filename = path.basename(result.outputPath);
 
           // Return immediate response with same structure as original backend
           return {
@@ -415,7 +415,7 @@ export class ImagesController {
             file.originalname
           );
 
-          const filename = result.outputPath.split('/').pop() || result.outputPath.split('\\').pop();
+          const filename = path.basename(result.outputPath);
 
           // Return immediate response with same structure as original backend
           return {
@@ -768,7 +768,9 @@ export class ImagesController {
       '.png': 'image/png',
       '.webp': 'image/webp',
       '.tiff': 'image/tiff',
+      '.tif': 'image/tiff',
       '.avif': 'image/avif',
+      '.gif': 'image/gif',
       '.zip': 'application/zip',
     };
     return mimeTypes[ext] || 'application/octet-stream';

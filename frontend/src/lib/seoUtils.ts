@@ -85,7 +85,7 @@ export async function getServerSideMetadata(pagePath: string): Promise<Metadata>
 
     const data = await response.json();
 
-    if (!data || !data.data) {
+    if (!data || !data.data || data.data.isActive === false) {
       return generateMetadataFromFallback(pagePath);
     }
 

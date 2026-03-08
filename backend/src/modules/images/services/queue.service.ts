@@ -54,7 +54,7 @@ class LocalQueue<T = any> {
       id: job.id,
       data: job.data,
       state: job.status,
-      progress: job.status === 'completed' ? 100 : job.status === 'active' ? 50 : 0,
+      progress: job.status === 'completed' ? 100 : job.status === 'active' ? 30 : 0,
       result: job.result,
       error: job.error,
     };

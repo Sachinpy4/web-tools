@@ -72,7 +72,8 @@ export default function ResizeTool() {
     processingFiles, 
     setVisualProgress,
     setProcessingFiles,
-    simulateProgress: _simulateProgress, 
+    startProgressSimulation,
+    cancelProgressSimulation,
     showResultsAfterProgress: sharedShowResultsAfterProgress, 
     clearAllProgress, 
     adjustProgressIndices 
@@ -296,11 +297,8 @@ export default function ResizeTool() {
         const file = filesToResize[i]
         const index = fileIndices[i]
         
-        // Start visual progress for this file
-        setVisualProgress(prev => ({
-          ...prev,
-          [index]: 0
-        }));
+        // Start real-time progress simulation before the API call
+        startProgressSimulation(index);
         
         const formData = new FormData()
         formData.append('image', file)
@@ -346,18 +344,8 @@ export default function ResizeTool() {
         } catch (error: any) {
           console.error(`Failed to resize file ${i+1}/${filesToResize.length}:`, error);
           
-          // Clean up progress state on error
-          setVisualProgress(prev => {
-            const newProgress = { ...prev };
-            delete newProgress[index];
-            return newProgress;
-          });
-          
-          setProcessingFiles(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(index);
-            return newSet;
-          });
+          // Cancel progress simulation on error
+          cancelProgressSimulation(index);
           
           // Special handling for rate limit errors
           if (error.status === 429) {
@@ -571,7 +559,8 @@ export default function ResizeTool() {
                         <div>
                           <a 
                             href={`${getApiUrl().replace('/api', '')}${results[selectedFileIndex].downloadUrl}`}
-                            className="text-xs inline-flex items-center px-3 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+                            className="text-xs inline-flex items-center px-3 py-2 rounded font-medium text-white shadow-sm hover:opacity-90 transition-opacity"
+                            style={{ background: `linear-gradient(to right, ${toolTheme.primaryColor}, ${toolTheme.primaryHover})` }}
                           >
                             <Download className="h-3 w-3 mr-1" /> Download
                           </a>
@@ -825,8 +814,12 @@ export default function ResizeTool() {
                 className="w-full" 
                 size="lg" 
                 onClick={handleResizeSingle}
-                disabled={selectedFileIndex === null || !width || !height || (selectedFileIndex !== null && results[selectedFileIndex])}
-                isLoading={isLoading}
+                disabled={
+                  selectedFileIndex === null || !width || !height || 
+                  !!(selectedFileIndex !== null && results[selectedFileIndex]) ||
+                  (selectedFileIndex !== null && processingFiles.has(selectedFileIndex))
+                }
+                isLoading={isLoading || (selectedFileIndex !== null && processingFiles.has(selectedFileIndex))}
                 loadingText="Resizing..."
               >
                 <ArrowDownSquare className="mr-2 h-4 w-4" /> Resize Selected Image
@@ -858,8 +851,8 @@ export default function ResizeTool() {
                 className="w-full" 
                 size="lg" 
                 onClick={handleResizeAll}
-                disabled={files.length === 0 || !width || !height || files.every((_, index) => results[index])}
-                isLoading={isLoading}
+                disabled={files.length === 0 || !width || !height || files.every((_, index) => results[index]) || processingFiles.size > 0}
+                isLoading={isLoading || processingFiles.size > 0}
                 loadingText="Resizing..."
               >
                 <ArrowRightSquare className="mr-2 h-4 w-4" /> Resize All Images

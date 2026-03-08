@@ -55,7 +55,8 @@ export default function CompressTool() {
     processingFiles, 
     setVisualProgress,
     setProcessingFiles,
-    simulateProgress: _simulateProgress, 
+    startProgressSimulation,
+    cancelProgressSimulation,
     showResultsAfterProgress: sharedShowResultsAfterProgress, 
     clearAllProgress, 
     adjustProgressIndices 
@@ -245,88 +246,65 @@ export default function CompressTool() {
         const file = filesToCompress[i]
         const index = fileIndices[i]
         
-        // Start visual progress for this file
-        setVisualProgress(prev => ({
-          ...prev,
-          [index]: 0
-        }));
+        // Start real-time progress simulation BEFORE the API call
+        startProgressSimulation(index);
         
         const formData = new FormData()
         formData.append('image', file)
         formData.append('quality', quality.toString())
         
         try {
-          // Use the shared API request function with rate limit tracking
           const result = await makeApiRequestWithRateLimitTracking<CompressResponse>('images/compress', {
             method: 'POST',
             body: formData,
             isFormData: true,
           });
           
-          // Handle queued response (with jobId) vs direct response
           if (result.status === 'processing' && result.data.jobId) {
-            // Queued processing - use shared job polling
+            // Queued processing — simulation keeps running, polling takes over progress
             startJobPolling(result.data.jobId, 'compress', index, file, createCompressResult);
             
           } else {
-            // Direct processing - immediate result, but use visual progress
+            // Direct processing — cancel simulation, complete to 100%, set result
             const resultObj = createCompressResult(result.data, file);
             
-            // Start visual progress simulation for direct processing
             showResultsAfterProgress(index, resultObj).then(() => {
-              // Show success notification after progress completes
               toast({
                 title: "✅ Compression completed!",
-                description: `${file.name} compressed successfully (${result.data.compressionRatio}% file size reduction)`,
+                description: result.data.compressionRatio > 0
+                  ? `${file.name} compressed successfully (${result.data.compressionRatio}% smaller)`
+                  : `${file.name} processed — already optimally compressed`,
               });
             });
           }
         } catch (error: any) {
-          // Update rate limit info from error
+          // Cancel progress simulation on error
+          cancelProgressSimulation(index);
           updateRateLimitFromError(error);
           
           if (error.status === 429) {
-            // Show rate limit error toast
             toast({
               title: "Rate limit reached",
               description: "You've reached the image processing limit. Please try again later.",
               variant: "destructive"
             });
             
-            // Explicitly set the rate limit reached flag
             setRateLimitUsage(prev => ({
               ...prev,
               isLimitReached: true
             }));
             
-            // Clean up progress state on error
-            setVisualProgress(prev => {
-              const newProgress = { ...prev };
-              delete newProgress[index];
-              return newProgress;
-            });
-            
-            setProcessingFiles(prev => {
-              const newSet = new Set(prev);
-              newSet.delete(index);
-              return newSet;
-            });
-            
-            // Mark the file as failed
             compressedResults[index] = null;
           } else {
-            // For other errors, just continue to the next file
             toast({
               title: `Failed to compress file ${i+1}/${filesToCompress.length}`,
               description: error.message || "An unexpected error occurred",
               variant: "destructive"
             });
             
-            // Mark the file as failed
             compressedResults[index] = null;
           }
           
-          // Continue with other files instead of stopping the whole batch
           continue;
         }
       }
@@ -558,8 +536,13 @@ export default function CompressTool() {
                               <p className="text-xs text-muted-foreground">
                                 {(file.size / 1024).toFixed(2)} KB
                                 {results[index] && results[index] !== null && (
-                                  <span className="text-green-600 ml-1 sm:ml-2">
-                                    → {(results[index].compressedSize / 1024).toFixed(2)} KB ({results[index].compressionRatio}% smaller)
+                                  <span className={`ml-1 sm:ml-2 ${results[index].compressionRatio > 0 ? 'text-green-600' : results[index].compressionRatio === 0 ? 'text-muted-foreground' : 'text-yellow-600'}`}>
+                                    → {(results[index].compressedSize / 1024).toFixed(2)} KB
+                                    {results[index].compressionRatio > 0 
+                                      ? ` (${results[index].compressionRatio}% smaller)`
+                                      : results[index].compressionRatio === 0 
+                                        ? ' (same size)' 
+                                        : ` (${Math.abs(results[index].compressionRatio)}% larger)`}
                                   </span>
                                 )}
                               </p>
@@ -624,11 +607,15 @@ export default function CompressTool() {
                     
                     {results[selectedFileIndex] && (
                       <div className="mt-3 pt-3 border-t">
-                        <p className="font-medium text-green-600 mb-2">Compressed Stats:</p>
+                        <p className={`font-medium mb-2 ${results[selectedFileIndex].compressionRatio > 0 ? 'text-green-600' : 'text-yellow-600'}`}>Compressed Stats:</p>
                         <p className="mb-3">
                           Size: {(results[selectedFileIndex].compressedSize / 1024).toFixed(2)} KB 
-                          <span className="text-green-600 ml-2">
-                            ({results[selectedFileIndex].compressionRatio}% smaller)
+                          <span className={`ml-2 ${results[selectedFileIndex].compressionRatio > 0 ? 'text-green-600' : results[selectedFileIndex].compressionRatio === 0 ? 'text-muted-foreground' : 'text-yellow-600'}`}>
+                            {results[selectedFileIndex].compressionRatio > 0
+                              ? `(${results[selectedFileIndex].compressionRatio}% smaller)`
+                              : results[selectedFileIndex].compressionRatio === 0
+                                ? '(same size)'
+                                : `(${Math.abs(results[selectedFileIndex].compressionRatio)}% larger)`}
                           </span>
                         </p>
                         <p className="text-xs text-muted-foreground mb-3">
@@ -637,7 +624,8 @@ export default function CompressTool() {
                         <div>
                           <a 
                             href={`${getApiUrl().replace('/api', '')}${results[selectedFileIndex].downloadUrl}`}
-                            className="text-xs inline-flex items-center px-3 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+                            className="text-xs inline-flex items-center px-3 py-2 rounded font-medium text-white shadow-sm hover:opacity-90 transition-opacity"
+                            style={{ background: `linear-gradient(to right, ${toolTheme.primaryColor}, ${toolTheme.primaryHover})` }}
                           >
                             <Download className="h-3 w-3 mr-1" /> Download
                           </a>
@@ -746,8 +734,12 @@ export default function CompressTool() {
                 className="w-full" 
                 size="lg" 
                 onClick={handleCompressSingle}
-                disabled={selectedFileIndex === null || (selectedFileIndex !== null && results[selectedFileIndex])}
-                isLoading={isLoading}
+                disabled={
+                  selectedFileIndex === null || 
+                  !!(selectedFileIndex !== null && results[selectedFileIndex]) ||
+                  (selectedFileIndex !== null && processingFiles.has(selectedFileIndex))
+                }
+                isLoading={isLoading || (selectedFileIndex !== null && processingFiles.has(selectedFileIndex))}
                 loadingText="Compressing..."
               >
                 <Download className="mr-2 h-4 w-4" /> Compress Selected Image
@@ -779,8 +771,8 @@ export default function CompressTool() {
                 className="w-full" 
                 size="lg" 
                 onClick={handleCompressAll}
-                disabled={files.length === 0 || files.every((_, index) => results[index])}
-                isLoading={isLoading}
+                disabled={files.length === 0 || files.every((_, index) => results[index]) || processingFiles.size > 0}
+                isLoading={isLoading || processingFiles.size > 0}
                 loadingText="Compressing..."
               >
                 <Download className="mr-2 h-4 w-4" /> Compress All Images

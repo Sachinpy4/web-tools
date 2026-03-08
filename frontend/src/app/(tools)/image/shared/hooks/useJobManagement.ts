@@ -431,9 +431,13 @@ export const useJobManagement = ({
 // Helper function to generate success messages with null-safe access
 const getSuccessMessage = (toolType: 'compress' | 'convert' | 'resize' | 'crop', file: File, jobResult: any): string => {
   switch (toolType) {
-    case 'compress':
-      const ratio = jobResult?.compressionRatio ?? 'N/A';
-      return `${file.name} compressed successfully (${ratio}% file size reduction)`;
+    case 'compress': {
+      const ratio = jobResult?.compressionRatio;
+      if (ratio != null && ratio > 0) {
+        return `${file.name} compressed successfully (${ratio}% smaller)`;
+      }
+      return `${file.name} processed — already optimally compressed`;
+    }
     case 'convert':
       return `${file.name} converted to ${(jobResult?.convertedFormat || 'new format').toUpperCase()}`;
     case 'resize':
