@@ -700,7 +700,6 @@ export class BackupService {
       for (const collectionName of targetCollections) {
         try {
           const collection = db.collection(collectionName);
-          const count = await collection.countDocuments();
           const documents: any[] = [];
 
           // Use cursor with batching for memory efficiency
