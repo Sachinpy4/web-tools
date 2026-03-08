@@ -17,6 +17,5 @@ COPY --from=builder /app/.next/static ./.next/static
 ENV NODE_ENV=production
 USER appuser
 EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "const http=require('http');http.get('http://localhost:3000/api/health',(r)=>{let d='';r.on('data',c=>d+=c);r.on('end',()=>process.exit(r.statusCode===200?0:1))}).on('error',()=>process.exit(1))"
+HEALTHCHECK NONE
 CMD ["node", "server.js"]
