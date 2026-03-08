@@ -8,7 +8,6 @@ import { AppProviders } from '@/components/providers/AppProviders'
 import { HeadScripts, BodyScripts, FooterScripts } from '@/components/analytics/DynamicScripts'
 import { WebVitals } from '@/components/performance/WebVitals'
 import { AsyncCSS } from '@/components/performance/AsyncCSS'
-import Script from 'next/script'
 import { generateOrganizationSchema, generateWebSiteSchema, renderJsonLd } from '@/lib/structuredData'
 
 // Using system font stack for optimal performance

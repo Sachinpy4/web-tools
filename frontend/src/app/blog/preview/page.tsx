@@ -6,7 +6,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft, Calendar, User, Tag, Eye } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from '@/components/ui/use-toast'
-import { Badge } from '@/components/ui/badge'
 import { getProxiedImageUrl } from '@/lib/imageProxy'
 import DOMPurify from 'dompurify'
 import { common, createLowlight } from 'lowlight'
@@ -147,7 +146,7 @@ export default function BlogPreviewPage() {
                 copyButton.disabled = false
               }, 1500)
               
-            } catch (err) {
+            } catch (_err) {
               // Error state
               copyButton.innerHTML = `
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

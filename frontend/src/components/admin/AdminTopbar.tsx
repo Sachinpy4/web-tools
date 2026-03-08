@@ -1,12 +1,11 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { Bell, Sun, Moon, LogOut, ChevronDown, Menu, User, Settings, Clock, RefreshCw } from 'lucide-react'
+import React, { useState } from 'react'
+import { Bell, Sun, Moon, LogOut, ChevronDown, Menu, User, Clock, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTheme } from 'next-themes'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useRouter } from 'next/navigation'
-import { cn } from '@/lib/utils'
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -15,8 +14,6 @@ import {
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
 import { Badge } from "@/components/ui/badge"
-import Link from 'next/link'
-
 interface User {
   id: string;
   name: string;

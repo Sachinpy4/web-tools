@@ -36,11 +36,10 @@ const CACHE_TTL = 5000; // 5 seconds
 // Track if we're in initial connection phase
 let isInitialConnection = true;
 let connectionAttempts = 0;
-let consecutiveErrors = 0;
+let _consecutiveErrors = 0;
 
-// Health check specific settings
 const MAX_INITIAL_ATTEMPTS = 3;
-const MAX_CONSECUTIVE_ERRORS = 5;
+const _MAX_CONSECUTIVE_ERRORS = 5;
 let lastErrorLogTime = 0;
 const ERROR_LOG_INTERVAL = 10000; // 10 seconds
 
@@ -82,7 +81,7 @@ export async function getServerStatus(): Promise<ServerStatus> {
     lastFetchTime = now;
     
     // Reset error tracking on success
-    consecutiveErrors = 0;
+    _consecutiveErrors = 0;
     
     // Initial connection is complete
     if (isInitialConnection) {
@@ -102,7 +101,7 @@ export async function getServerStatus(): Promise<ServerStatus> {
     
     // Increment connection attempts and error count
     connectionAttempts++;
-    consecutiveErrors++;
+    _consecutiveErrors++;
     
     // After MAX_INITIAL_ATTEMPTS failed attempts, consider initial connection phase complete
     if (isInitialConnection && connectionAttempts >= MAX_INITIAL_ATTEMPTS) {
@@ -135,8 +134,7 @@ export async function getProcessingMode(): Promise<ProcessingMode> {
   try {
     const status = await getServerStatus();
     return status.mode === 'queued' ? 'queued' : 'direct';
-  } catch (error) {
-    // Always default to direct mode on error
+  } catch (_error) {
     return 'direct';
   }
 }
@@ -163,12 +161,11 @@ export async function getRateLimitSettings(): Promise<{
     });
     
     return response.data;
-  } catch (error) {
-    // Fallback to default values if unable to fetch
+  } catch (_error) {
     return {
-      imageProcessing: { max: 50, windowMs: 300000 }, // 50 requests per 5 minutes
-      batchOperation: { max: 15, windowMs: 600000 }, // 15 requests per 10 minutes
-      api: { max: 1000, windowMs: 900000 } // 1000 requests per 15 minutes
+      imageProcessing: { max: 50, windowMs: 300000 },
+      batchOperation: { max: 15, windowMs: 600000 },
+      api: { max: 1000, windowMs: 900000 }
     };
   }
 }
@@ -243,8 +240,7 @@ export async function pollJobStatus(
               timestamp: now
             };
           }
-        } catch (error) {
-          // Increase backoff on connection errors
+        } catch (_error) {
           backoffFactor = Math.min(backoffFactor * 1.5, 5);
           
           // Continue polling despite errors, but slow down
@@ -319,10 +315,9 @@ export async function getFileUploadSettings(): Promise<{
     });
     
     return response.data;
-  } catch (error) {
-    // Fallback to default values if unable to fetch
+  } catch (_error) {
     return {
-      maxFileSize: 52428800, // 50MB
+      maxFileSize: 52428800,
       maxFiles: 10
     };
   }

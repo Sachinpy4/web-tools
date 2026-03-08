@@ -198,9 +198,9 @@ export default function DynamicScripts({ placement }: DynamicScriptsProps) {
         }
 
         // Detect the platform for better logging
-        const isGTMScript = script.content.match(/GTM-[A-Z0-9]+/) && script.platform === 'Google Tag Manager'
-        const isFacebookPixel = script.content.includes('fbq') || script.platform === 'Facebook Pixel'
-        const isGoogleAnalytics = script.content.includes('gtag') || script.platform === 'Google Analytics'
+        const _isGTMScript = script.content.match(/GTM-[A-Z0-9]+/) && script.platform === 'Google Tag Manager'
+        const _isFacebookPixel = script.content.includes('fbq') || script.platform === 'Facebook Pixel'
+        const _isGoogleAnalytics = script.content.includes('gtag') || script.platform === 'Google Analytics'
         
         // Render based on content type
         if (type === 'noscript') {

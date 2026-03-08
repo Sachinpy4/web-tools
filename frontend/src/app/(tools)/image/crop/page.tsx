@@ -3,24 +3,20 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { ToolHeader } from '@/components/tools/ToolHeader'
 import { Button } from '@/components/ui/button'
-import { Crop, Download, X, Trash2, MoveHorizontal, MoveVertical, ArrowDownSquare, RefreshCw, CheckCircle, Server } from 'lucide-react'
+import { Crop, Download, X, Trash2, CheckCircle, Server } from 'lucide-react'
 import ImageDropzone from '@/components/tools/ImageDropzone'
 import { useToast } from '@/components/ui/use-toast'
 import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import ReactCrop, { Crop as CropType, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop'
+import ReactCrop, { Crop as CropType, PixelCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
-import { processHeicFiles } from '@/lib/heicConverter'
 
 import { getApiUrl } from '@/lib/apiClient'
 
 import { useProcessingMode } from '@/lib/context/ProcessingModeContext'
-import { QueueStatusIndicator } from '@/components/ui/QueueStatusIndicator'
-import { apiRequest } from '@/lib/apiClient'
 import { DynamicSeoLoader } from '@/components/seo/DynamicSeoLoader'
-import { LocalRateLimitIndicator, useRateLimitTracking, useVisualProgress, useFileManagement, useApiWithRateLimit, useJobManagement, useArchiveDownload, useProgressBadges, useProgressDisplay, useHeicDetection, ThemedButton, toolThemes, type ToolTheme } from '../shared'
+import { LocalRateLimitIndicator, useRateLimitTracking, useVisualProgress, useFileManagement, useApiWithRateLimit, useJobManagement, useArchiveDownload, useProgressBadges, useProgressDisplay, useHeicDetection, ThemedButton } from '../shared'
 
 // Define response types for API calls
 interface CropResponse {
@@ -64,13 +60,13 @@ export default function CropTool() {
   }, []);
   
   // Add rate limit tracking
-  const { rateLimitUsage, setRateLimitUsage, updateRateLimitFromError } = useRateLimitTracking();
+  const { rateLimitUsage, setRateLimitUsage, updateRateLimitFromError: _updateRateLimitFromError } = useRateLimitTracking();
   const { 
     visualProgress, 
     processingFiles, 
     setVisualProgress,
     setProcessingFiles,
-    simulateProgress, 
+    simulateProgress: _simulateProgress, 
     showResultsAfterProgress: sharedShowResultsAfterProgress, 
     clearAllProgress, 
     adjustProgressIndices 
@@ -81,10 +77,10 @@ export default function CropTool() {
     previews,
     selectedFileIndex,
     shouldClearDropzone,
-    setFiles,
-    setPreviews,
+    setFiles: _setFiles,
+    setPreviews: _setPreviews,
     setSelectedFileIndex,
-    setShouldClearDropzone,
+    setShouldClearDropzone: _setShouldClearDropzone,
     handleImageDrop: sharedHandleImageDrop,
     handleRemoveFile: sharedHandleRemoveFile,
     handleRemoveAllFiles: sharedHandleRemoveAllFiles,
@@ -108,21 +104,21 @@ export default function CropTool() {
   });
   
   const { renderProgressBadge } = useProgressBadges();
-  const { renderBackgroundJobProgress, renderVisualProgress, renderBatchProgress, toolTheme } = useProgressDisplay('crop');
+  const { renderBackgroundJobProgress, renderVisualProgress, renderBatchProgress: _renderBatchProgress, toolTheme } = useProgressDisplay('crop');
   const { renderHeicWarning } = useHeicDetection();
   
   const {
-    jobIds,
+    jobIds: _jobIds,
     jobProgress,
     queueStatus,
     fileJobMapping,
-    setJobIds,
-    setJobProgress,
-    setQueueStatus,
+    setJobIds: _setJobIds,
+    setJobProgress: _setJobProgress,
+    setQueueStatus: _setQueueStatus,
     setFileJobMapping,
     startJobPolling,
-    cleanupJobState,
-    clearAllJobs
+    cleanupJobState: _cleanupJobState,
+    clearAllJobs: _clearAllJobs
   } = useJobManagement({
     setVisualProgress,
     setProcessingFiles,
@@ -442,7 +438,7 @@ export default function CropTool() {
       }
       
       // Calculate scaling ratio between displayed image and original
-      const { scaleX, scaleY, offsetX, offsetY, actualDisplayedWidth, actualDisplayedHeight } = calculateProperScaling(imageElement, imageWidth, imageHeight);
+      const { scaleX, scaleY, offsetX, offsetY, actualDisplayedWidth: _actualDisplayedWidth, actualDisplayedHeight: _actualDisplayedHeight } = calculateProperScaling(imageElement, imageWidth, imageHeight);
       
       // Adjust crop coordinates to account for centering offset, then scale to original dimensions
       const scaledCrop = {
@@ -636,6 +632,7 @@ export default function CropTool() {
                       >
                         <div className="flex items-center min-w-0 flex-1">
                           <div className="h-8 w-8 sm:h-10 sm:w-10 mr-3 shrink-0 bg-background rounded overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img 
                               src={previews[index]} 
                               alt={file.name} 
@@ -692,6 +689,7 @@ export default function CropTool() {
               {selectedFileIndex !== null ? (
                 <div className="grow flex flex-col">
                   <div className="grow flex items-center justify-center bg-accent/20 rounded-lg mb-4 overflow-hidden min-h-[200px] sm:min-h-[250px] lg:min-h-[300px]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
                       src={previews[selectedFileIndex]} 
                       alt={files[selectedFileIndex].name}
@@ -778,6 +776,7 @@ export default function CropTool() {
                         minHeight={20}
                         className="max-w-full"
                       >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           ref={imgRef}
                           src={previews[selectedFileIndex]}

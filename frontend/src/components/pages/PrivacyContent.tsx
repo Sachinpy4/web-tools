@@ -9,11 +9,8 @@ import {
   Shield, 
   Eye, 
   Lock, 
-  Server, 
-  Cookie,
   FileText,
-  CheckCircle,
-  AlertTriangle
+  CheckCircle
 } from 'lucide-react'
 
 export default function PrivacyContent() {

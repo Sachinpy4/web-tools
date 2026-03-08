@@ -11,7 +11,6 @@ import {
   Settings, 
   Users, 
   Home,
-  ImageIcon,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -22,7 +21,6 @@ import {
   X,
   Database
 } from 'lucide-react'
-import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 
 interface NavItem {
@@ -38,7 +36,7 @@ interface AdminSidebarProps {
   isOpen?: boolean
 }
 
-export function AdminSidebar({ onToggle, isMobile = false, isOpen = true }: AdminSidebarProps) {
+export function AdminSidebar({ onToggle, isMobile = false, isOpen: _isOpen = true }: AdminSidebarProps) {
   const pathname = usePathname()
   const { logout } = useAuth()
   const router = useRouter()

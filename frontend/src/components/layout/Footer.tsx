@@ -15,8 +15,7 @@ import {
   ExternalLink,
   Sparkles,
   ImageIcon,
-  Newspaper,
-  Scissors
+  Newspaper
 } from 'lucide-react'
 
 

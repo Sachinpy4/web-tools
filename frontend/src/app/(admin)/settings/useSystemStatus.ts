@@ -6,7 +6,7 @@ import { SystemStatus, SchedulerStates, SchedulerInfo, CleanupType, ApiResponse 
 export function useSystemStatus() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<ApiResponse['data'] | null>(null);
+  const [results, _setResults] = useState<ApiResponse['data'] | null>(null);
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   
   // Scheduler states for each cleanup type
@@ -212,7 +212,7 @@ export function useSystemStatus() {
       
       const schedule = scheduleMap[type];
       
-      const response = await apiRequest<any>(`admin/scheduler`, {
+      const _response = await apiRequest<any>(`admin/scheduler`, {
         method: 'POST',
         body: { 
           type, 

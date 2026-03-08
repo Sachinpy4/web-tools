@@ -145,7 +145,7 @@ export function useBlogPostData(blogId: string) {
               return; // Exit early if found by slug
             }
           }
-        } catch (slugError) {
+        } catch (_slugError) {
           // Not found by slug, will try by ID
         }
         

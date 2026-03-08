@@ -12,17 +12,12 @@ import {
   ZoomIn, 
   Shield, 
   Zap, 
-  Clock, 
   Award,
-  CreditCard,
-  CalendarIcon,
   Check,
   MoveRight,
   FileText,
   ArrowUpRight,
-  Star,
   Users,
-  Download,
   Globe,
   Sparkles,
   Info,
@@ -96,18 +91,6 @@ const container = {
 const item = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0 }
-}
-
-const sparkleVariants = {
-  animate: {
-    scale: [0, 1, 0],
-    rotate: [0, 180, 360],
-    transition: {
-      duration: 2,
-      repeat: Infinity,
-      ease: "easeInOut" as const
-    }
-  }
 }
 
 // FAQ data
@@ -664,12 +647,13 @@ export default function HomeContent() {
                 animate="show"
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
               >
-                {latestPosts.map((post, index) => (
+                {latestPosts.map((post, _index) => (
                   <motion.div key={post._id} variants={item}>
                     <Link href={`/blog/${post.slug}`}>
                       <div className="group h-full rounded-2xl border-2 border-transparent bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-300/30 hover:-translate-y-2">
                         {post.featuredImage && (
                           <div className="aspect-video overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={getProxiedFeaturedImage(post.featuredImage)}
                               alt={post.title}

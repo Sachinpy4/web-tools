@@ -85,7 +85,7 @@ export const useFileManagement = ({
       // Reset results and progress states when new files are uploaded
       onResultsReset?.();
       clearAllProgress();
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error processing HEIC images",
         description: "There was an error processing one or more HEIC images. Try converting them to JPEG before uploading.",

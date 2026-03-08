@@ -259,7 +259,7 @@ export function RichTextEditor({
       }
       
       setLinkUrl('')
-    } catch (e) {
+    } catch (_e) {
       toast({
         title: 'Invalid URL',
         description: 'Please enter a valid URL including http:// or https://',

@@ -12,7 +12,6 @@ import { Input } from '@/components/ui/input'
 import { 
   Plus, 
   Search, 
-  Pencil,
   Trash,
   MoreHorizontal,
   UserCog,
@@ -200,7 +199,7 @@ function UsersPage() {
       await fetchUsers()
       setIsAddUserDialogOpen(false)
       resetForm()
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Error',
         description: 'Failed to add user. Please try again.',
@@ -242,7 +241,7 @@ function UsersPage() {
       await fetchUsers()
       setIsEditUserDialogOpen(false)
       resetForm()
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Error',
         description: 'Failed to update user. Please try again.',
@@ -280,7 +279,7 @@ function UsersPage() {
       
       setIsChangePasswordDialogOpen(false)
       resetForm()
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Error',
         description: 'Failed to change password. Please try again.',
@@ -308,7 +307,7 @@ function UsersPage() {
       await fetchUsers()
       setIsDeleteUserDialogOpen(false)
       resetForm()
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Error',
         description: 'Failed to delete user. Please try again.',
@@ -330,7 +329,7 @@ function UsersPage() {
   const formatDate = (dateString: string) => {
     try {
       return formatDistanceToNow(new Date(dateString), { addSuffix: true })
-    } catch (e) {
+    } catch (_e) {
       return dateString
     }
   }

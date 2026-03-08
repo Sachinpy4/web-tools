@@ -6,14 +6,13 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Pagination } from '@/components/ui/pagination'
 import { 
   CalendarIcon, 
   Search, 
   UserIcon, 
   Clock, 
-  Tag,
   ArrowRight,
   X
 } from 'lucide-react'
@@ -505,6 +504,7 @@ export default function BlogContent() {
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div className="h-[250px] sm:h-[300px] md:h-[350px] rounded-xl overflow-hidden bg-muted">
               {blogPosts[0].featuredImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img 
                   src={getProxiedFeaturedImage(blogPosts[0].featuredImage)}
                   alt={blogPosts[0].title}
@@ -563,6 +563,7 @@ export default function BlogContent() {
           <Card key={post._id} className="overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow">
             <div className="h-40 sm:h-48 overflow-hidden bg-muted/50">
               {post.featuredImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img 
                   src={getProxiedFeaturedImage(post.featuredImage)}
                   alt={post.title}

@@ -73,7 +73,7 @@ export const ColumnLayout = Node.create({
   
   addCommands() {
     return {
-      insertColumnLayout: (attributes = {}) => ({ chain, commands }) => {
+      insertColumnLayout: (attributes = {}) => ({ chain, commands: _commands }) => {
         return chain()
           .insertContent({
             type: this.name,
@@ -92,7 +92,7 @@ export const ColumnLayout = Node.create({
           .run()
       },
       
-      insertThreeColumnLayout: () => ({ chain, commands }) => {
+      insertThreeColumnLayout: () => ({ chain, commands: _commands }) => {
         return chain()
           .insertContent({
             type: this.name,
@@ -115,7 +115,7 @@ export const ColumnLayout = Node.create({
           .run()
       },
       
-      deleteColumnLayout: () => ({ commands, state, tr }) => {
+      deleteColumnLayout: () => ({ commands, state, tr: _tr }) => {
         // Find the column layout node that contains the current selection
         const { selection } = state
         const { $from } = selection
@@ -142,7 +142,7 @@ export const ColumnLayout = Node.create({
         return false
       },
       
-      toggleColumnCount: () => ({ chain, commands, state }) => {
+      toggleColumnCount: () => ({ chain, commands: _commands, state }) => {
         const { selection } = state
         const { $from } = selection
         

@@ -1,8 +1,5 @@
 'use client'
 
-import { useEffect } from 'react'
-import { fetchDynamicSeoData, updatePageSeo } from '@/lib/seoUtils'
-
 interface DynamicSeoLoaderProps {
   pagePath: string
 }
@@ -21,7 +18,7 @@ interface DynamicSeoLoaderProps {
  * 
  * For now, this component is disabled to prevent SEO issues.
  */
-export function DynamicSeoLoader({ pagePath }: DynamicSeoLoaderProps) {
+export function DynamicSeoLoader({ pagePath: _pagePath }: DynamicSeoLoaderProps) {
   // DISABLED: This was causing hydration issues and duplicate meta tags
   // Server-side metadata via generateMetadata() is now used instead
   

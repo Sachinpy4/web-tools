@@ -2,33 +2,14 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
-  Pencil, 
   Plus, 
   Search, 
-  Trash, 
   FileText, 
-  Eye as EyeIcon, 
-  MoreHorizontal,
-  Calendar,
   Loader2
 } from 'lucide-react'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { BlogTable } from '@/components/admin/BlogTable'
 import { BlogGrid } from '@/components/admin/BlogGrid'
 import Link from 'next/link'
@@ -76,7 +57,7 @@ interface FormattedBlog {
 }
 
 export default function BlogsPage() {
-  const [view, setView] = useState<'list' | 'grid'>('list')
+  const [view, _setView] = useState<'list' | 'grid'>('list')
   const [blogs, setBlogs] = useState<BlogData[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')

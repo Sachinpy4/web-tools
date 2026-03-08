@@ -1,21 +1,19 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import {
   CalendarIcon,
   Clock,
   Facebook,
-  Link2,
   Tag,
   Twitter,
   EyeIcon,
@@ -28,17 +26,15 @@ import {
   ChevronUp,
   Share,
   Instagram,
-  X,
   ArrowLeft,
 } from 'lucide-react'
 import { toast } from '@/components/ui/use-toast'
 import { cn } from '@/lib/utils'
 import { getProxiedImageUrl } from '@/lib/imageProxy'
-import { BlogPost, Comment, HeadingInfo } from './types'
+import { BlogPost } from './types'
 import { 
   formatCommentDate, 
   processContentImages, 
-  getProxiedFeaturedImage,
   copyToClipboard,
   shareOnSocial,
   getAuthorName,
@@ -68,7 +64,7 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
     processedContent,
     relatedPosts,
     loading,
-    error,
+    error: _error,
     headings,
     liked,
     likeCount,
@@ -108,7 +104,7 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
     isTocOpen,
     setIsTocOpen,
     articleRef,
-    handleScrollToTop
+    handleScrollToTop: _handleScrollToTop
   } = useScrollTracking(headings)
 
   // Use the post from the hook if available, fallback to initial post
@@ -214,7 +210,7 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
                 copyButton.disabled = false
               }, 1500)
               
-            } catch (err) {
+            } catch (_err) {
               // Error state
               copyButton.innerHTML = `
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -419,6 +415,7 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
         <div className="mb-12 relative overflow-hidden rounded-2xl">
           <div className="aspect-video w-full transform transition-transform duration-700 hover:scale-105 bg-muted/50">
             {currentPost.featuredImage ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img 
                 src={getProxiedImageUrl(currentPost.featuredImage)} 
                 alt={currentPost.title}
@@ -1057,6 +1054,7 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
               >
                 <div className="h-40 sm:h-48 overflow-hidden bg-muted/50">
                   {post.featuredImage ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img 
                       src={getProxiedImageUrl(post.featuredImage)} 
                       alt={post.title}

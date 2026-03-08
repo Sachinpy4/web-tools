@@ -42,7 +42,7 @@ export function useSettings() {
       setSettingsSaving(true);
       
       // Strip MongoDB-specific fields before sending to NestJS backend
-      const { _id, createdAt, updatedAt, __v, ...cleanSettings } = settings as any;
+      const { _id: _mongoId, createdAt: _createdAt, updatedAt: _updatedAt, __v: _version, ...cleanSettings } = settings as any;
       
       const response = await apiRequest<{ status: string; data: { settings: SystemSettings; message: string } }>('admin/settings', {
         method: 'PUT',

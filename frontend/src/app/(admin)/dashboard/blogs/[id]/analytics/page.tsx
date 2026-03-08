@@ -22,7 +22,7 @@ interface Analytics {
 
 function BlogAnalyticsPage() {
   const params = useParams()
-  const router = useRouter()
+  const _router = useRouter()
   const blogId = params.id as string
   
   const [blog, setBlog] = useState<any>(null)
@@ -97,7 +97,7 @@ function BlogAnalyticsPage() {
         title: 'Analytics updated',
         description: 'The latest analytics data has been loaded'
       })
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Error',
         description: 'Failed to refresh analytics data',

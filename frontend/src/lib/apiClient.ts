@@ -258,7 +258,7 @@ export async function apiRequest<T>(
               errorMessage = `You've reached your limit for image processing. It will reset after some time.`;
             }
           }
-        } catch (e) {
+        } catch (_e) {
           // If response is not JSON, use status text
         }
 
@@ -307,7 +307,7 @@ export async function apiRequest<T>(
           // If not valid JSON, return as text
           return text as unknown as T;
         }
-      } catch (e) {
+      } catch (_e) {
         if (failedEndpoints.has(endpoint)) {
           clearFailedEndpoint(endpoint);
         }

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
@@ -19,7 +19,7 @@ import { Pagination } from '@/components/ui/pagination'
 import { Progress } from '@/components/ui/progress'
 import { 
   Loader2, Search, Image as ImageIcon, File, Upload, X, Trash2, Info, 
-  Calendar, FileType, CheckCircle, XCircle
+  Calendar, FileType
 } from 'lucide-react'
 import { apiRequest, getApiUrl } from '@/lib/apiClient'
 import { toast } from '@/components/ui/use-toast'
@@ -73,7 +73,7 @@ export function MediaLibrary({
   const [type, setType] = useState<'all' | 'images' | 'documents'>('all')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [totalItems, setTotalItems] = useState(0)
+  const [_totalItems, setTotalItems] = useState(0)
   const [limit] = useState(20)
   const [open, setOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -544,6 +544,7 @@ export function MediaLibrary({
             <div className="flex items-center space-x-4 py-4">
               {mediaToDelete.mimetype.startsWith('image/') ? (
                 <div className="h-20 w-20 rounded border overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
                     src={getDisplayUrl(mediaToDelete)} 
                     alt={mediaToDelete.alt || mediaToDelete.originalname} 
@@ -588,6 +589,7 @@ export function MediaLibrary({
             <div className="grid gap-4">
               {selectedMedia.mimetype.startsWith('image/') && (
                 <div className="rounded-md border overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
                     src={getDisplayUrl(selectedMedia)} 
                     alt={selectedMedia.alt || selectedMedia.originalname} 

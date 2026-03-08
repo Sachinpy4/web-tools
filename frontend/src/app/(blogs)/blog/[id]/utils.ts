@@ -69,11 +69,11 @@ export const scrollToTop = () => {
       behavior: 'smooth'
     })
     
-  } catch (error) {
+  } catch (_error) {
     // Ultimate fallback
     try {
       window.scroll(0, 0)
-    } catch (fallbackError) {
+    } catch (_fallbackError) {
       // Silent fail
     }
   }

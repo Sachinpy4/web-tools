@@ -1,13 +1,11 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -17,16 +15,11 @@ import {
   Edit, 
   Trash2, 
   Globe, 
-  Settings, 
   Eye,
   EyeOff,
   RefreshCw,
   AlertCircle,
-  CheckCircle,
-  Image as ImageIcon,
-  ExternalLink,
-  Download,
-  Upload
+  Download
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { withAdminAuth } from '@/middleware/authCheck'
@@ -149,7 +142,7 @@ function SeoManagementPage() {
   // Initialize default SEO settings
   const initializeDefaults = async () => {
     try {
-      const response = await apiRequest<{ status: string; data: any }>('/seo/initialize', {
+      const _response = await apiRequest<{ status: string; data: any }>('/seo/initialize', {
         method: 'POST',
         requireAuth: true
       })

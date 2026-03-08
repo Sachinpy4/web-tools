@@ -12,8 +12,7 @@ import {
   Newspaper,
   Info,
   Sun,
-  Moon,
-  Scissors
+  Moon
 } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'

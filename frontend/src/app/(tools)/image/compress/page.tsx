@@ -1,23 +1,21 @@
 'use client'
 
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ToolHeader } from '@/components/tools/ToolHeader'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
-import { ImageIcon, Download, X, Trash2, Plus, Package, Server, WifiOff, RefreshCw, AlertCircle, Clock, CheckCircle } from 'lucide-react'
+import { ImageIcon, Download, X, Trash2, Package, Server, WifiOff, RefreshCw, AlertCircle, Clock, CheckCircle } from 'lucide-react'
 import ImageDropzone from '@/components/tools/ImageDropzone'
 import { useToast } from '@/components/ui/use-toast'
 import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
-import { processHeicFiles } from '@/lib/heicConverter'
 import { useProcessingMode } from '@/lib/context/ProcessingModeContext'
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { apiRequest, getApiUrl } from '@/lib/apiClient'
+import { getApiUrl } from '@/lib/apiClient'
 import { QueueStatusIndicator } from '@/components/ui/QueueStatusIndicator'
 import { DynamicSeoLoader } from '@/components/seo/DynamicSeoLoader'
-import { LocalRateLimitIndicator, useRateLimitTracking, useVisualProgress, useFileManagement, useApiWithRateLimit, useJobManagement, useArchiveDownload, useProgressBadges, useProgressDisplay, useHeicDetection, ThemedButton, toolThemes, type ToolTheme } from '../shared'
+import { LocalRateLimitIndicator, useRateLimitTracking, useVisualProgress, useFileManagement, useApiWithRateLimit, useJobManagement, useArchiveDownload, useProgressBadges, useProgressDisplay, useHeicDetection, ThemedButton } from '../shared'
 
 // Define types for API responses
 interface CompressResponse {
@@ -32,7 +30,7 @@ interface CompressResponse {
   }
 }
 
-interface ArchiveResponse {
+interface _ArchiveResponse {
   status: string;
   data: {
     downloadUrl: string;
@@ -44,12 +42,12 @@ export default function CompressTool() {
 
   const [isLoading, setIsLoading] = useState(false)
   const [results, setResults] = useState<any[]>([])
-  const [pendingResults, setPendingResults] = useState<any[]>([]) // store results until progress reaches 100%
+  const [_pendingResults, _setPendingResults] = useState<any[]>([]) // store results until progress reaches 100%
   
 
   
   const { toast } = useToast()
-  const { processingMode, isConnected, isInitializing, serverState, errorDetails, nextRetryTime, retryConnection } = useProcessingMode()
+  const { processingMode, isConnected, isInitializing: _isInitializing, serverState, errorDetails, nextRetryTime, retryConnection } = useProcessingMode()
   const [retryCountdown, setRetryCountdown] = useState<number | null>(null);
   const { rateLimitUsage, setRateLimitUsage, updateRateLimitFromError } = useRateLimitTracking();
   const { 
@@ -57,7 +55,7 @@ export default function CompressTool() {
     processingFiles, 
     setVisualProgress,
     setProcessingFiles,
-    simulateProgress, 
+    simulateProgress: _simulateProgress, 
     showResultsAfterProgress: sharedShowResultsAfterProgress, 
     clearAllProgress, 
     adjustProgressIndices 
@@ -68,10 +66,10 @@ export default function CompressTool() {
     previews,
     selectedFileIndex,
     shouldClearDropzone,
-    setFiles,
-    setPreviews,
+    setFiles: _setFiles,
+    setPreviews: _setPreviews,
     setSelectedFileIndex,
-    setShouldClearDropzone,
+    setShouldClearDropzone: _setShouldClearDropzone,
     handleImageDrop: sharedHandleImageDrop,
     handleRemoveFile: sharedHandleRemoveFile,
     handleRemoveAllFiles: sharedHandleRemoveAllFiles,
@@ -103,13 +101,13 @@ export default function CompressTool() {
     jobProgress,
     queueStatus,
     fileJobMapping,
-    setJobIds,
-    setJobProgress,
-    setQueueStatus,
+    setJobIds: _setJobIds,
+    setJobProgress: _setJobProgress,
+    setQueueStatus: _setQueueStatus,
     setFileJobMapping,
     startJobPolling,
-    cleanupJobState,
-    clearAllJobs
+    cleanupJobState: _cleanupJobState,
+    clearAllJobs: _clearAllJobs
   } = useJobManagement({
     setVisualProgress,
     setProcessingFiles,
@@ -545,6 +543,7 @@ export default function CompressTool() {
                       >
                         <div className="flex items-center min-w-0 flex-1">
                           <div className="h-8 w-8 sm:h-10 sm:w-10 mr-3 shrink-0 bg-background rounded overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img 
                               src={previews[index]} 
                               alt={file.name} 
@@ -602,6 +601,7 @@ export default function CompressTool() {
               {selectedFileIndex !== null ? (
                 <div className="grow flex flex-col">
                   <div className="grow flex items-center justify-center bg-accent/20 rounded-lg mb-4 overflow-hidden min-h-[200px] sm:min-h-[250px] lg:min-h-[300px]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
                       src={previews[selectedFileIndex]} 
                       alt={files[selectedFileIndex].name}

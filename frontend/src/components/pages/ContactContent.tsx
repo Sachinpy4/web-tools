@@ -12,9 +12,7 @@ import {
   MessageSquare, 
   Send, 
   CheckCircle,
-  MapPin,
   Clock,
-  Phone,
   Globe
 } from 'lucide-react'
 import { toast } from '@/components/ui/use-toast'

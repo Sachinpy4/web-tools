@@ -4,14 +4,12 @@ import React, { useState, useEffect } from 'react'
 import { ToolHeader } from '@/components/tools/ToolHeader'
 import { Button } from '@/components/ui/button'
 import { 
-  Repeat, Download, X, Trash2, FileType, ImageIcon, Plus, Package, 
-  ArrowDownSquare, ArrowRightSquare, RefreshCw, CheckCircle, Server
+  Repeat, Download, X, Trash2, CheckCircle, Server
 } from 'lucide-react'
 import ImageDropzone from '@/components/tools/ImageDropzone'
 import { useToast } from '@/components/ui/use-toast'
 import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
 import { 
   Select, 
   SelectContent, 
@@ -19,14 +17,12 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select'
-import { processHeicFiles } from '@/lib/heicConverter'
 
-import { apiRequest, getApiUrl } from '@/lib/apiClient'
+import { getApiUrl } from '@/lib/apiClient'
 
-import { QueueStatusIndicator } from '@/components/ui/QueueStatusIndicator'
 import { useProcessingMode } from '@/lib/context/ProcessingModeContext'
 import { DynamicSeoLoader } from '@/components/seo/DynamicSeoLoader'
-import { LocalRateLimitIndicator, useRateLimitTracking, useVisualProgress, useFileManagement, useApiWithRateLimit, useJobManagement, useArchiveDownload, useProgressBadges, useProgressDisplay, useHeicDetection, ThemedButton, toolThemes, type ToolTheme } from '../shared'
+import { LocalRateLimitIndicator, useRateLimitTracking, useVisualProgress, useFileManagement, useApiWithRateLimit, useJobManagement, useArchiveDownload, useProgressBadges, useProgressDisplay, useHeicDetection, ThemedButton } from '../shared'
 
 // Define response types for API calls
 interface ConvertResponse {
@@ -56,13 +52,13 @@ export default function ConvertTool() {
   const { toast } = useToast()
   const { processingMode } = useProcessingMode()
 
-  const { rateLimitUsage, setRateLimitUsage, updateRateLimitFromError } = useRateLimitTracking();
+  const { rateLimitUsage, setRateLimitUsage, updateRateLimitFromError: _updateRateLimitFromError } = useRateLimitTracking();
   const { 
     visualProgress, 
     processingFiles, 
     setVisualProgress,
     setProcessingFiles,
-    simulateProgress, 
+    simulateProgress: _simulateProgress, 
     showResultsAfterProgress: sharedShowResultsAfterProgress, 
     clearAllProgress, 
     adjustProgressIndices 
@@ -73,10 +69,10 @@ export default function ConvertTool() {
     previews,
     selectedFileIndex,
     shouldClearDropzone,
-    setFiles,
-    setPreviews,
+    setFiles: _setFiles,
+    setPreviews: _setPreviews,
     setSelectedFileIndex,
-    setShouldClearDropzone,
+    setShouldClearDropzone: _setShouldClearDropzone,
     handleImageDrop: sharedHandleImageDrop,
     handleRemoveFile: sharedHandleRemoveFile,
     handleRemoveAllFiles: sharedHandleRemoveAllFiles,
@@ -108,13 +104,13 @@ export default function ConvertTool() {
     jobProgress,
     queueStatus,
     fileJobMapping,
-    setJobIds,
-    setJobProgress,
-    setQueueStatus,
+    setJobIds: _setJobIds,
+    setJobProgress: _setJobProgress,
+    setQueueStatus: _setQueueStatus,
     setFileJobMapping,
     startJobPolling,
-    cleanupJobState,
-    clearAllJobs
+    cleanupJobState: _cleanupJobState,
+    clearAllJobs: _clearAllJobs
   } = useJobManagement({
     setVisualProgress,
     setProcessingFiles,
@@ -262,7 +258,7 @@ export default function ConvertTool() {
           });
           
           // Create the new filename with the target extension
-          const newFilename = `${getFileNameWithoutExtension(file.name)}.${targetFormat}`;
+          const _newFilename = `${getFileNameWithoutExtension(file.name)}.${targetFormat}`;
           
           // Check if this is a direct response or a job that needs polling
           if (result.status === 'success' && 'convertedFormat' in result.data) {
@@ -436,6 +432,7 @@ export default function ConvertTool() {
                       >
                         <div className="flex items-center min-w-0 flex-1">
                           <div className="h-8 w-8 sm:h-10 sm:w-10 mr-3 shrink-0 bg-background rounded overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img 
                               src={previews[index]} 
                               alt={file.name} 
@@ -492,6 +489,7 @@ export default function ConvertTool() {
               {selectedFileIndex !== null ? (
                 <div className="grow flex flex-col">
                   <div className="grow flex items-center justify-center bg-accent/20 rounded-lg mb-4 overflow-hidden min-h-[200px] sm:min-h-[250px] lg:min-h-[300px]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
                       src={previews[selectedFileIndex]} 
                       alt={files[selectedFileIndex].name}

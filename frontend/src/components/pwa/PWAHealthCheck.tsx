@@ -43,7 +43,7 @@ export function PWAHealthCheck() {
         } else {
           errors.push('Manifest file not accessible')
         }
-      } catch (error) {
+      } catch (_error) {
         errors.push('Failed to load manifest')
       }
 
@@ -64,7 +64,7 @@ export function PWAHealthCheck() {
           } else {
             warnings.push('Service worker registration not found')
           }
-        } catch (error) {
+        } catch (_error) {
           errors.push('Service worker check failed')
         }
       } else {
@@ -83,7 +83,7 @@ export function PWAHealthCheck() {
         if (!iconsValid) {
           warnings.push('Some icon files are missing or inaccessible')
         }
-      } catch (error) {
+      } catch (_error) {
         warnings.push('Could not verify icon files')
       }
 

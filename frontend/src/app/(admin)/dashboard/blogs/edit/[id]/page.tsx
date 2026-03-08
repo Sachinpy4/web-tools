@@ -39,7 +39,7 @@ const DEFAULT_CATEGORIES = [
 function EditBlogPage() {
   const params = useParams()
   const router = useRouter()
-  const { user } = useAuth()
+  const { user: _user } = useAuth()
   
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -370,7 +370,7 @@ function EditBlogPage() {
       // Try to store in localStorage
       try {
         localStorage.setItem('blogPreview', JSON.stringify(previewData))
-      } catch (storageError) {
+      } catch (_storageError) {
         console.warn('Preview data too large for localStorage, creating simplified preview')
         // If it fails, create a more simplified version
         const minimalPreview = {

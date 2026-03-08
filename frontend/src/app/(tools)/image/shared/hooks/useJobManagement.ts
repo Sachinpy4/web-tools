@@ -49,7 +49,7 @@ export const useJobManagement = ({
   setVisualProgress,
   setProcessingFiles,
   setResults,
-  setRateLimitUsage
+  setRateLimitUsage: _setRateLimitUsage
 }: UseJobManagementProps): UseJobManagementReturn => {
   const [jobIds, setJobIds] = useState<string[]>([]);
   const [jobProgress, setJobProgress] = useState<Record<string, number>>({});
@@ -144,8 +144,7 @@ export const useJobManagement = ({
     setJobProgress(prev => ({ ...prev, [jobId]: 0 }));
 
     let pollAttempts = 0;
-    // eslint-disable-next-line prefer-const
-    let pollInterval: NodeJS.Timeout;
+    const pollRef: { id?: NodeJS.Timeout } = {};
 
     const pollJobStatus = async () => {
       try {
@@ -194,7 +193,7 @@ export const useJobManagement = ({
           // Handle completion
           if (state === 'completed' && result) {
             // Job completed successfully
-            clearInterval(pollInterval);
+            clearInterval(pollRef.id);
 
             const resultObj = resultProcessor(result, file);
             // Result processed
@@ -233,7 +232,7 @@ export const useJobManagement = ({
 
           } else if (state === 'failed') {
             // Job failed
-            clearInterval(pollInterval);
+            clearInterval(pollRef.id);
 
             toast({
               title: `${toolType.charAt(0).toUpperCase() + toolType.slice(1)} failed`,
@@ -250,7 +249,7 @@ export const useJobManagement = ({
         // Check if we've exceeded max attempts
         if (pollAttempts >= maxPollAttempts) {
           // Max polling attempts exceeded
-          clearInterval(pollInterval);
+          clearInterval(pollRef.id);
 
           // Clean up job state
           cleanupJobState(jobId, fileIndex);
@@ -293,7 +292,7 @@ export const useJobManagement = ({
         if (isJobNotFound && isJobCleanedUp) {
           // Job was cleaned up but likely completed - treat as success
           // Job cleaned up from queue, assuming completion
-          clearInterval(pollInterval);
+          clearInterval(pollRef.id);
 
           // Try to find any completed result for this file
           // This is a fallback for when Redis cleans up completed jobs too quickly
@@ -341,7 +340,7 @@ export const useJobManagement = ({
         // If job not found but not due to cleanup, or we've exceeded attempts, clean up
         if (isJobNotFound || isNetworkError || pollAttempts >= maxPollAttempts) {
           // Stopping polling due to error or timeout
-          clearInterval(pollInterval);
+          clearInterval(pollRef.id);
 
           // Clean up job state
           cleanupJobState(jobId, fileIndex);
@@ -383,19 +382,18 @@ export const useJobManagement = ({
     };
 
     // Start polling with configured interval
-    pollInterval = setInterval(pollJobStatus, pollingIntervalMs);
+    pollRef.id = setInterval(pollJobStatus, pollingIntervalMs);
 
-    // CRITICAL PERFORMANCE FIX: Track the interval for cleanup
-    activeIntervalsRef.current.add(pollInterval);
+    activeIntervalsRef.current.add(pollRef.id);
 
     // Start the first poll immediately
     pollJobStatus();
 
     // CRITICAL PERFORMANCE FIX: Return cleanup function
     return () => {
-      if (pollInterval) {
-        clearInterval(pollInterval);
-        activeIntervalsRef.current.delete(pollInterval);
+      if (pollRef.id) {
+        clearInterval(pollRef.id);
+        activeIntervalsRef.current.delete(pollRef.id);
       }
     };
   }, [setJobIds, setFileJobMapping, setVisualProgress, setJobProgress, setQueueStatus, setResults, setProcessingFiles, toast, cleanupJobState, pollingIntervalMs, maxPollAttempts]);

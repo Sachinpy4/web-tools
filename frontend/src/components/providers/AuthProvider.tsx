@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
   const [sessionTimeRemaining, setSessionTimeRemaining] = useState<number | null>(null);
   
   const lastActivityRef = useRef<number>(Date.now());
@@ -176,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       
       return true;
-    } catch (error) {
+    } catch (_error) {
       handleSessionExpiry();
       return false;
     }
@@ -191,7 +191,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (storedToken && storedUser && storedUser !== "undefined") {
         try {
           // Try to parse the stored user first
-          const parsedUser = JSON.parse(storedUser);
+          const _parsedUser = JSON.parse(storedUser);
           
           // Validate the token by making a request to get user profile
           const response = await apiRequest<{status: string; data: User}>('/auth/me', {
@@ -211,7 +211,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               setTokenWithRef(storedToken);
               setUserWithRef(parsedUser);
               startSessionTimer(); // Start session management even with cached data
-            } catch (parseError) {
+            } catch (_parseError) {
               // If can't parse stored user, clear everything
               localStorage.removeItem('token');
               localStorage.removeItem('user');

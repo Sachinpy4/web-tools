@@ -1,7 +1,6 @@
 import React from 'react'
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getProxiedImageUrl } from '@/lib/imageProxy'
 import { BlogPostClient } from './BlogPostClient'
 import { getServerSideMetadata } from '@/lib/seoUtils'
 import { generateArticleSchema, renderJsonLd } from '@/lib/structuredData'
@@ -62,7 +61,7 @@ async function getBlogPost(id: string) {
             const slugData = await slugResponse.json()
             return slugData.status === 'success' ? slugData.data : null
           }
-        } catch (slugError) {
+        } catch (_slugError) {
           // Continue to try by ID if slug fails
         }
       }

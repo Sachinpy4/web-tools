@@ -7,7 +7,7 @@ import { withAdminAuth } from '@/middleware/authCheck'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/components/ui/use-toast'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { ImageUploader } from '@/components/image/ImageUploader'
@@ -37,7 +37,7 @@ const DEFAULT_CATEGORIES = [
 
 function NewBlogPage() {
   const router = useRouter()
-  const { user } = useAuth()
+  useAuth()
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState('content')
@@ -248,7 +248,7 @@ function NewBlogPage() {
         };
       }
       
-      const result = await apiRequest<BlogResponse>('/blogs', {
+      const _result = await apiRequest<BlogResponse>('/blogs', {
         method: 'POST',
         body: payload,
         requireAuth: true
@@ -293,7 +293,7 @@ function NewBlogPage() {
       // Try to store in localStorage
       try {
         localStorage.setItem('blogPreview', JSON.stringify(previewData))
-      } catch (storageError) {
+      } catch (_storageError) {
         console.warn('Preview data too large for localStorage, creating simplified preview')
         // If it fails, create a more simplified version
         const minimalPreview = {

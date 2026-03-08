@@ -10,7 +10,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { toast } from '@/components/ui/use-toast'
 import { 
   Plus, 
@@ -85,7 +84,7 @@ export default function ScriptsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingScript, setEditingScript] = useState<Script | null>(null)
   const [expandedScripts, setExpandedScripts] = useState<Set<string>>(new Set())
-  const [testResults, setTestResults] = useState<{[key: string]: any}>({})
+  const [_testResults, setTestResults] = useState<{[key: string]: any}>({})
   
   // Form state
   const [formData, setFormData] = useState({
@@ -208,7 +207,7 @@ export default function ScriptsPage() {
         excludePages: formData.excludePages ? formData.excludePages.split(',').map(p => p.trim()) : ['/admin', '/api']
       }
 
-      const response = await apiRequest<{status: string; data: Script}>(endpoint, {
+      const _response = await apiRequest<{status: string; data: Script}>(endpoint, {
         method,
         requireAuth: true,
         body: payload

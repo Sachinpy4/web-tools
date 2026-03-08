@@ -126,7 +126,7 @@ export function useComments(post: BlogPost | null) {
     
     try {
       // Call the API to post the comment
-      const submitResponse = await apiRequest(`/blogs/${post._id}/comments`, {
+      const _submitResponse = await apiRequest(`/blogs/${post._id}/comments`, {
         method: 'POST',
         body: {
           name: commentName,

@@ -14,8 +14,6 @@ import {
   Settings, 
   Users, 
   BarChart3, 
-  ShieldAlert,
-  LogOut,
   Database
 } from 'lucide-react'
 
@@ -88,7 +86,7 @@ export default function AdminLayout({
   
   // If authenticated and session loaded, show admin panel
   if (user && user.role === 'admin') {
-    const mainNav = [
+    const _mainNav = [
       {
         title: "Dashboard",
         href: "/dashboard",

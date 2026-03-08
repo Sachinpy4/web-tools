@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Upload, Download, RotateCcw, Info, Camera, Palette, BarChart3, X, Copy, MapPin, Calendar, Settings, Image as ImageIcon, Zap, Eye, Layers } from 'lucide-react'
+import { Upload, Download, RotateCcw, Info, Camera, Palette, BarChart3, X, Copy, MapPin, Settings, Image as ImageIcon, Zap, Eye, Layers } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -11,7 +11,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { Separator } from '@/components/ui/separator'
 import { ToolHeader } from '@/components/tools/ToolHeader'
 import ImageDropzone from '@/components/tools/ImageDropzone'
-import { useEnhancedMetadata, ThemedButton, toolThemes, type ToolTheme } from '../shared'
+import { useEnhancedMetadata, ThemedButton, toolThemes } from '../shared'
 
 // Enhanced ImagePreview component
 interface ImagePreviewProps {
@@ -26,6 +26,7 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ file, preview, metadata, on
     <div className="relative group">
       <div className="aspect-video bg-linear-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-xl overflow-hidden flex items-center justify-center shadow-sm border">
         {preview ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img 
             src={preview} 
             alt={file.name}
@@ -107,7 +108,7 @@ const ColorPalette: React.FC<{ colors: string[], title?: string }> = ({ colors, 
   )
 }
 
-const FaceColorPalette: React.FC<{ faceAnalysis: any }> = ({ faceAnalysis }) => {
+const _FaceColorPalette: React.FC<{ faceAnalysis: any }> = ({ faceAnalysis }) => {
   const { toast } = useToast()
 
   const copyColor = (color: string) => {
@@ -763,7 +764,7 @@ export default function MetadataAnalysisTool() {
   }
 
   // Use the enhanced metadata hook for client-side analysis
-  const { analyzeImage: analyzeImageMetadata, isAnalyzing: isAnalyzingMetadata } = useEnhancedMetadata()
+  const { analyzeImage: analyzeImageMetadata, isAnalyzing: _isAnalyzingMetadata } = useEnhancedMetadata()
   
   // Analyze image with client-side processing
   const analyzeImage = async (file: File) => {
@@ -914,6 +915,7 @@ export default function MetadataAnalysisTool() {
                         <div className="flex items-center min-w-0 flex-1">
                           <div className="h-10 w-10 mr-3 shrink-0 bg-background rounded-lg overflow-hidden border">
                             {previews[index] ? (
+                              // eslint-disable-next-line @next/next/no-img-element
                               <img 
                                 src={previews[index]!} 
                                 alt={file.name} 

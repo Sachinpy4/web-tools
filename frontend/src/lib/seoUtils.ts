@@ -204,7 +204,7 @@ export async function fetchDynamicSeoData(pagePath: string): Promise<SeoData | n
     } else {
       return null
     }
-  } catch (error) {
+  } catch (_error) {
     return null
   }
 }
@@ -293,7 +293,7 @@ export function updatePageSeo(seoData: SeoData) {
       updateMetaProperty('article:tag', seoData.articleTags.join(', '))
     }
 
-  } catch (error) {
+  } catch (_error) {
     // Error handling
   }
 }

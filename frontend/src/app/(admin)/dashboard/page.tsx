@@ -2,34 +2,25 @@
 
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { 
   BarChart, 
   Eye, 
   FileText, 
   FilePlus2, 
   Users, 
-  TrendingUp,
   Image,
   Zap,
   Activity,
-  Clock,
   RefreshCw,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
   Database,
-  Server,
-  Calendar,
   MessageSquare,
   Plus,
   Settings
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { withAdminAuth } from '@/middleware/authCheck'
 import { apiRequest } from '@/lib/apiClient'
 import { toast } from '@/components/ui/use-toast'
@@ -98,7 +89,7 @@ function AdminDashboard() {
   const [toolUsage, setToolUsage] = useState<ToolUsageStats | null>(null)
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [_error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [timeRange, setTimeRange] = useState('7days')
 
@@ -508,7 +499,7 @@ function AdminDashboard() {
             <CardContent className="p-4 sm:p-6 pt-0">
               <div className="space-y-3 sm:space-y-4">
                 {recentPosts.length > 0 ? (
-                  recentPosts.map((post, index) => (
+                  recentPosts.map((post, _index) => (
                     <motion.div
                       key={post._id}
                       variants={itemVariants}

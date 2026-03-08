@@ -70,8 +70,7 @@ export default function SimplePWAInstallPrompt() {
       
       setDeferredPrompt(null)
       setShowPrompt(false)
-    } catch (error) {
-      // Silently handle installation errors
+    } catch (_error) {
       setShowPrompt(false)
     }
   }
@@ -99,6 +98,7 @@ export default function SimplePWAInstallPrompt() {
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-linear-to-br from-teal-400 via-purple-500 to-blue-600 rounded-lg flex items-center justify-center overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src="/favicon.svg" 
                 alt="ToolsCandy" 

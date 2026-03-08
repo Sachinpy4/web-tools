@@ -7,32 +7,10 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { 
   AlertTriangle, 
-  Info, 
-  Shield, 
-  FileText, 
-  Scale,
-  Lightbulb,
-  CheckCircle,
-  ExternalLink,
-  Clock
+  FileText
 } from 'lucide-react'
 
 export default function DisclaimerContent() {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  }
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0 }
-  }
-
   return (
     <div className="min-h-screen">
       {/* Hero Section */}

@@ -10,11 +10,6 @@ import { Badge } from '@/components/ui/badge'
 import { X, Wand } from 'lucide-react'
 import { ProgressCircle } from '@/components/ui/progress-circle'
 import { Button } from '@/components/ui/button'
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger 
-} from '@/components/ui/tooltip'
 import { getProxiedImageUrl } from '@/lib/imageProxy'
 
 interface SeoMetadata {
@@ -38,7 +33,7 @@ export function SeoMetadataEditor({
   onChange,
   content,
   title,
-  excerpt
+  excerpt: _excerpt
 }: SeoMetadataEditorProps) {
   const [metaTitle, setMetaTitle] = useState(value.metaTitle || '')
   const [metaDescription, setMetaDescription] = useState(value.metaDescription || '')
@@ -253,7 +248,7 @@ export function SeoMetadataEditor({
     }
     
     const sortedBigrams = Object.entries(bigrams)
-      .filter(([phrase, count]) => count > 1) // Only frequent phrases
+      .filter(([_phrase, count]) => count > 1)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
       .map(([phrase]) => phrase);

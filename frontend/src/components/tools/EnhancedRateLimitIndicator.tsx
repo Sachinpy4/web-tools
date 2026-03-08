@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Clock, Server, AlertTriangle, CheckCircle, XCircle, Zap } from 'lucide-react';
+import { Clock, Server, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 
 export interface RateLimitInfo {
