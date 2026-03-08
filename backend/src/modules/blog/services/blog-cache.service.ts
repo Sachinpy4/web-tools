@@ -151,14 +151,14 @@ export class BlogCacheService {
 
     try {
       // Use SCAN instead of KEYS to avoid blocking Redis
-      let cursor = 0;
+      let cursor: string = '0';
       do {
         const result = await this.redisClient!.scan(cursor, { MATCH: pattern, COUNT: 100 });
-        cursor = result.cursor;
+        cursor = result.cursor.toString();
         if (result.keys.length > 0) {
           await this.redisClient!.del(result.keys);
         }
-      } while (cursor !== 0);
+      } while (cursor !== '0');
     } catch (error) {
       this.logger.warn('Failed to delete pattern from blog cache:', error.message);
     }
@@ -356,12 +356,12 @@ export class BlogCacheService {
     if (this.isAvailable()) {
       try {
         let count = 0;
-        let cursor = 0;
+        let cursor: string = '0';
         do {
           const result = await this.redisClient!.scan(cursor, { MATCH: 'blog:*', COUNT: 100 });
-          cursor = result.cursor;
+          cursor = result.cursor.toString();
           count += result.keys.length;
-        } while (cursor !== 0);
+        } while (cursor !== '0');
         this.logger.log(`Blog cache contains ${count} entries`);
       } catch (error) {
         this.logger.warn('Failed to get blog cache stats:', error.message);
@@ -383,12 +383,12 @@ export class BlogCacheService {
 
     try {
       const keys: string[] = [];
-      let cursor = 0;
+      let cursor: string = '0';
       do {
         const result = await this.redisClient!.scan(cursor, { MATCH: 'blog:*', COUNT: 100 });
-        cursor = result.cursor;
+        cursor = result.cursor.toString();
         keys.push(...result.keys);
-      } while (cursor !== 0);
+      } while (cursor !== '0');
 
       return {
         available: true,
