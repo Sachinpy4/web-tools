@@ -338,26 +338,17 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
 
   // Add job to queue with dynamic settings
   async addCompressJob(data: CompressJobData, options?: QueueOptions): Promise<string> {
-    console.log('🔍 QUEUE SERVICE - Adding compress job:', data);
-    
     try {
-      // Get dynamic options from system settings
       const dynamicOptions = await this.getDynamicQueueOptions(options);
       
-      // BullMQ requires job name, LocalQueue doesn't
       const job = this.isUsingRedisQueues() 
         ? await (this.compressQueue as Queue).add('compress-image', data, dynamicOptions)
         : await (this.compressQueue as LocalQueue<CompressJobData>).add(data);
 
       const jobId = (job as any).id?.toString() || (job as any).id;
-      console.log('✅ QUEUE SERVICE - Compress job added with dynamic settings:', {
-        jobId,
-        attempts: dynamicOptions.attempts,
-        timeout: dynamicOptions.timeout
-      });
+      this.logger.log(`Added compress job: ${jobId}`);
       return jobId;
     } catch (error) {
-      console.error('❌ QUEUE SERVICE - Failed to add compress job:', error);
       this.logger.error('Failed to add compress job:', error);
       throw error;
     }
@@ -442,8 +433,6 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   // Get job status (same API as original)
   async getJobStatus(jobId: string, queueType: string): Promise<any> {
     try {
-      console.log('🔍 QUEUE SERVICE - Getting job status:', { jobId, queueType });
-      
       let queue: Queue<any> | LocalQueue<any>;
       
       switch (queueType) {
@@ -466,13 +455,9 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
           throw new Error(`Unknown queue type: ${queueType}`);
       }
 
-      console.log('🔍 QUEUE SERVICE - Using queue:', queue.constructor.name);
-      
       const job = await queue.getJob(jobId);
-      console.log('🔍 QUEUE SERVICE - Raw job object:', job);
       
       if (!job) {
-        console.log('❌ QUEUE SERVICE - Job not found in queue:', jobId);
         return null;
       }
 
@@ -496,17 +481,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
           result = (job as any).returnvalue;
           error = (job as any).failedReason;
           
-          console.log('🔍 QUEUE SERVICE - BullMQ job state details:', {
-            state,
-            progress,
-            hasResult: !!result,
-            hasError: !!error,
-            processedOn: (job as any).processedOn,
-            finishedOn: (job as any).finishedOn,
-            failedReason: (job as any).failedReason
-          });
         } catch {
-          console.log('⚠️ QUEUE SERVICE - Could not get BullMQ state, using fallback');
           // Fallback for BullMQ
           state = 'waiting';
           progress = 0;
@@ -518,15 +493,9 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
         result = (job as any).result;
         error = (job as any).error;
         
-        console.log('🔍 QUEUE SERVICE - LocalQueue job state details:', {
-          state,
-          progress,
-          hasResult: !!result,
-          hasError: !!error
-        });
       }
 
-      const status = {
+      return {
         id: job.id,
         state,
         progress,
@@ -535,11 +504,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
         queuePosition: (job as any).queuePosition,
         estimatedWaitTime: (job as any).estimatedWaitTime,
       };
-      
-      console.log('✅ QUEUE SERVICE - Job status result:', status);
-      return status;
     } catch (error) {
-      console.error('❌ QUEUE SERVICE - Failed to get job status:', { jobId, queueType, error: error.message });
       this.logger.error(`Failed to get job status for ${jobId}:`, error);
       return null;
     }
@@ -573,8 +538,6 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   // Get queue statistics (using Redis status service)
   async getQueueStats(): Promise<any> {
     try {
-      console.log('🔍 QUEUE SERVICE - Getting queue stats, Redis available:', this.redisStatusService.isRedisAvailable);
-      
       const stats = {
         redis: this.redisStatusService.isRedisAvailable ? 'available' : 'unavailable',
         mode: this.redisStatusService.isRedisAvailable ? 'queued' : 'direct',
@@ -587,10 +550,8 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
         },
       };
 
-      console.log('✅ QUEUE SERVICE - Queue stats result:', stats);
       return stats;
     } catch (error) {
-      console.error('❌ QUEUE SERVICE - Failed to get queue stats:', error);
       this.logger.error('Failed to get queue stats:', error);
       return { redis: 'unavailable', mode: 'direct', error: error.message };
     }
@@ -615,7 +576,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
           failed: failed.length,
         };
       } catch (error) {
-        console.warn('Failed to get BullMQ queue info:', error);
+        this.logger.warn('Failed to get BullMQ queue info:', error.message);
         return {
           type: 'bullmq',
           waiting: 0,
