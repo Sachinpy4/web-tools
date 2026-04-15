@@ -122,7 +122,7 @@ export class SanitizationPipe implements PipeTransform {
       'createdAt', 'updatedAt', 'timestamp',
       'ogType', 'twitterCard', 'canonicalUrl',
       // Script-related fields that need to contain HTML/JS (admin-only endpoints)
-      'scriptContent', 'placement', 'platform', 'targetPages', 'excludePages'
+      'scriptContent', 'content', 'placement', 'platform', 'targetPages', 'excludePages'
     ];
     
     return technicalFields.includes(key) || key.endsWith('Id') || key.endsWith('_id');

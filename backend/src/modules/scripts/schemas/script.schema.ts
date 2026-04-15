@@ -53,6 +53,7 @@ export class Script {
     enum: [
       'Google Analytics',
       'Google Tag Manager',
+      'Google AdSense',
       'Facebook Pixel',
       'Google Ads',
       'LinkedIn Insight',

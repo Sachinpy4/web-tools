@@ -43,6 +43,10 @@ export function ImageUploader({
   const [isUploading, setIsUploading] = useState(false)
   const [imageUrl, setImageUrl] = useState(value)
   
+  React.useEffect(() => {
+    setImageUrl(value)
+  }, [value])
+  
   // Image optimization settings
   const [optimizeImage, setOptimizeImage] = useState(forBlog)
   const [quality, setQuality] = useState(80)
@@ -76,28 +80,21 @@ export function ImageUploader({
     setIsUploading(true)
     
     try {
-      // Create FormData
       const formData = new FormData()
-      formData.append('image', file)
-      
-      // Get base API URL
-      const baseApiUrl = getApiUrl().replace('/api', '')
-      
-      // Determine upload endpoint based on optimization settings
-      let uploadEndpoint = '/api/upload'
+      formData.append('files', file)
       
       if (optimizeImage) {
-        uploadEndpoint = '/api/images/optimize-blog'
-        formData.set('image', file) // Reset to ensure proper naming
-        formData.append('quality', quality.toString())
-        formData.append('format', format)
-        formData.append('optimizeForBlog', 'true')
-        formData.append('isFeatured', isFeaturedImage ? 'true' : 'false')
+        formData.append('tags', `blog,${isFeaturedImage ? 'featured' : 'content'}`)
       }
       
-      // Upload to backend
-      const response = await fetch(`${baseApiUrl}${uploadEndpoint}`, {
+      const baseApiUrl = getApiUrl()
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      
+      const response = await fetch(`${baseApiUrl}/media`, {
         method: 'POST',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
         body: formData,
       })
       
@@ -106,16 +103,17 @@ export function ImageUploader({
       }
       
       const data = await response.json()
-      const fileUrl = data.fileUrl || data.data?.fileUrl
+      const uploadedMedia = data.data?.[0] || data.data
+      const fileUrl = uploadedMedia?.url
       
       if (!fileUrl) {
         throw new Error('No file URL returned from server')
       }
       
-      // Make sure the URL is absolute with the correct backend domain
+      const backendDomain = baseApiUrl.replace('/api', '')
       let fullUrl = fileUrl
       if (fileUrl.startsWith('/')) {
-        fullUrl = `${baseApiUrl}${fileUrl}`
+        fullUrl = `${backendDomain}${fileUrl}`
       }
       
       setImageUrl(fullUrl)

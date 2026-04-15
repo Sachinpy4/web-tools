@@ -36,68 +36,74 @@ export default function DynamicScripts({ placement }: DynamicScriptsProps) {
   const [error, setError] = useState<string | null>(null)
   const pathname = usePathname()
 
-  // Enhanced content processing function for any HTML content
-  const processContent = (content: string): { type: 'script' | 'noscript' | 'html', processedContent: string } => {
+  interface ProcessedScript {
+    type: 'external-script' | 'inline-script' | 'noscript' | 'html'
+    src?: string
+    attrs?: Record<string, string>
+    processedContent: string
+  }
+
+  const processContent = (content: string): ProcessedScript[] => {
+    const results: ProcessedScript[] = []
     try {
-      // Handle noscript content
-      if (content.includes('<noscript>')) {
-        const noscriptMatch = content.match(/<noscript[^>]*>([\s\S]*?)<\/noscript>/i)
-        return {
-          type: 'noscript',
-          processedContent: noscriptMatch ? noscriptMatch[1] : content
-        }
-      }
-
-      // Handle script tags (extract JavaScript)
-      if (content.includes('<script')) {
-        const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/gi
-        let extractedContent = ''
-        let match
-        
-        while ((match = scriptRegex.exec(content)) !== null) {
-          const scriptContent = match[1]
-          if (scriptContent && scriptContent.trim()) {
-            extractedContent += scriptContent.trim() + '\n'
-          }
-        }
-        
-        const cleanedScript = extractedContent
-          .replace(/<!--[\s\S]*?-->/g, '') // Remove HTML comments
-          .replace(/&lt;/g, '<')           // Decode HTML entities
-          .replace(/&gt;/g, '>')
-          .replace(/&amp;/g, '&')
-          .replace(/&quot;/g, '"')
-          .replace(/&#39;/g, "'")
-          .trim()
-
-        return {
-          type: 'script',
-          processedContent: cleanedScript
-        }
-      }
-
-      // Handle any other HTML content (meta, link, style, etc.)
-      // Clean up and decode entities but preserve HTML structure
-      const cleanedHTML = content
+      const decoded = content
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
         .replace(/&amp;/g, '&')
         .replace(/&quot;/g, '"')
         .replace(/&#39;/g, "'")
-        .trim()
 
-      return {
-        type: 'html',
-        processedContent: cleanedHTML
+      // Extract noscript blocks
+      const noscriptRegex = /<noscript[^>]*>([\s\S]*?)<\/noscript>/gi
+      let noscriptMatch
+      while ((noscriptMatch = noscriptRegex.exec(decoded)) !== null) {
+        results.push({ type: 'noscript', processedContent: noscriptMatch[1] })
       }
 
-    } catch (error) {
-      console.error('Error processing content:', error)
-      return {
-        type: 'html',
-        processedContent: content.trim()
+      // Extract script tags -- handle both external src and inline
+      const scriptTagRegex = /<script([^>]*)>([\s\S]*?)<\/script>/gi
+      let scriptMatch
+      while ((scriptMatch = scriptTagRegex.exec(decoded)) !== null) {
+        const attrsStr = scriptMatch[1]
+        const body = scriptMatch[2].trim()
+        const srcMatch = attrsStr.match(/src\s*=\s*["']([^"']+)["']/i)
+
+        if (srcMatch) {
+          const attrs: Record<string, string> = {}
+          if (/async/i.test(attrsStr)) attrs.async = 'true'
+          if (/defer/i.test(attrsStr)) attrs.defer = 'true'
+          const crossOriginMatch = attrsStr.match(/crossorigin\s*=?\s*["']?([^"'\s>]*)["']?/i)
+          if (crossOriginMatch) attrs.crossOrigin = crossOriginMatch[1] || 'anonymous'
+          results.push({ type: 'external-script', src: srcMatch[1], attrs, processedContent: body })
+        } else if (body) {
+          const cleaned = body.replace(/<!--[\s\S]*?-->/g, '').trim()
+          if (cleaned) {
+            results.push({ type: 'inline-script', processedContent: cleaned })
+          }
+        }
       }
+
+      // If no script or noscript tags found, treat as raw HTML
+      if (results.length === 0) {
+        const stripped = decoded.replace(/<noscript[^>]*>[\s\S]*?<\/noscript>/gi, '').replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '').trim()
+        if (stripped) {
+          results.push({ type: 'html', processedContent: stripped })
+        }
+      } else {
+        // Also capture any non-script HTML alongside scripts (e.g., noscript fallbacks next to script tags)
+        const stripped = decoded
+          .replace(/<noscript[^>]*>[\s\S]*?<\/noscript>/gi, '')
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          .trim()
+        if (stripped) {
+          results.push({ type: 'html', processedContent: stripped })
+        }
+      }
+    } catch (err) {
+      console.error('Error processing content:', err)
+      results.push({ type: 'html', processedContent: content.trim() })
     }
+    return results
   }
 
   // Script load handlers
@@ -183,79 +189,61 @@ export default function DynamicScripts({ placement }: DynamicScriptsProps) {
 
   return (
     <>
-      {scripts.map((script, index) => {
-        const scriptId = `${script._id}-${index}`
-        
-        // Mark script as loading
-        scriptLoadStatus.set(scriptId, 'loading')
+      {scripts.flatMap((script, sIndex) => {
+        const items = processContent(script.content)
 
-        // Extract and clean script content
-        const { type, processedContent } = processContent(script.content)
-        
-        // Validate that we have actual JavaScript content
-        if (type === 'script' && (!processedContent || processedContent.trim().length === 0)) {
-          return null
-        }
+        return items.map((item, iIndex) => {
+          const key = `${script._id}-${sIndex}-${iIndex}`
+          scriptLoadStatus.set(key, 'loading')
 
-        // Detect the platform for better logging
-        const _isGTMScript = script.content.match(/GTM-[A-Z0-9]+/) && script.platform === 'Google Tag Manager'
-        const _isFacebookPixel = script.content.includes('fbq') || script.platform === 'Facebook Pixel'
-        const _isGoogleAnalytics = script.content.includes('gtag') || script.platform === 'Google Analytics'
-        
-        // Render based on content type
-        if (type === 'noscript') {
-          return (
-            <noscript 
-              key={scriptId}
-              dangerouslySetInnerHTML={{
-                __html: processedContent
-              }}
-            />
-          )
-        }
-
-        if (type === 'script') {
-          // Use Next.js Script component for JavaScript
-          return (
-            <Script
-              key={scriptId}
-              id={`dynamic-script-${script._id}`}
-              strategy="lazyOnload"
-              dangerouslySetInnerHTML={{
-                __html: processedContent
-              }}
-              onLoad={() => handleScriptLoad(scriptId, script.platform)}
-              onError={() => handleScriptError(scriptId, script.platform)}
-            />
-          )
-        }
-
-        if (type === 'html') {
-          // For head placement, render directly as HTML
-          if (placement === 'head') {
+          if (item.type === 'noscript') {
             return (
-              <div
-                key={scriptId}
-                dangerouslySetInnerHTML={{
-                  __html: processedContent
-                }}
-                style={{ display: 'none' }} // Hide the wrapper div
+              <noscript
+                key={key}
+                dangerouslySetInnerHTML={{ __html: item.processedContent }}
               />
             )
           }
 
-          // For body/footer placement, render as regular HTML
-          return (
-            <div
-              key={scriptId}
-              dangerouslySetInnerHTML={{
-                __html: processedContent
-              }}
-            />
-          )
-        }
+          if (item.type === 'external-script') {
+            return (
+              <Script
+                key={key}
+                id={`dynamic-script-${script._id}-ext-${iIndex}`}
+                src={item.src}
+                strategy="afterInteractive"
+                crossOrigin={item.attrs?.crossOrigin as '' | 'anonymous' | 'use-credentials' | undefined}
+                onLoad={() => handleScriptLoad(key, script.platform)}
+                onError={() => handleScriptError(key, script.platform)}
+              />
+            )
+          }
 
-        return null
+          if (item.type === 'inline-script') {
+            return (
+              <Script
+                key={key}
+                id={`dynamic-script-${script._id}-inline-${iIndex}`}
+                strategy="afterInteractive"
+                dangerouslySetInnerHTML={{ __html: item.processedContent }}
+                onLoad={() => handleScriptLoad(key, script.platform)}
+                onError={() => handleScriptError(key, script.platform)}
+              />
+            )
+          }
+
+          if (item.type === 'html') {
+            return (
+              <div
+                key={key}
+                dangerouslySetInnerHTML={{ __html: item.processedContent }}
+                style={placement === 'head' ? { display: 'none' } : undefined}
+              />
+            )
+          }
+
+          return null
+        })
       })}
     </>
   )

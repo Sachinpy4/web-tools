@@ -51,22 +51,23 @@ export function getProxiedImageUrl(imageUrl: string | undefined | null): string 
     const backendApiUrl = getBackendApiUrl()
     const backendDomain = backendApiUrl.replace('/api', '')
     
-    // Check if this is a backend image URL
-    if (imageUrl.includes(backendDomain) && imageUrl.includes('/api/media/file/')) {
-      // Extract the path after '/api/media/file/'
-      const mediaFilePattern = /\/api\/media\/file\/(.+)$/
-      const match = imageUrl.match(mediaFilePattern)
+    // Match any URL containing /api/media/file/ (absolute with backend domain, or relative path)
+    if (imageUrl.includes('/api/media/file/')) {
+      const isBackendAbsolute = imageUrl.includes(backendDomain)
+      const isRelative = imageUrl.startsWith('/api/media/file/')
       
-      if (match && match[1]) {
-        const imagePath = match[1]
-        const frontendDomain = getFrontendDomain()
-        const proxiedUrl = `${frontendDomain}/api/images/${imagePath}`
+      if (isBackendAbsolute || isRelative) {
+        const mediaFilePattern = /\/api\/media\/file\/(.+)$/
+        const match = imageUrl.match(mediaFilePattern)
         
-        return proxiedUrl
+        if (match && match[1]) {
+          const imagePath = match[1]
+          const frontendDomain = getFrontendDomain()
+          return `${frontendDomain}/api/images/${imagePath}`
+        }
       }
     }
     
-    // If not a backend URL, return as-is
     return imageUrl
   } catch (error) {
     console.error('[Image Proxy] Error converting URL:', error)
@@ -96,9 +97,8 @@ export function shouldProxyImage(imageUrl: string | undefined | null): boolean {
   }
   
   try {
-    const backendApiUrl = getBackendApiUrl()
-    const backendDomain = backendApiUrl.replace('/api', '')
-    
+    if (imageUrl.startsWith('/api/media/file/')) return true
+    const backendDomain = getBackendApiUrl().replace('/api', '')
     return imageUrl.includes(backendDomain) && imageUrl.includes('/api/media/file/')
   } catch {
     return false

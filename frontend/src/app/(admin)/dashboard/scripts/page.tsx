@@ -62,6 +62,7 @@ interface Script {
 const PLATFORMS = [
   'Google Analytics',
   'Google Tag Manager',
+  'Google AdSense',
   'Facebook Pixel',
   'Google Ads',
   'LinkedIn Insight',
