@@ -127,7 +127,8 @@ export class MediaController {
   ) {
     const fileInfo = await this.mediaService.serveFile(folder, filename);
     res.setHeader('Content-Type', fileInfo.mimetype);
-    res.sendFile(fileInfo.path, { root: '.' });
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.sendFile(fileInfo.path);
   }
 
   @Get('stats')
