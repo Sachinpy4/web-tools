@@ -89,27 +89,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]
 
-  // Blog pages
+  // Blog pages - paginate through all published posts (backend caps at 50 per page)
   let blogPages: MetadataRoute.Sitemap = []
   
   try {
-    // Fetch published blog posts
-    const response = await apiRequest<{
-      status: string
-      data: BlogPost[]
-    }>('/blogs?status=published&limit=1000', { 
-      noRedirect: true,
-      requireAuth: false
-    })
+    let page = 1
+    let totalPages = 1
     
-    if (response.data && Array.isArray(response.data)) {
-      blogPages = response.data.map((post: BlogPost) => ({
-        url: `${baseUrl}/blog/${post.slug}`,
-        lastModified: new Date(post.updatedAt),
-        changeFrequency: 'weekly' as const,
-        priority: 0.7,
-      }))
-    }
+    do {
+      const response = await apiRequest<{
+        status: string
+        data: BlogPost[]
+        pages: number
+      }>(`/blogs/public?page=${page}&limit=50`, { 
+        noRedirect: true,
+        requireAuth: false
+      })
+      
+      if (response.data && Array.isArray(response.data)) {
+        blogPages.push(
+          ...response.data.map((post: BlogPost) => ({
+            url: `${baseUrl}/blog/${post.slug}`,
+            lastModified: new Date(post.updatedAt),
+            changeFrequency: 'weekly' as const,
+            priority: 0.7,
+          }))
+        )
+        totalPages = response.pages || 1
+      }
+      
+      page++
+    } while (page <= totalPages)
   } catch {
     // Backend unreachable during static build - this is expected
     // Blog pages will be fetched at runtime when sitemap is revalidated

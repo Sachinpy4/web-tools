@@ -13,7 +13,7 @@ export default () => ({
   database: {
     uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/web-tools',
     // High-traffic connection pool settings
-    maxPoolSize: parseInt(process.env.DB_MAX_POOL_SIZE, 10) || 50,
+    maxPoolSize: parseInt(process.env.DB_MAX_POOL_SIZE, 10) || 10,
     minPoolSize: parseInt(process.env.DB_MIN_POOL_SIZE, 10) || 5,
     maxIdleTimeMS: parseInt(process.env.DB_MAX_IDLE_TIME_MS, 10) || 30000,
     serverSelectionTimeoutMS: parseInt(process.env.DB_SERVER_SELECTION_TIMEOUT_MS, 10) || 5000,
@@ -43,7 +43,7 @@ export default () => ({
 
   // Worker Configuration optimized for high traffic
   worker: {
-    concurrency: parseInt(process.env.WORKER_CONCURRENCY, 10) || 30, // Increased from 20
+    concurrency: parseInt(process.env.WORKER_CONCURRENCY, 10) || 4,
     maxLoadThreshold: parseFloat(process.env.MAX_LOAD_THRESHOLD) || 0.8, // More conservative
     maxMemoryUsagePercent: parseInt(process.env.MAX_MEMORY_USAGE_PERCENT, 10) || 85, // More conservative
     degradationCooldownMs: parseInt(process.env.DEGRADATION_COOLDOWN_MS, 10) || 10000, // Faster recovery
@@ -111,6 +111,6 @@ export default () => ({
 
   // Performance Settings (same as original)
   performance: {
-    nodeOptions: process.env.NODE_OPTIONS || '--max-old-space-size=4096',
+    nodeOptions: process.env.NODE_OPTIONS || '--max-old-space-size=1024',
   },
 }); 

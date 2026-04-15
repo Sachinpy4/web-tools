@@ -11,7 +11,7 @@ export class SystemSettings {
   // Worker & Processing Settings
   @Prop({
     type: Number,
-    default: 30, // Increased for 10K+ traffic handling
+    default: 4,
     min: [1, 'Worker concurrency must be at least 1'],
     max: [100, 'Worker concurrency cannot exceed 100']
   })
@@ -149,9 +149,9 @@ export class SystemSettings {
   // System Settings
   @Prop({
     type: Number,
-    default: 4096, // 4GB
-    min: [1024, 'Memory limit must be at least 1GB'],
-    max: [16384, 'Memory limit cannot exceed 16GB']
+    default: 1024,
+    min: [256, 'Memory limit must be at least 256MB'],
+    max: [8192, 'Memory limit cannot exceed 8GB']
   })
   nodeMemoryLimit: number;
 

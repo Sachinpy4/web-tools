@@ -71,7 +71,7 @@ export class SettingsCacheService implements OnModuleInit {
     imageProcessingWindowMs: 300000, // 5 minutes
     batchOperationMaxRequests: 25, // Increased for higher traffic
     batchOperationWindowMs: 600000, // 10 minutes
-    workerConcurrency: 30, // Increased for 10K+ traffic handling
+    workerConcurrency: 4,
     maxLoadThreshold: 0.9,
     maxMemoryUsagePercent: 85, // More conservative for high traffic
     degradationCooldownMs: 15000,
@@ -82,7 +82,7 @@ export class SettingsCacheService implements OnModuleInit {
     tempFileRetentionHours: 2,
     autoCleanupEnabled: true,
     cleanupIntervalHours: 3, // More frequent for high traffic
-    nodeMemoryLimit: 4096,
+    nodeMemoryLimit: 1024,
     jobTimeoutMs: 180000,
     jobRetryAttempts: 3,
     jobStatusPollingIntervalMs: 2000, // 2 seconds

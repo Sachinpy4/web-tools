@@ -1,5 +1,28 @@
 import type { Metadata } from 'next'
 
+function getPublicImageUrl(imageUrl: string | undefined): string | undefined {
+  if (!imageUrl) return undefined
+
+  const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL
+    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null)
+    || (process.env.NODE_ENV === 'production' ? 'https://toolscandy.com' : 'http://localhost:3000')
+
+  // Relative backend media path -> public proxy URL
+  if (imageUrl.startsWith('/api/media/file/')) {
+    const path = imageUrl.replace('/api/media/file/', '')
+    return `${frontendUrl}/api/images/${path}`
+  }
+
+  // Absolute backend URL -> public proxy URL
+  const backendUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace('/api', '')
+  if (backendUrl && imageUrl.includes(backendUrl) && imageUrl.includes('/api/media/file/')) {
+    const match = imageUrl.match(/\/api\/media\/file\/(.+)$/)
+    if (match) return `${frontendUrl}/api/images/${match[1]}`
+  }
+
+  return imageUrl
+}
+
 interface SeoData {
   metaTitle: string
   metaDescription: string
@@ -90,6 +113,7 @@ export async function getServerSideMetadata(pagePath: string): Promise<Metadata>
     }
 
     const seoData: SeoData = data.data;
+    const publicOgImage = getPublicImageUrl(seoData.ogImage);
 
     // Convert to Next.js Metadata format
     return {
@@ -101,7 +125,7 @@ export async function getServerSideMetadata(pagePath: string): Promise<Metadata>
         description: seoData.metaDescription,
         url: seoData.canonicalUrl || undefined,
         siteName: 'ToolsCandy',
-        images: seoData.ogImage ? [{ url: seoData.ogImage }] : undefined,
+        images: publicOgImage ? [{ url: publicOgImage }] : undefined,
         type: getValidOgType(seoData.ogType),
         locale: 'en_US',
         ...(seoData.articlePublishedTime ? { publishedTime: seoData.articlePublishedTime } : {}),
@@ -116,7 +140,7 @@ export async function getServerSideMetadata(pagePath: string): Promise<Metadata>
         creator: '@toolscandy',
         title: seoData.metaTitle,
         description: seoData.metaDescription,
-        images: seoData.ogImage ? [seoData.ogImage] : undefined,
+        images: publicOgImage ? [publicOgImage] : undefined,
       },
       alternates: {
         canonical: seoData.canonicalUrl || undefined,

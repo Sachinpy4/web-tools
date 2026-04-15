@@ -3,6 +3,22 @@
  * For rich results in Google Search
  */
 
+function toPublicImageUrl(imageUrl: string | undefined): string | undefined {
+  if (!imageUrl) return undefined
+  const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL
+    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null)
+    || (process.env.NODE_ENV === 'production' ? 'https://toolscandy.com' : 'http://localhost:3000')
+  if (imageUrl.startsWith('/api/media/file/')) {
+    return `${frontendUrl}/api/images/${imageUrl.replace('/api/media/file/', '')}`
+  }
+  const backendUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace('/api', '')
+  if (backendUrl && imageUrl.includes(backendUrl) && imageUrl.includes('/api/media/file/')) {
+    const match = imageUrl.match(/\/api\/media\/file\/(.+)$/)
+    if (match) return `${frontendUrl}/api/images/${match[1]}`
+  }
+  return imageUrl
+}
+
 export interface BlogPost {
   title: string
   slug: string
@@ -123,7 +139,7 @@ export function generateArticleSchema(post: BlogPost) {
     '@type': 'Article',
     headline: post.metaTitle || post.title,
     description: post.metaDescription || post.excerpt,
-    image: post.featuredImage ? [post.featuredImage] : ['https://toolscandy.com/logo.svg'],
+    image: post.featuredImage ? [toPublicImageUrl(post.featuredImage) || 'https://toolscandy.com/logo.svg'] : ['https://toolscandy.com/logo.svg'],
     datePublished: post.date,
     dateModified: post.updatedAt,
     author: {
@@ -222,7 +238,7 @@ export function generateBlogPostingSchema(post: BlogPost) {
     headline: post.metaTitle || post.title,
     alternativeHeadline: post.title,
     description: post.metaDescription || post.excerpt,
-    image: post.featuredImage || 'https://toolscandy.com/logo.svg',
+    image: toPublicImageUrl(post.featuredImage) || 'https://toolscandy.com/logo.svg',
     datePublished: post.date,
     dateModified: post.updatedAt,
     author: {
