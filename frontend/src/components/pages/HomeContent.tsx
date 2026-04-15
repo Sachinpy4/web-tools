@@ -658,6 +658,11 @@ export default function HomeContent() {
                               src={getProxiedFeaturedImage(post.featuredImage)}
                               alt={post.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.onerror = null;
+                                target.style.display = 'none';
+                              }}
                             />
                           </div>
                         )}

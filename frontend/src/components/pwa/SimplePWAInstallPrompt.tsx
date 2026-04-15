@@ -3,72 +3,31 @@
 import { useState, useEffect } from 'react'
 import { useSimplePWA } from './SimplePWAProvider'
 
-interface BeforeInstallPromptEvent extends Event {
-  readonly platforms: string[]
-  readonly userChoice: Promise<{
-    outcome: 'accepted' | 'dismissed'
-    platform: string
-  }>
-  prompt(): Promise<void>
-}
-
 export default function SimplePWAInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [showPrompt, setShowPrompt] = useState(false)
   const [dismissed, setDismissed] = useState(false)
-  const { isInstalled } = useSimplePWA()
+  const { isInstalled, installPromptEvent } = useSimplePWA()
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
+    if (typeof window === 'undefined') return
 
-    // Check if user has previously dismissed the prompt
     const isDismissed = localStorage.getItem('pwa-install-dismissed') === 'true'
     setDismissed(isDismissed)
+  }, [])
 
-    let timeoutId: NodeJS.Timeout | null = null
+  useEffect(() => {
+    if (!installPromptEvent || dismissed || isInstalled) return
 
-    // Listen for the beforeinstallprompt event
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault()
-      setDeferredPrompt(e as BeforeInstallPromptEvent)
-      
-      // Show prompt after a delay if not dismissed
-      if (!isDismissed && !isInstalled) {
-        timeoutId = setTimeout(() => setShowPrompt(true), 3000)
-      }
-    }
-
-    const handleAppInstalled = () => {
-      setShowPrompt(false)
-      setDeferredPrompt(null)
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-        timeoutId = null
-      }
-    }
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    window.addEventListener('appinstalled', handleAppInstalled)
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-      window.removeEventListener('appinstalled', handleAppInstalled)
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-      }
-    }
-  }, [isInstalled])
+    const timeoutId = setTimeout(() => setShowPrompt(true), 3000)
+    return () => clearTimeout(timeoutId)
+  }, [installPromptEvent, dismissed, isInstalled])
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return
+    if (!installPromptEvent) return
 
     try {
-      await deferredPrompt.prompt()
-      await deferredPrompt.userChoice
-      
-      setDeferredPrompt(null)
+      await installPromptEvent.prompt()
+      await installPromptEvent.userChoice
       setShowPrompt(false)
     } catch (_error) {
       setShowPrompt(false)
@@ -81,8 +40,7 @@ export default function SimplePWAInstallPrompt() {
     localStorage.setItem('pwa-install-dismissed', 'true')
   }
 
-  // Don't show if already installed, dismissed, or no prompt available
-  if (isInstalled || dismissed || !deferredPrompt || !showPrompt) {
+  if (isInstalled || dismissed || !installPromptEvent || !showPrompt) {
     return null
   }
 

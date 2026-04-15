@@ -187,7 +187,7 @@ export default function BlogContent() {
             author: { name: 'John Smith', email: 'john@example.com' },
             category: 'Optimization',
             tags: ['Performance', 'Images', 'Optimization', 'Web Development'],
-            featuredImage: '/placeholder-image-1.jpg',
+            featuredImage: '',
             views: 1452,
             readingTime: '5 min read',
             slug: 'how-to-optimize-web-images'
@@ -202,7 +202,7 @@ export default function BlogContent() {
             author: { name: 'Jane Doe', email: 'jane@example.com' },
             category: 'Web Development',
             tags: ['Images', 'Web Development', 'Optimization', 'Best Practices'],
-            featuredImage: '/placeholder-image-2.jpg',
+            featuredImage: '',
             views: 892,
             readingTime: '8 min read',
             slug: 'essential-image-optimization-tips'
@@ -511,7 +511,9 @@ export default function BlogContent() {
                   className="w-full h-full object-cover"
                   loading="eager"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/placeholder.jpg';
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null;
+                    target.style.display = 'none';
                   }}
                 />
               ) : (
@@ -570,7 +572,9 @@ export default function BlogContent() {
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                   loading="lazy"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/placeholder.jpg';
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null;
+                    target.style.display = 'none';
                   }}
                 />
               ) : (

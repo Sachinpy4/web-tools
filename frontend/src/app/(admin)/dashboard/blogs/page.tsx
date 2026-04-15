@@ -142,7 +142,7 @@ export default function BlogsPage() {
       status: blog.status,
       author: authorName,
       category: blog.category,
-      featuredImage: blog.featuredImage || '/placeholder-image-1.jpg',
+      featuredImage: blog.featuredImage || '',
       views: blog.views || 0,
       likes: blog.likes || 0
     }

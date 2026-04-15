@@ -422,8 +422,9 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
                 className="w-full h-full object-cover"
                 loading="eager"
                 onError={(e) => {
-                  // Fallback if image fails to load
-                  (e.target as HTMLImageElement).src = '/placeholder.jpg';
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.style.display = 'none';
                 }}
               />
             ) : (
@@ -1061,8 +1062,9 @@ export function BlogPostClient({ post: initialPost }: BlogPostClientProps) {
                       className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
                       loading="lazy"
                       onError={(e) => {
-                        // Fallback if image fails to load
-                        (e.target as HTMLImageElement).src = '/placeholder.jpg';
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.style.display = 'none';
                       }}
                     />
                   ) : (
